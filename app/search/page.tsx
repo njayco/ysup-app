@@ -20,6 +20,7 @@ import {
   FileText,
   Video,
   FolderSearch,
+  Monitor,
 } from "lucide-react"
 
 interface Book {
@@ -54,6 +55,14 @@ interface ScholarArticle {
   pdfUrl: string
 }
 
+interface WebResult {
+  id: string
+  title: string
+  snippet: string
+  url: string
+  displayUrl: string
+}
+
 interface CampusUser {
   id: number
   username: string
@@ -62,7 +71,7 @@ interface CampusUser {
   college: string
 }
 
-type TabType = "all" | "scholar" | "books" | "wikipedia" | "users"
+type TabType = "all" | "web" | "scholar" | "books" | "wikipedia" | "users"
 
 function BookPlaceholder({ title, authors, isFocused }: { title: string; authors: string[]; isFocused: boolean }) {
   const authorText = authors.length > 0 ? authors[0] : ""
@@ -141,6 +150,7 @@ function SearchContent() {
   const [books, setBooks] = useState<Book[]>([])
   const [scholarArticles, setScholarArticles] = useState<ScholarArticle[]>([])
   const [wikiArticles, setWikiArticles] = useState<WikiArticle[]>([])
+  const [webResults, setWebResults] = useState<WebResult[]>([])
   const [campusUsers, setCampusUsers] = useState<CampusUser[]>([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
@@ -153,6 +163,8 @@ function SearchContent() {
   const [selectedScholar, setSelectedScholar] = useState<ScholarArticle | null>(null)
   const [searchTime, setSearchTime] = useState(0)
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
+  const [aiOverview, setAiOverview] = useState("")
+  const [loadingOverview, setLoadingOverview] = useState(false)
   const searchedQueryRef = useRef<string>("")
 
   const performSearch = async (searchQuery: string) => {
@@ -167,34 +179,59 @@ function SearchContent() {
     setSelectedBook(null)
     setSelectedScholar(null)
     setFailedImages(new Set())
+    setAiOverview("")
     const startTime = Date.now()
 
     try {
-      const [booksRes, scholarRes, wikiRes, usersRes] = await Promise.allSettled([
+      const [booksRes, scholarRes, wikiRes, usersRes, webRes] = await Promise.allSettled([
         fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/web-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
       ])
 
       const booksData = booksRes.status === "fulfilled" && Array.isArray(booksRes.value) ? booksRes.value : []
       const scholarData = scholarRes.status === "fulfilled" && Array.isArray(scholarRes.value) ? scholarRes.value : []
       const wikiData = wikiRes.status === "fulfilled" && Array.isArray(wikiRes.value) ? wikiRes.value : []
       const usersData = usersRes.status === "fulfilled" && Array.isArray(usersRes.value) ? usersRes.value : []
+      const webData = webRes.status === "fulfilled" && Array.isArray(webRes.value) ? webRes.value : []
 
       setBooks(booksData)
       setScholarArticles(scholarData)
       setWikiArticles(wikiData)
       setCampusUsers(usersData)
+      setWebResults(webData)
 
       if (booksData.length > 0) setSelectedBook(booksData[0])
       if (scholarData.length > 0) setSelectedScholar(scholarData[0])
 
       setSearchTime((Date.now() - startTime) / 1000)
+
+      fetchAiOverview(searchQuery)
     } catch (error) {
       console.error("Search error:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAiOverview = async (searchQuery: string) => {
+    setLoadingOverview(true)
+    try {
+      const res = await fetch("/api/ai-overview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      })
+      const data = await res.json()
+      if (data.overview) {
+        setAiOverview(data.overview)
+      }
+    } catch {
+      console.error("Failed to fetch AI overview")
+    } finally {
+      setLoadingOverview(false)
     }
   }
 
@@ -251,10 +288,11 @@ function SearchContent() {
     }
   }
 
-  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length
+  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length
 
   const sidebarCategories = [
     { label: "Everything", icon: <Search className="w-4 h-4" />, tab: "all" as TabType, count: totalResults },
+    { label: "Web", icon: <Monitor className="w-4 h-4" />, tab: "web" as TabType, count: webResults.length },
     { label: "Scholarly Articles", icon: <GraduationCap className="w-4 h-4" />, tab: "scholar" as TabType, count: scholarArticles.length },
     { label: "Books", icon: <BookOpen className="w-4 h-4" />, tab: "books" as TabType, count: books.length },
     { label: "Encyclopedia", icon: <Globe className="w-4 h-4" />, tab: "wikipedia" as TabType, count: wikiArticles.length },
@@ -343,7 +381,7 @@ function SearchContent() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search books, articles, campus users..."
+                  placeholder="Search the Web, Books, Scholarly Articles or find classmates"
                   className="w-full pl-5 pr-14 py-3 text-lg rounded-full bg-amber-950 bg-opacity-70 border-2 border-amber-700 text-amber-100 placeholder-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-500 shadow-lg"
                   style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}
                 />
@@ -389,7 +427,7 @@ function SearchContent() {
               <div className="text-center py-20">
                 <BookOpen className="w-20 h-20 text-amber-400 mx-auto mb-4 opacity-60" />
                 <p className="text-amber-200 text-xl" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
-                  Enter a search term to explore books, articles, and campus users
+                  Search the Web, Books, Scholarly Articles or find classmates
                 </p>
               </div>
             )}
@@ -406,6 +444,7 @@ function SearchContent() {
 
             {/* Per-tab empty state */}
             {!loading && hasSearched && totalResults > 0 && activeTab !== "all" && (
+              (activeTab === "web" && webResults.length === 0) ||
               (activeTab === "books" && books.length === 0) ||
               (activeTab === "scholar" && scholarArticles.length === 0) ||
               (activeTab === "wikipedia" && wikiArticles.length === 0) ||
@@ -414,15 +453,79 @@ function SearchContent() {
               <div className="text-center py-20">
                 <FolderSearch className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-60" />
                 <p className="text-amber-200 text-lg" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
-                  No {activeTab === "books" ? "books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
+                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
                 </p>
                 <p className="text-amber-400 text-sm mt-2 opacity-70">Try checking other categories for results</p>
+              </div>
+            )}
+
+            {/* AI Overview */}
+            {!loading && hasSearched && (aiOverview || loadingOverview) && (
+              <div className="max-w-3xl mx-auto mb-6">
+                <div className="bg-gradient-to-br from-amber-950 via-amber-900 to-amber-950 bg-opacity-80 rounded-xl p-5 border border-amber-700 shadow-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 bg-amber-700 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-amber-200" />
+                    </div>
+                    <h3 className="text-lg font-bold text-amber-200" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
+                      AI Overview
+                    </h3>
+                  </div>
+                  {loadingOverview ? (
+                    <div className="flex items-center gap-2 text-amber-300 py-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Generating overview...</span>
+                    </div>
+                  ) : (
+                    <p className="text-amber-100 text-sm leading-relaxed" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
+                      {aiOverview}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Results */}
             {!loading && hasSearched && totalResults > 0 && (
               <div className="space-y-8">
+                {/* Web Results */}
+                {(activeTab === "all" || activeTab === "web") && webResults.length > 0 && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <Monitor className="w-5 h-5" />
+                      Web Results ({webResults.length})
+                    </h2>
+                    <div className="space-y-3">
+                      {webResults.map((result) => (
+                        <div
+                          key={result.id}
+                          className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 transition-all"
+                        >
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Monitor className="w-5 h-5 text-blue-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-amber-500 text-xs mb-0.5 truncate">{result.displayUrl}</p>
+                              <h3 className="text-lg font-bold text-amber-200 mb-1" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
+                                <a href={result.url} target="_blank" rel="noopener noreferrer" className="hover:text-amber-100 transition-colors">
+                                  {result.title}
+                                </a>
+                              </h3>
+                              <p className="text-amber-200 text-sm line-clamp-2 opacity-80">
+                                {result.snippet}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {/* 3D Book Carousel */}
                 {(activeTab === "all" || activeTab === "books") && books.length > 0 && (
                   <section>

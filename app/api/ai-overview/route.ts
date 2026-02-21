@@ -22,22 +22,21 @@ function getOpenAI() {
   return _openai;
 }
 
-function generateCacheKey(source: string, itemId: string): string {
-  return crypto.createHash("md5").update(`${source}:${itemId}`).digest("hex");
-}
-
 export async function POST(request: Request) {
   try {
-    const { title, description, source, itemId } = await request.json();
+    const { query } = await request.json();
 
-    if (!title || !source || !itemId) {
+    if (!query) {
       return NextResponse.json(
-        { error: "title, source, and itemId are required" },
+        { error: "query is required" },
         { status: 400 }
       );
     }
 
-    const cacheKey = generateCacheKey(source, itemId);
+    const cacheKey = crypto
+      .createHash("md5")
+      .update(`ai-overview:${query.toLowerCase().trim()}`)
+      .digest("hex");
 
     const cached = await getPool().query(
       "SELECT summary_text FROM summary_cache WHERE cache_key = $1",
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
     );
 
     if (cached.rows.length > 0) {
-      return NextResponse.json({ summary: cached.rows[0].summary_text });
+      return NextResponse.json({ overview: cached.rows[0].summary_text });
     }
 
     const completion = await getOpenAI().chat.completions.create({
@@ -54,29 +53,31 @@ export async function POST(request: Request) {
         {
           role: "system",
           content:
-            "You are an academic assistant helping college students understand books and articles. Provide clear, concise summaries that highlight key concepts, main arguments, and academic relevance. Keep summaries informative and accessible.",
+            "You are an academic search assistant for college students. When given a search query, provide a brief, informative overview (3-4 sentences) that helps the student understand the topic. Include key facts, context, and academic relevance. Be concise and educational. Do not use markdown formatting or bullet points - write in plain flowing text.",
         },
         {
           role: "user",
-          content: `Please provide a brief academic summary of the following:\n\nTitle: ${title}\n\nDescription: ${description || "No description available."}`,
+          content: `Provide a brief academic overview for the search query: "${query}"`,
         },
       ],
-      max_tokens: 300,
+      max_tokens: 200,
     });
 
-    const summary = completion.choices[0]?.message?.content || "Unable to generate summary.";
+    const overview =
+      completion.choices[0]?.message?.content ||
+      "Unable to generate overview.";
 
     await getPool().query(
       `INSERT INTO summary_cache (query, source, item_id, item_title, summary_text, cache_key)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [title, source, itemId, title, summary, cacheKey]
+      [query, "ai-overview", query, query, overview, cacheKey]
     );
 
-    return NextResponse.json({ summary });
+    return NextResponse.json({ overview });
   } catch (error) {
-    console.error("Summarize error:", error);
+    console.error("AI Overview error:", error);
     return NextResponse.json(
-      { error: "Failed to generate summary" },
+      { error: "Failed to generate overview" },
       { status: 500 }
     );
   }

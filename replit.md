@@ -48,9 +48,12 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
   - Wikipedia API integration (/api/wiki) - searches and displays article results with snippets
   - Campus user search (/api/search-users) - searches PostgreSQL users table by name/username
   - AI summarization (/api/summarize) - generates academic summaries using OpenAI (gpt-4o-mini) with PostgreSQL caching in summary_cache table
-  - Wood/amber themed UI with filter tabs (Everything, Scholarly Articles, Books, Encyclopedia, Campus Users)
+  - DuckDuckGo web search (/api/web-search) - free web search via HTML parsing, no API key needed
+  - AI Overview (/api/ai-overview) - generates brief topic overviews using OpenAI with PostgreSQL caching
+  - Wood/amber themed UI with filter tabs (Everything, Web, Scholarly Articles, Books, Encyclopedia, Campus Users)
   - Homepage and header search bars redirect to /search?q=... (no mock results modals)
   - Installed OpenAI via Replit AI Integrations (uses Replit credits, no API key needed)
+  - OpenAI client configured with AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL
 - Rebuilt onboarding page (/onboarding) with full guided setup wizard:
   - Step 1: Student Profile Setup with major, year, bio fields and completion checklist (required before proceeding)
   - Steps 2-10: Feature walkthroughs for Dashboard, YsUp Book, YBucks system, HU Bookstore, Bulletin Board, The Hilltop, The Game, Bison Web, Academy with detailed explanations and tips
