@@ -1,135 +1,126 @@
 "use server"
 
-interface SignupData {
-  college: string
-  phone: string
-  username: string
-  password: string
-  firstName: string
-  lastName: string
-  agreeTerms: boolean
+import { Pool } from "pg"
+import bcrypt from "bcryptjs"
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+})
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-\(\)\+]/g, "")
 }
 
-// Simulated database - in a real app, this would be a proper database
-const users: Array<SignupData & { id: string; createdAt: string }> = []
-
 export async function signupUser(formData: FormData) {
-  const signupData: SignupData = {
-    college: formData.get("college") as string,
-    phone: formData.get("phone") as string,
-    username: formData.get("username") as string,
-    password: formData.get("password") as string,
-    firstName: formData.get("firstName") as string,
-    lastName: formData.get("lastName") as string,
-    agreeTerms: formData.get("agreeTerms") === "on",
-  }
+  const college = formData.get("college") as string
+  const rawPhone = formData.get("phone") as string
+  const phone = normalizePhone(rawPhone)
+  const username = (formData.get("username") as string).trim().toLowerCase()
+  const password = formData.get("password") as string
+  const firstName = formData.get("firstName") as string
+  const lastName = formData.get("lastName") as string
+  const agreeTerms = formData.get("agreeTerms") === "on"
 
-  // Validate required fields
-  if (
-    !signupData.phone ||
-    !signupData.username ||
-    !signupData.password ||
-    !signupData.firstName ||
-    !signupData.lastName
-  ) {
+  if (!phone || !username || !password || !firstName || !lastName) {
     throw new Error("All fields are required")
   }
 
-  // Validate username length
-  if (signupData.username.length < 4) {
+  if (username.length < 4) {
     throw new Error("Username must be at least 4 characters long")
   }
 
-  if (!signupData.agreeTerms) {
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters long")
+  }
+
+  if (!agreeTerms) {
     throw new Error("You must agree to the Terms & Conditions")
   }
 
-  // Check if user already exists (by phone or username)
-  const existingUser = users.find((user) => user.phone === signupData.phone || user.username === signupData.username)
-  if (existingUser) {
-    if (existingUser.phone === signupData.phone) {
+  const existingUser = await pool.query(
+    "SELECT id, phone, username FROM users WHERE phone = $1 OR username = $2",
+    [phone, username]
+  )
+
+  if (existingUser.rows.length > 0) {
+    const existing = existingUser.rows[0]
+    if (existing.phone === phone) {
       throw new Error("User with this phone number already exists")
     } else {
       throw new Error("Username is already taken")
     }
   }
 
-  // Save user to "database"
-  const newUser = {
-    ...signupData,
-    id: Date.now().toString(),
-    createdAt: new Date().toISOString(),
-  }
+  const passwordHash = await bcrypt.hash(password, 10)
 
-  users.push(newUser)
+  const result = await pool.query(
+    `INSERT INTO users (username, phone, password_hash, first_name, last_name, college)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, username, phone, first_name, last_name, college`,
+    [username, phone, passwordHash, firstName, lastName, college || "Howard University"]
+  )
 
-  console.log("New user registered:", {
-    id: newUser.id,
-    phone: newUser.phone,
-    username: newUser.username,
-    firstName: newUser.firstName,
-    lastName: newUser.lastName,
-    college: newUser.college,
-    createdAt: newUser.createdAt,
-  })
+  const newUser = result.rows[0]
 
-  // Return success response instead of redirecting
   return {
     success: true,
     user: {
-      id: newUser.id,
+      id: newUser.id.toString(),
       phone: newUser.phone,
       username: newUser.username,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
+      firstName: newUser.first_name,
+      lastName: newUser.last_name,
       college: newUser.college,
     },
   }
 }
 
 export async function loginUser(formData: FormData) {
-  const phone = formData.get("phone") as string
-  const username = formData.get("username") as string
+  const identifier = formData.get("identifier") as string
   const password = formData.get("password") as string
 
-  // Find user in "database" by phone or username
-  const user = users.find((u) => (u.phone === phone || u.username === username) && u.password === password)
+  if (!identifier || !password) {
+    throw new Error("Please enter your username or phone number and password")
+  }
 
-  if (!user) {
+  const trimmed = identifier.trim()
+  const isPhone = /^[\d\s\-\(\)\+]+$/.test(trimmed)
+
+  let result
+  if (isPhone) {
+    const normalizedPhone = normalizePhone(trimmed)
+    result = await pool.query(
+      "SELECT * FROM users WHERE phone = $1",
+      [normalizedPhone]
+    )
+  } else {
+    const cleanUsername = trimmed.startsWith("+") ? trimmed.slice(1) : trimmed
+    result = await pool.query(
+      "SELECT * FROM users WHERE username = $1",
+      [cleanUsername.toLowerCase()]
+    )
+  }
+
+  if (result.rows.length === 0) {
     throw new Error("Invalid credentials")
   }
 
-  console.log("User logged in:", {
-    id: user.id,
-    phone: user.phone,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-  })
+  const user = result.rows[0]
+  const passwordMatch = await bcrypt.compare(password, user.password_hash)
 
-  // Return success response instead of redirecting
+  if (!passwordMatch) {
+    throw new Error("Invalid credentials")
+  }
+
   return {
     success: true,
     user: {
-      id: user.id,
+      id: user.id.toString(),
       phone: user.phone,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.first_name,
+      lastName: user.last_name,
       college: user.college,
     },
   }
-}
-
-// Helper function to get all users (for admin purposes)
-export async function getAllUsers() {
-  return users.map((user) => ({
-    id: user.id,
-    phone: user.phone,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    college: user.college,
-    createdAt: user.createdAt,
-  }))
 }

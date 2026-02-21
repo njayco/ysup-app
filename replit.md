@@ -7,7 +7,7 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Frontend**: Next.js 14 with TypeScript, Tailwind CSS, shadcn/ui components
 - **Backend**: Express.js API server (server.js) with MongoDB (Mongoose)
 - **Real-time**: Socket.io for messaging
-- **Auth**: Server actions for frontend auth, JWT-based Express middleware for API
+- **Auth**: Next.js server actions with PostgreSQL + bcryptjs password hashing, localStorage session on client
 
 ### Directory Structure
 - `/app` - Next.js App Router pages and server actions
@@ -26,8 +26,13 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Package manager**: pnpm
 - **Deployment**: Autoscale with `pnpm build` and `pnpm next-start`
 - **Backend**: Express server on separate port (not currently integrated with frontend dev workflow)
-- **Database**: MongoDB via Mongoose (requires MONGODB_URI env var for backend)
+- **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
 
 ## Recent Changes
+- Added PostgreSQL database with users table for authentication (username, phone, password_hash, first_name, last_name, college)
+- Simplified login to single identifier field (accepts +username or phone number)
+- Auth uses bcryptjs for password hashing, pg for database queries
+- Phone numbers normalized on signup/login for consistent matching
+- Auth guard (useAuth hook) on protected pages redirects to /login
 - Configured for Replit environment (port 5000, host 0.0.0.0)
 - Set up deployment configuration

@@ -10,8 +10,7 @@ import { signupUser, loginUser } from "../actions/auth"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [phone, setPhone] = useState("")
-  const [username, setUsername] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [signupData, setSignupData] = useState({
@@ -33,8 +32,7 @@ export default function LoginPage() {
 
     try {
       const formData = new FormData()
-      formData.append("phone", phone)
-      formData.append("username", username)
+      formData.append("identifier", identifier)
       formData.append("password", password)
 
       const result = await loginUser(formData)
@@ -96,31 +94,15 @@ export default function LoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-lg font-serif mb-2">Phone Number</label>
+                <label className="block text-lg font-serif mb-2">Username or Phone Number</label>
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full max-w-xs px-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
-                  placeholder="(555) 123-4567"
+                  placeholder="+username or (555) 123-4567"
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-lg font-serif mb-2">Username</label>
-                <div className="relative w-full max-w-xs">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-400 text-lg">+</span>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
-                    placeholder="username"
-                    minLength={4}
-                    required
-                  />
-                </div>
               </div>
 
               <div>
