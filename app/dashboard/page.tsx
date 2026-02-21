@@ -26,6 +26,8 @@ import {
   Link2,
   Copy,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 
 interface PDFFile {
@@ -82,6 +84,8 @@ export default function DashboardPage() {
     college: "",
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [dashboardPage, setDashboardPage] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
 
   // Welcome message for new users
   const [showWelcome, setShowWelcome] = useState(false)
@@ -147,7 +151,17 @@ export default function DashboardPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
-    // Check if this is a new user (in a real app, you'd check session/auth state)
+    const updateItemsPerPage = () => {
+      if (window.innerWidth < 640) setItemsPerPage(6)
+      else if (window.innerWidth < 1024) setItemsPerPage(9)
+      else setItemsPerPage(12)
+    }
+    updateItemsPerPage()
+    window.addEventListener("resize", updateItemsPerPage)
+    return () => window.removeEventListener("resize", updateItemsPerPage)
+  }, [])
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get("welcome") === "true") {
       setShowWelcome(true)
@@ -639,6 +653,14 @@ export default function DashboardPage() {
 
   const filteredFiles = searchFiles(fileSearchQuery)
 
+  useEffect(() => {
+    const totalItems = filteredFiles.length + folders.length + stickyNotes.length
+    const maxPage = Math.max(0, Math.ceil(totalItems / itemsPerPage) - 1)
+    if (dashboardPage > maxPage) {
+      setDashboardPage(maxPage)
+    }
+  }, [filteredFiles.length, folders.length, stickyNotes.length, itemsPerPage, dashboardPage])
+
   // Update the handleSaveProfile function:
   const handleSaveProfile = () => {
     setCurrentUser({
@@ -958,18 +980,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div
-        className="p-4 md:p-8 relative min-h-[calc(100vh-140px)] transition-all duration-200"
-        onDragOver={handleDragOver}
-        onDrop={(e) => handleDrop(e, "desktop")}
-        style={{
-          background:
-            moveMode && draggedItem
-              ? "radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.1) 0%, transparent 50%)"
-              : undefined,
-        }}
-      >
-        {/* File Upload */}
+      <div className="p-4 md:p-6 lg:p-8">
         <input
           ref={fileInputRef}
           type="file"
@@ -978,285 +989,237 @@ export default function DashboardPage() {
           className="hidden"
         />
 
-        {/* Upload Button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="absolute top-2 md:top-4 right-2 md:right-4 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center space-x-1 md:space-x-2 z-10 text-sm md:text-base"
-        >
-          <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Upload File</span>
-          <span className="sm:hidden">Upload</span>
-        </button>
-
-        {/* Move Mode Toggle */}
-        <button
-          onClick={() => setMoveMode(!moveMode)}
-          className={`absolute top-12 md:top-16 right-2 md:right-20 px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center space-x-1 md:space-x-2 z-10 transition-colors text-sm md:text-base ${
-            moveMode ? "bg-green-600 hover:bg-green-700 text-white" : "bg-gray-500 hover:bg-gray-600 text-white"
-          }`}
-        >
-          <span>{moveMode ? "Exit Move" : "Move"}</span>
-        </button>
-
-        {/* Add Folder Button */}
-        <button
-          onClick={handleCreateFolder}
-          className="absolute top-28 right-4 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-10"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Folder</span>
-        </button>
-
-        {/* Trash Can */}
-        <div
-          className={`absolute bottom-8 right-8 w-16 h-16 rounded-lg flex items-center justify-center cursor-pointer transition-all z-20 ${
-            dragOverTrash ? "bg-red-600 scale-110" : "bg-gray-600 hover:bg-gray-700"
-          }`}
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragOverTrash(true)
-          }}
-          onDragLeave={() => setDragOverTrash(false)}
-          onDrop={(e) => handleDrop(e, "trash")}
-          onClick={() => setShowRecycleBin(true)}
-        >
-          <Trash2 className="w-8 h-8 text-white" />
-        </div>
-
-        {/* ID Card */}
-        <div
-          className="absolute top-4 left-4 cursor-pointer transform hover:scale-105 transition-all duration-200 z-10"
-          onClick={() => setShowProfile(true)}
-        >
-          <div className="bg-white rounded-lg shadow-lg p-3 w-48 border-2 border-blue-500">
-            <div className="flex items-center space-x-3">
-              <img
-                src={profileData.profileImage || "/placeholder.svg"}
-                alt="Profile"
-                className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
-              />
-              <div className="flex-1">
-                <div className="font-bold text-sm text-gray-800">
-                  {profileData.firstName || profileData.lastName
-                    ? `${profileData.firstName} ${profileData.lastName}`.trim()
-                    : "Set up profile"}
+        {/* Top toolbar: ID card + action buttons */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          {/* ID Card */}
+          <div
+            className="cursor-pointer transform hover:scale-[1.02] transition-all duration-200"
+            onClick={() => setShowProfile(true)}
+          >
+            <div className="bg-white rounded-lg shadow-lg p-3 w-full sm:w-56 border-2 border-blue-500">
+              <div className="flex items-center space-x-3">
+                <img
+                  src={profileData.profileImage || "/placeholder.svg"}
+                  alt="Profile"
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm text-gray-800 truncate">
+                    {profileData.firstName || profileData.lastName
+                      ? `${profileData.firstName} ${profileData.lastName}`.trim()
+                      : "Set up profile"}
+                  </div>
+                  <div className="text-xs text-gray-600 truncate">{profileData.username ? `+${profileData.username}` : ""}</div>
+                  <div className="text-xs text-blue-600 truncate">{profileData.major || "Tap to add major"}</div>
                 </div>
-                <div className="text-xs text-gray-600">{profileData.username ? `+${profileData.username}` : ""}</div>
-                <div className="text-xs text-blue-600">{profileData.major || "Tap to add major"}</div>
               </div>
             </div>
-            <div className="mt-2 text-xs text-gray-500 text-center">Click to edit profile</div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center flex-wrap gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1.5 text-sm"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Upload</span>
+            </button>
+            <button
+              onClick={handleCreateFolder}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1.5 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Folder</span>
+            </button>
+            <button
+              onClick={() => handleCreateStickyNote()}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1.5 text-sm"
+            >
+              <StickyNoteIcon className="w-4 h-4" />
+              <span>Note</span>
+            </button>
+            <button
+              onClick={() => setShowRecycleBin(true)}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1.5 text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Trash</span>
+            </button>
           </div>
         </div>
 
-        {/* All Files on Desk */}
-        {filteredFiles.map((file, index) => (
-          <div
-            key={file.id}
-            className={`absolute cursor-pointer transform transition-all duration-200 ${
-              index === currentFileIndex && file.type !== "bluebook" && file.type !== "notebook"
-                ? "z-20 ring-4 ring-blue-400"
-                : "z-10"
-            } ${moveMode ? "hover:scale-110" : "hover:scale-105"} ${draggedItem === file.id ? "opacity-50" : ""}`}
-            style={{
-              left: `${file.position.x}%`,
-              top: `${file.position.y}%`,
-              transform: `rotate(${file.position.rotation}deg)`,
-              "--mouse-x": `${mousePosition.x}px`,
-              "--mouse-y": `${mousePosition.y}px`,
-            }}
-            draggable={moveMode}
-            onDragStart={(e) => handleDragStart(e, file.id, "file")}
-            onDragEnd={handleDragEnd}
-            onClick={() => !moveMode && handleFileClick(file)}
-          >
-            {/* File Content */}
-            <div className={`rounded shadow-lg overflow-hidden border-2 w-32 h-40 ${getFileBackground(file)}`}>
-              {/* File Content */}
-              {file.type === "bluebook" ? (
-                <div className="p-2 h-full flex flex-col">
-                  <div className="text-center mb-2">
-                    <Calendar className="w-8 h-8 mx-auto text-blue-600" />
-                    <div className="text-xs font-bold text-blue-800">YsUp Bluebook</div>
-                  </div>
-                  <div className="flex-1 text-xs space-y-1">
-                    <div className="bg-blue-100 p-1 rounded">
-                      <div className="font-bold">Dec 19</div>
-                      <div>3:00pm Calculus</div>
-                    </div>
-                    <div className="bg-blue-100 p-1 rounded">
-                      <div className="font-bold">Dec 20</div>
-                      <div>Movie Night</div>
-                    </div>
-                  </div>
-                </div>
-              ) : file.type === "notebook" ? (
-                <div className="p-2 h-full flex flex-col relative">
-                  {/* Spiral holes */}
-                  <div className="absolute left-1 top-2 bottom-2 w-1">
-                    <div className="h-full bg-gray-400 rounded-full opacity-60"></div>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-center mb-2">
-                      <BookOpen className="w-6 h-6 mx-auto text-yellow-600" />
-                      <div className="text-xs font-bold text-gray-800">Class Network</div>
-                    </div>
-                    <div className="flex-1 text-xs space-y-1">
-                      <div className="bg-white p-1 rounded border">
-                        <div className="font-semibold">Nick Fisher</div>
-                        <div className="text-gray-600">Did anybody...</div>
+        {/* Grid Items: files + folders + sticky notes, paginated */}
+        {(() => {
+          const gridItems: ({ type: "file"; data: PDFFile } | { type: "folder"; data: typeof folders[0] } | { type: "note"; data: StickyNote })[] = []
+
+          filteredFiles.forEach((f) => gridItems.push({ type: "file", data: f }))
+          folders.forEach((f) => gridItems.push({ type: "folder", data: f }))
+          stickyNotes.forEach((n) => gridItems.push({ type: "note", data: n }))
+
+          const totalPages = Math.max(1, Math.ceil(gridItems.length / itemsPerPage))
+          const safePage = Math.min(dashboardPage, totalPages - 1)
+          const pageItems = gridItems.slice(safePage * itemsPerPage, (safePage + 1) * itemsPerPage)
+
+          return (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                {pageItems.map((item) => {
+                  if (item.type === "file") {
+                    const file = item.data as PDFFile
+                    return (
+                      <div
+                        key={`file-${file.id}`}
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        onClick={() => handleFileClick(file)}
+                      >
+                        <div className={`rounded-lg shadow-lg overflow-hidden border-2 h-44 ${getFileBackground(file)} relative`}>
+                          {file.type === "bluebook" ? (
+                            <div className="p-2 h-full flex flex-col">
+                              <div className="text-center mb-2">
+                                <Calendar className="w-8 h-8 mx-auto text-blue-600" />
+                                <div className="text-xs font-bold text-blue-800">YsUp Bluebook</div>
+                              </div>
+                              <div className="flex-1 text-xs space-y-1">
+                                <div className="bg-blue-100 p-1 rounded">
+                                  <div className="font-bold">Dec 19</div>
+                                  <div>3:00pm Calculus</div>
+                                </div>
+                                <div className="bg-blue-100 p-1 rounded">
+                                  <div className="font-bold">Dec 20</div>
+                                  <div>Movie Night</div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : file.type === "notebook" ? (
+                            <div className="p-2 h-full flex flex-col relative">
+                              <div className="absolute left-1 top-2 bottom-2 w-1">
+                                <div className="h-full bg-gray-400 rounded-full opacity-60"></div>
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-center mb-2">
+                                  <BookOpen className="w-6 h-6 mx-auto text-yellow-600" />
+                                  <div className="text-xs font-bold text-gray-800">Class Network</div>
+                                </div>
+                                <div className="flex-1 text-xs space-y-1">
+                                  <div className="bg-white p-1 rounded border">
+                                    <div className="font-semibold">Nick Fisher</div>
+                                    <div className="text-gray-600">Did anybody...</div>
+                                  </div>
+                                  <div className="bg-white p-1 rounded border">
+                                    <div className="font-semibold">Amanda</div>
+                                    <div className="text-gray-600">What was...</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="relative h-32 overflow-hidden">
+                                <img
+                                  src={file.thumbnail || "/placeholder.svg"}
+                                  alt={file.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                {file.type === "pdf" && (
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-gray-600 to-gray-400 opacity-80"></div>
+                                )}
+                                {file.type === "pdf" && (
+                                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                                )}
+                              </div>
+                              <div className="p-1.5 bg-white">
+                                <div className="text-xs font-medium truncate text-gray-800">{file.name}</div>
+                              </div>
+                            </>
+                          )}
+                          <div className="absolute bottom-1 right-1">{getFileIcon(file)}</div>
+                        </div>
                       </div>
-                      <div className="bg-white p-1 rounded border">
-                        <div className="font-semibold">Amanda</div>
-                        <div className="text-gray-600">What was...</div>
+                    )
+                  }
+
+                  if (item.type === "folder") {
+                    const folder = item.data as typeof folders[0]
+                    return (
+                      <div
+                        key={`folder-${folder.id}`}
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        onClick={() => handleFolderClick(folder)}
+                      >
+                        <div className="h-44 bg-yellow-400 border-2 border-yellow-600 rounded-lg shadow-lg">
+                          <div className="p-3 h-full flex flex-col items-center justify-center">
+                            <Folder className="w-10 h-10 text-yellow-800 mb-2" />
+                            <div className="text-sm font-bold text-yellow-900 truncate w-full text-center">{folder.name}</div>
+                            <div className="text-xs text-yellow-800 mt-1">{folder.files.length} files</div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="relative h-32 overflow-hidden">
-                    <img
-                      src={file.thumbnail || "/placeholder.svg"}
-                      alt={file.name}
-                      className="w-full h-full object-cover"
-                      style={{
-                        filter: file.type === "pdf" ? "none" : "brightness(1.1) contrast(1.1)",
-                      }}
-                    />
-                    {/* Textbook spine effect for PDFs */}
-                    {file.type === "pdf" && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-gray-600 to-gray-400 opacity-80"></div>
-                    )}
-                    {/* Glossy cover effect for textbooks */}
-                    {file.type === "pdf" && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    )}
-                  </div>
-                  <div className="p-1 bg-white">
-                    <div className="text-xs font-medium truncate text-gray-800">{file.name}</div>
-                  </div>
-                </>
-              )}
+                    )
+                  }
 
-              {/* File Type Icon */}
-              <div className="absolute bottom-1 right-1">{getFileIcon(file)}</div>
-            </div>
+                  if (item.type === "note") {
+                    const note = item.data as StickyNote
+                    return (
+                      <div
+                        key={`note-${note.id}`}
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        onClick={() => handleStickyNoteClick(note)}
+                      >
+                        <div className="h-44 bg-yellow-300 border border-yellow-400 rounded-lg shadow-lg relative">
+                          <div className="absolute top-0 right-0 w-5 h-5 bg-yellow-400 transform rotate-45 translate-x-1 -translate-y-1 rounded-sm"></div>
+                          <div className="p-3 h-full overflow-hidden">
+                            <StickyNoteIcon className="w-6 h-6 text-yellow-700 mb-2" />
+                            <div className="text-xs text-gray-700 leading-relaxed">
+                              {note.content.slice(0, 60)}
+                              {note.content.length > 60 && "..."}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-2">{note.lastModified}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
 
-            {/* Move Mode Indicator */}
-            {moveMode && (
-              <div className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                ↔
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* Folders */}
-        {folders.map((folder) => (
-          <div
-            key={folder.id}
-            className={`absolute cursor-pointer transform transition-all duration-200 z-10 ${
-              moveMode ? "hover:scale-110" : "hover:scale-105"
-            } ${draggedItem === folder.id ? "opacity-50" : ""} ${
-              dragOverFolder === folder.id ? "ring-4 ring-yellow-400" : ""
-            }`}
-            style={{
-              left: `${folder.position.x}%`,
-              top: `${folder.position.y}%`,
-              transform: `rotate(${folder.position.rotation}deg)`,
-              "--mouse-x": `${mousePosition.x}px`,
-              "--mouse-y": `${mousePosition.y}px`,
-            }}
-            draggable={moveMode}
-            onDragStart={(e) => handleDragStart(e, folder.id, "folder")}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setDragOverFolder(folder.id)
-            }}
-            onDragLeave={() => setDragOverFolder(null)}
-            onDrop={(e) => {
-              e.stopPropagation()
-              handleDrop(e, "folder", folder.id)
-            }}
-            onClick={() => handleFolderClick(folder)}
-          >
-            <div className="w-32 h-40 bg-yellow-400 border-2 border-yellow-600 rounded shadow-lg relative">
-              <div className="p-2 h-full flex flex-col">
-                <div className="text-center mb-2">
-                  <Folder className="w-8 h-8 mx-auto text-yellow-800" />
-                  <div className="text-xs font-bold text-yellow-900 truncate">{folder.name}</div>
-                </div>
-                <div className="flex-1 text-xs text-yellow-800">{folder.files.length} files</div>
+                  return null
+                })}
               </div>
 
-              {/* Move Mode Indicator */}
-              {moveMode && (
-                <div className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                  ↔
+              {/* Pagination arrows */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <button
+                    onClick={() => setDashboardPage(Math.max(0, safePage - 1))}
+                    disabled={safePage === 0}
+                    className={`flex items-center space-x-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      safePage === 0
+                        ? "bg-amber-800/30 text-amber-500/40 cursor-not-allowed"
+                        : "bg-amber-700 hover:bg-amber-600 text-white"
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+                  <span className="text-amber-200 text-sm">
+                    Page {safePage + 1} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setDashboardPage(Math.min(totalPages - 1, safePage + 1))}
+                    disabled={safePage === totalPages - 1}
+                    className={`flex items-center space-x-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      safePage === totalPages - 1
+                        ? "bg-amber-800/30 text-amber-500/40 cursor-not-allowed"
+                        : "bg-amber-700 hover:bg-amber-600 text-white"
+                    }`}
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               )}
-            </div>
-          </div>
-        ))}
-
-        {/* Sticky Notes */}
-        {stickyNotes.map((note) => (
-          <div
-            key={note.id}
-            className={`absolute cursor-pointer transform transition-all duration-200 z-10 ${
-              moveMode ? "hover:scale-110" : "hover:scale-110"
-            } ${draggedItem === note.id ? "opacity-50" : ""}`}
-            style={{
-              left: `${note.position.x}%`,
-              top: `${note.position.y}%`,
-              transform: `rotate(${note.position.rotation}deg)`,
-              "--mouse-x": `${mousePosition.x}px`,
-              "--mouse-y": `${mousePosition.y}px`,
-            }}
-            draggable={moveMode}
-            onDragStart={(e) => handleDragStart(e, note.id, "note")}
-            onDragEnd={handleDragEnd}
-            onClick={() => !moveMode && handleStickyNoteClick(note)}
-          >
-            <div className="w-16 h-16 bg-yellow-300 border border-yellow-400 shadow-lg relative">
-              {/* Sticky note fold effect */}
-              <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 transform rotate-45 translate-x-1 -translate-y-1"></div>
-
-              {/* Note content preview */}
-              <div className="p-1 h-full overflow-hidden">
-                <div className="text-xs text-gray-700 leading-tight">
-                  {note.content.slice(0, 20)}
-                  {note.content.length > 20 && "..."}
-                </div>
-              </div>
-
-              {/* Move Mode Indicator */}
-              {moveMode && (
-                <div className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                  ↔
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {/* Media Items */}
-        <div className="absolute right-8 top-32 w-48 space-y-4">
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <img src="/placeholder.svg?height=150&width=200" alt="Movie" className="w-full h-32 object-cover" />
-            <div className="p-2 text-white text-sm">It All Ends Here</div>
-          </div>
-
-          <div className="bg-teal-400 rounded-lg overflow-hidden">
-            <img
-              src="/placeholder.svg?height=150&width=200"
-              alt="Cipher Sessions"
-              className="w-full h-32 object-cover"
-            />
-          </div>
-        </div>
+            </>
+          )
+        })()}
       </div>
 
       {/* Expanded Bluebook Modal */}
