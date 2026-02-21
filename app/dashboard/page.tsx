@@ -1276,12 +1276,8 @@ export default function DashboardPage() {
                               </div>
                               <div className="flex-1 text-xs space-y-1">
                                 <div className="bg-blue-100 p-1 rounded">
-                                  <div className="font-bold">Dec 19</div>
-                                  <div>3:00pm Calculus</div>
-                                </div>
-                                <div className="bg-blue-100 p-1 rounded">
-                                  <div className="font-bold">Dec 20</div>
-                                  <div>Movie Night</div>
+                                  <div className="font-bold">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                                  <div>Tap to view</div>
                                 </div>
                               </div>
                             </div>

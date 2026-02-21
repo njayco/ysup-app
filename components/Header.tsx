@@ -21,11 +21,12 @@ interface Message {
 
 interface Notification {
   id: string
-  type: "message" | "cosign" | "response"
+  type: "message" | "cosign" | "response" | "event_invite"
   from: string
   content: string
   timestamp: string
   read: boolean
+  eventId?: number
 }
 
 export default function Header({ currentPage = "Home" }: HeaderProps) {
@@ -66,7 +67,6 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     "+emmawilson",
   ])
 
-  // Load user data and simulate notifications
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
@@ -77,53 +77,36 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         lastName: userData.lastName,
       })
       setIsLoggedIn(true)
+
+      if (userData.id) {
+        fetch(`/api/events/invites?userId=${userData.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.invites.length > 0) {
+              const eventNotifs: Notification[] = data.invites.map((inv: any) => ({
+                id: `event-${inv.event_id}`,
+                type: "event_invite" as const,
+                from: `${inv.creator_first_name} ${inv.creator_last_name}`,
+                content: `invited you to "${inv.title}"`,
+                timestamp: inv.invited_at,
+                read: false,
+                eventId: inv.event_id,
+              }))
+              setNotifications(eventNotifs)
+              setUnreadNotifications(eventNotifs.length)
+            } else {
+              setNotifications([])
+              setUnreadNotifications(0)
+            }
+          })
+          .catch(() => {
+            setNotifications([])
+            setUnreadNotifications(0)
+          })
+      }
     } else {
       setIsLoggedIn(false)
     }
-
-    // Simulate some initial notifications
-    setNotifications([
-      {
-        id: "1",
-        type: "message",
-        from: "+nickfisher",
-        content: "Hey, did you finish the calc homework?",
-        timestamp: new Date().toISOString(),
-        read: false,
-      },
-      {
-        id: "2",
-        type: "cosign",
-        from: "+amandawinston",
-        content: "TRUE'd your post about the midterm",
-        timestamp: new Date().toISOString(),
-        read: false,
-      },
-      {
-        id: "3",
-        type: "response",
-        from: "+garyjackson",
-        content: "responded to your question in Calculus 2",
-        timestamp: new Date().toISOString(),
-        read: false,
-      },
-    ])
-
-    setMessages([
-      {
-        id: "1",
-        from: "+nickfisher",
-        to: `+${currentUser.username}`,
-        content: "Hey, did you finish the calc homework?",
-        timestamp: new Date().toISOString(),
-        read: false,
-        readBy: {},
-      },
-    ])
-
-    // Calculate unread notifications
-    const unreadCount = notifications.filter((notification) => !notification.read).length
-    setUnreadNotifications(unreadCount)
   }, [])
 
   const markMessagesAsRead = (conversationId: string) => {

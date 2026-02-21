@@ -57,6 +57,18 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Post creation, co-signing, and threaded responses
 - PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses
 
+## YsUp Bluebook Calendar Feature
+- PostgreSQL-backed event/calendar system accessible from the dashboard Bluebook item
+- API routes: `/api/events` (create/list events), `/api/events/rsvp` (RSVP responses), `/api/events/invites` (pending invitations), `/api/events/network-members` (fetch members for inviting)
+- Event creation: Title, description, date, time, location fields
+- Network-based invitations: Invite entire Class Networks or pick individual members from joined networks
+- RSVP system: Three states (going/maybe/not_going) with real-time tallies displayed on each event
+- Pending invites section: Shows unresponded invitations with quick RSVP buttons
+- Event deletion: Only event creators can delete their events (cascades to invites)
+- Header notifications: Fetches real pending event invites as notification badges
+- PostgreSQL tables: calendar_events, event_invites with proper foreign keys and indexes
+- Bluebook preview card shows current date dynamically (no hardcoded dates)
+
 ## Recent Changes
 - Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
 - Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens
