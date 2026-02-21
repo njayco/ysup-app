@@ -3,6 +3,8 @@ import { Pool } from "pg";
 import OpenAI from "openai";
 import crypto from "crypto";
 
+export const dynamic = 'force-dynamic'
+
 let _pool: Pool | null = null;
 function getPool() {
   if (!_pool) {
@@ -69,7 +71,8 @@ export async function POST(request: Request) {
 
     await getPool().query(
       `INSERT INTO summary_cache (query, source, item_id, item_title, summary_text, cache_key)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (cache_key) DO UPDATE SET summary_text = EXCLUDED.summary_text`,
       [query, "ai-overview", query, query, overview, cacheKey]
     );
 

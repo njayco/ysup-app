@@ -22,13 +22,20 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - `/public` - Static assets and images
 
 ## Configuration
-- **Dev server**: `pnpm dev` runs Next.js on port 5000 (0.0.0.0)
+- **Dev server**: `pnpm next dev --turbo -H 0.0.0.0 -p 5000` (Turbopack for fast compilation, no recompilation loop)
 - **Package manager**: pnpm
 - **Deployment**: Autoscale with `pnpm build` and `pnpm next-start`
 - **Backend**: Express server on separate port (not currently integrated with frontend dev workflow)
 - **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
+- **React**: v18.3.1 (downgraded from 19 for Next.js 14 compatibility)
+- **All API routes**: Use `export const dynamic = 'force-dynamic'` for production builds
 
 ## Recent Changes
+- Fixed dev server stability: Switched to Turbopack (--turbo) to eliminate constant webpack recompilation loop
+- Fixed React version: Downgraded from React 19 to 18.3.1 for Next.js 14 compatibility
+- Fixed AI overview/summarize duplicate key errors: Added ON CONFLICT DO UPDATE to PostgreSQL inserts
+- Added force-dynamic exports to all API routes for production build compatibility
+- Pre-warm workflow: Dev server pre-requests / and /search pages after startup for faster first load
 - Major search improvements:
   - Book images: Added onError fallback with styled 3D book placeholders showing title + author when Google Books image fails
   - Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)

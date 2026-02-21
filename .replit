@@ -22,20 +22,20 @@ args = "Next.js Dev Server"
 name = "Next.js Dev Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -c 'pnpm next dev --turbo -H 0.0.0.0 -p 5000 & sleep 5 && curl -s http://localhost:5000/ > /dev/null && curl -s http://localhost:5000/search > /dev/null && echo \"Pages pre-warmed\" && wait'"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "cloudrun"
-run = ["sh", "-c", "pnpm next-start"]
+deploymentTarget = "autoscale"
+run = ["pnpm", "next-start"]
 build = ["pnpm", "build"]
 publicDir = "public"
