@@ -330,10 +330,6 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    fetchMyNetworks()
-  }, [])
-
-  useEffect(() => {
     if (showNotebook) {
       fetchMyNetworks()
     }
