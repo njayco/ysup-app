@@ -58,6 +58,11 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses
 
 ## Recent Changes
+- Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
+- Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens
+- Mobile carousels: 3D book/journal carousels scale to 75% with fewer visible items on mobile
+- Mobile layouts: Vertical stacking, responsive font sizes, reduced padding, single-column grids on small screens
+- Mobile navigation: Header hamburger menu with slide-out drawer for all nav items
 - Added Class Networks feature: create/join/search networks, post feed, invite links, moderator tools
 - Replaced hardcoded dashboard class network data with real PostgreSQL-backed API
 - Reordered search category sidebar: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
