@@ -1,0 +1,163 @@
+GOAL
+Build the YsUp Search feature (homepage search experience) inspired by the attached screenshot:
+- A top nav with: Home, Bison Web, The Hilltop, Bulletin Board, HU Bookstore, Academy (NEW)
+- Left sidebar filters: Everything, Scholarly Sources, Encyclopedia, Dictionary, Videos, File Search
+- Main search bar centered, wood background theme
+- Results area showing: 
+  1) Google Books results with a 3D-looking book “carousel” preview (cover images angled, with depth/shadow)
+  2) Wikipedia “Encyclopedia” results list
+  3) Optional: Google Books “search inside book” (when available) to find relevant snippets from the book text/preview
+
+KEY FEATURES
+1) Search Input
+- Search box with query + search icon.
+- When user searches, load results for:
+  - Google Books API (books)
+  - Wikipedia API (encyclopedia)
+- Show a “Results found / time” line under the Search heading.
+
+2) Source Tabs + Left Filters
+- Implement filters in left sidebar:
+  - Everything (default): combine all sources (Books + Wikipedia)
+  - Scholarly Sources: (initially map to Google Books with subject filters; label it “beta”)
+  - Encyclopedia: Wikipedia only
+  - Dictionary: placeholder (Coming Soon)
+  - Videos: placeholder (Coming Soon)
+  - File Search: placeholder (Coming Soon)
+- Clicking a filter updates the query params and refreshes results.
+
+3) Google Books Integration (Required)
+- Use Google Books API:
+  - volumes?q=<query>&maxResults=10
+- Display each result with:
+  - Title, authors, published date, publisher, short snippet if available
+  - Cover image
+  - “Preview” / “Open in Google Books” link
+- Create a hero “3D Books” carousel at the top of the Books section:
+  - Use CSS transforms to angle each book cover (like 3D standing books)
+  - Add realistic drop shadow and slight perspective
+  - Clicking a book selects it and scrolls to its details card
+
+4) Search Inside the Book (Best effort)
+- When a book has preview available, provide a “Search in this book” input on the selected book panel.
+- Implement this using Google Books Volumes endpoint:
+  - If text snippets are not directly accessible for full text, then:
+    - Use available searchInfo.textSnippet if present
+    - Otherwise show: “Limited preview — snippet not available.”
+- Still provide “Open Preview” button for the user to view the relevant part in Google Books.
+
+5) OpenAI Summaries Under Results (Required)
+- After results load, generate short summaries under each result (like Google’s result snippet but smarter).
+- For each result card:
+  - Create an OpenAI summary of ~2–3 lines:
+    - “Why this result matches your search”
+    - “Key takeaways”
+- Summaries must be cached per (query + resultId) to avoid repeated costs.
+- Provide a toggle: “AI Summaries: On/Off”
+- Provide a “Generate summaries” button if user wants to trigger it manually.
+- IMPORTANT: If OpenAI key is missing, the UI still works without summaries and shows “Add OPENAI_API_KEY to enable AI summaries.”
+
+6) Wikipedia Integration (Required)
+- Use Wikipedia API:
+  - opensearch or REST search endpoint
+- Display results with:
+  - Title, short extract/snippet, link
+- Also generate AI summary under each Wikipedia result (same caching rules).
+
+7) UI / STYLE (Match screenshot vibe)
+- Wood background texture feel (use CSS gradient + subtle noise if no image is provided).
+- Gold/yellow typography for headings (“Search” on left).
+- Top nav bar with subtle bevel/shadow.
+- Main area centered content; book carousel floats visually above results.
+- Keep it clean, “2000s academic portal but premium.”
+
+TECH STACK (Use exactly this)
+Frontend:
+- Next.js (App Router) + TypeScript
+- Tailwind CSS for layout + custom CSS for 3D book effect
+Backend:
+- Next.js API routes (/api/books, /api/wiki, /api/summarize)
+- Use server-side fetch for external APIs
+Data:
+- Use SQLite + Prisma for caching summaries
+Auth:
+- None for now
+
+ENV VARS
+Create .env.local support:
+- GOOGLE_BOOKS_API_KEY= (optional; allow unauthenticated but support key)
+- OPENAI_API_KEY= (required for summaries)
+
+API ROUTES
+1) GET /api/books?q=
+- Calls Google Books volumes API
+- Normalizes data to: id, title, authors[], publishedDate, publisher, thumbnail, previewLink, snippet
+
+2) GET /api/wiki?q=
+- Calls Wikipedia search API
+- Normalizes data to: id (title or pageid), title, snippet/extract, url
+
+3) POST /api/summarize
+Body: { query: string, source: "books"|"wiki", item: {id,title,snippet?,authors?,publisher?,publishedDate?,url?} }
+- Checks Prisma cache table first:
+  - key = hash(query + source + item.id)
+- If cached, return cached summary
+- If not cached, call OpenAI and store summary.
+
+OPENAI PROMPT SPEC
+System: You are an educational search assistant for students. Be concise and accurate.
+User input includes:
+- search query
+- item metadata + snippet
+Return:
+- 2–3 sentence summary
+- 3 bullet key points
+- 1 suggested follow-up question
+
+DATABASE (Prisma)
+Create a SummaryCache table:
+- id (string, cuid)
+- cacheKey (unique)
+- query (string)
+- source (string)
+- itemId (string)
+- itemTitle (string)
+- summaryText (text)
+- createdAt (datetime)
+
+PAGES / COMPONENTS
+- / (Homepage Search UI)
+Components:
+- TopNav
+- LeftFilters
+- SearchBar
+- BooksCarousel3D (3D book covers)
+- ResultCard (supports Books + Wiki)
+- AISummaryBlock (toggle + loading + cached status)
+
+3D BOOK EFFECT
+Implement a “standing book” CSS:
+- container: perspective(1000px)
+- each book: transform: rotateY(-25deg) translateZ(20px)
+- add a fake spine using ::before and a page edge using ::after
+- shadows: box-shadow + drop-shadow
+- on hover: rotateY(-10deg) scale(1.02)
+- on selected: glow outline subtle gold
+
+BEHAVIOR
+- Typing query and pressing enter triggers search.
+- Results render fast from Books/Wiki.
+- AI summaries:
+  - If toggle ON: auto-generate for first 5 results of each source (limit to control cost)
+  - Provide “Generate more” button to summarize remaining results.
+
+ERROR HANDLING
+- If Google Books fails: show “Books unavailable”
+- If Wikipedia fails: show “Encyclopedia unavailable”
+- If OpenAI fails: show “AI summary unavailable” and allow retry.
+
+DELIVERABLE
+- App runs with “npm run dev”
+- Fully working search, filters, books carousel, results, caching summaries, and encyclopedia tab.
+- Include a README with setup steps and env vars.
+If you want, I can also tailor the exact CSS + layout measurements so the top nav + left column match your screenshot pixel-for-pixel (wood header height, gold font sizes, spacing, etc.).
