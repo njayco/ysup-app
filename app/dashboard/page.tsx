@@ -363,11 +363,15 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSearchNetworks = async () => {
-    if (!searchNetworkQuery.trim()) return
+  const handleSearchNetworks = async (query?: string) => {
+    const q = query ?? searchNetworkQuery
+    if (!q.trim()) {
+      setSearchNetworkResults([])
+      return
+    }
     setSearchingNetworks(true)
     try {
-      const res = await fetch(`/api/networks/search?query=${encodeURIComponent(searchNetworkQuery)}`)
+      const res = await fetch(`/api/networks/search?query=${encodeURIComponent(q)}`)
       const data = await res.json()
       if (data.success) {
         setSearchNetworkResults(data.networks)
@@ -2129,10 +2133,14 @@ export default function DashboardPage() {
                 <input
                   type="text"
                   value={searchNetworkQuery}
-                  onChange={(e) => setSearchNetworkQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchNetworkQuery(e.target.value)
+                    handleSearchNetworks(e.target.value)
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleSearchNetworks()}
                   placeholder="Search by network name..."
                   className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  autoFocus
                 />
                 <button
                   onClick={handleSearchNetworks}
