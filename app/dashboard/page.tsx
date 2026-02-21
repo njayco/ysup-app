@@ -119,21 +119,24 @@ export default function DashboardPage() {
   const [pdfNumPages, setPdfNumPages] = useState(0)
   const [pdfCurrentSpread, setPdfCurrentSpread] = useState(0)
 
-  // Update the sticky notes positions to avoid overlapping with the Bluebook and notebook
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([
-    {
-      id: "note1",
-      content: "Remember to study for midterms!",
-      position: { x: 75, y: 60, rotation: -5 }, // Moved to bottom right area
-      lastModified: "2012-04-25 10:30",
-    },
-    {
-      id: "note2",
-      content: "Group project meeting tomorrow at 3pm",
-      position: { x: 65, y: 75, rotation: 8 }, // Moved to bottom right area
-      lastModified: "2012-04-25 09:15",
-    },
-  ])
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      if (userData.id) {
+        fetch(`/api/notes?userId=${userData.id}`)
+          .then((r) => r.json())
+          .then((dbNotes) => {
+            if (Array.isArray(dbNotes)) {
+              setStickyNotes(dbNotes)
+            }
+          })
+          .catch(() => {})
+      }
+    }
+  }, [])
 
   const [showStickyNote, setShowStickyNote] = useState(false)
   const [selectedNote, setSelectedNote] = useState<StickyNote | null>(null)
@@ -654,19 +657,43 @@ export default function DashboardPage() {
     setShowCreatePost(false)
   }
 
-  // Update the handleCreateStickyNote function to create notes in safe areas
-  const handleCreateStickyNote = () => {
+  const handleCreateStickyNote = async () => {
+    const position = {
+      x: Math.random() * 30 + 60,
+      y: Math.random() * 30 + 50,
+      rotation: Math.random() * 20 - 10,
+    }
+    const content = "New note..."
+    const storedUser = localStorage.getItem("currentUser")
+    const userId = storedUser ? JSON.parse(storedUser).id : null
+
+    if (userId) {
+      try {
+        const res = await fetch("/api/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, content, position }),
+        })
+        const result = await res.json()
+        if (result.success) {
+          const newNote: StickyNote = {
+            id: result.id,
+            content,
+            position,
+            lastModified: result.lastModified,
+          }
+          setStickyNotes((prev) => [...prev, newNote])
+          return
+        }
+      } catch {}
+    }
     const newNote: StickyNote = {
       id: Date.now().toString(),
-      content: "New note...",
-      position: {
-        x: Math.random() * 30 + 60, // Generate in right side area (60-90%)
-        y: Math.random() * 30 + 50, // Generate in bottom area (50-80%)
-        rotation: Math.random() * 20 - 10,
-      },
+      content,
+      position,
       lastModified: new Date().toISOString().slice(0, 16).replace("T", " "),
     }
-    setStickyNotes([...stickyNotes, newNote])
+    setStickyNotes((prev) => [...prev, newNote])
   }
 
   const handleStickyNoteClick = (note: StickyNote) => {
@@ -675,14 +702,25 @@ export default function DashboardPage() {
     setShowStickyNote(true)
   }
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (selectedNote) {
+      const newLastModified = new Date().toISOString().slice(0, 16).replace("T", " ")
       const updatedNotes = stickyNotes.map((note) =>
         note.id === selectedNote.id
-          ? { ...note, content: noteContent, lastModified: new Date().toISOString().slice(0, 16).replace("T", " ") }
+          ? { ...note, content: noteContent, lastModified: newLastModified }
           : note,
       )
       setStickyNotes(updatedNotes)
+
+      const storedUser = localStorage.getItem("currentUser")
+      const userId = storedUser ? JSON.parse(storedUser).id : null
+      if (userId) {
+        fetch("/api/notes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ noteId: selectedNote.id, userId, content: noteContent }),
+        }).catch(() => {})
+      }
     }
     setShowStickyNote(false)
     setSelectedNote(null)
@@ -692,6 +730,12 @@ export default function DashboardPage() {
   const handleDeleteNote = () => {
     if (selectedNote) {
       setStickyNotes(stickyNotes.filter((note) => note.id !== selectedNote.id))
+
+      const storedUser = localStorage.getItem("currentUser")
+      const userId = storedUser ? JSON.parse(storedUser).id : null
+      if (userId) {
+        fetch(`/api/notes?noteId=${selectedNote.id}&userId=${userId}`, { method: "DELETE" }).catch(() => {})
+      }
     }
     setShowStickyNote(false)
     setSelectedNote(null)
@@ -1017,6 +1061,18 @@ export default function DashboardPage() {
               : note,
           ),
         )
+        const movedNote = stickyNotes.find((n) => n.id === itemId)
+        if (movedNote) {
+          const storedUser = localStorage.getItem("currentUser")
+          const userId = storedUser ? JSON.parse(storedUser).id : null
+          if (userId) {
+            fetch("/api/notes", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ noteId: itemId, userId, content: movedNote.content, position: { ...movedNote.position, x: constrainedX, y: constrainedY } }),
+            }).catch(() => {})
+          }
+        }
       } else if (itemType === "folder") {
         setFolders((folders) =>
           folders.map((folder) =>
@@ -1151,6 +1207,11 @@ export default function DashboardPage() {
           },
         ])
         setStickyNotes(stickyNotes.filter((n) => n.id !== itemId))
+        const storedUser = localStorage.getItem("currentUser")
+        const userId = storedUser ? JSON.parse(storedUser).id : null
+        if (userId) {
+          fetch(`/api/notes?noteId=${itemId}&userId=${userId}`, { method: "DELETE" }).catch(() => {})
+        }
       }
     } else if (itemType === "folder") {
       const folder = folders.find((f) => f.id === itemId)
