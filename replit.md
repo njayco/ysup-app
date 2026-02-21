@@ -69,6 +69,21 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - PostgreSQL tables: calendar_events, event_invites with proper foreign keys and indexes
 - Bluebook preview card shows current date dynamically (no hardcoded dates)
 
+## Sticky Notes Feature
+- PostgreSQL-backed sticky notes on dashboard with full persistence
+- API routes: `/api/notes` (CRUD - create, read, update, delete)
+- Notes saved to `user_sticky_notes` table with content, position, and rotation
+- Position updates persisted on drag/move
+- Content updates persisted on save
+- Notes load from database on dashboard mount, persist across logout/login
+
+## File Upload Feature
+- PostgreSQL-backed file storage on dashboard
+- API routes: `/api/files` (CRUD - upload, list, delete with lazy file data loading)
+- Files saved to `user_files` table with metadata and base64 file data
+- File data loaded on demand (not in list response) for performance
+- PostgreSQL table: user_files
+
 ## Recent Changes
 - Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
 - Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens
