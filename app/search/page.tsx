@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Header from "@/components/Header"
-import { useAuth } from "@/lib/useAuth"
 import {
   Search,
   BookOpen,
@@ -66,7 +65,6 @@ interface CampusUser {
 type TabType = "all" | "scholar" | "books" | "wikipedia" | "users"
 
 function SearchContent() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const searchParams = useSearchParams()
 
   const [query, setQuery] = useState("")
@@ -240,14 +238,6 @@ function SearchContent() {
       setSelectedBook(books[carouselIndex])
     }
   }, [carouselIndex, books])
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen wood-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-200" />
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen wood-background">
