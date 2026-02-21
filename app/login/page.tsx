@@ -25,6 +25,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 10)
+    if (digits.length === 0) return ""
+    if (digits.length <= 3) return `(${digits}`
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value)
+    setSignupData({ ...signupData, phone: formatted })
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -55,6 +68,13 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+
+    const phoneDigits = signupData.phone.replace(/\D/g, "")
+    if (phoneDigits.length !== 10) {
+      setError("Please enter a valid 10-digit phone number")
+      setIsLoading(false)
+      return
+    }
 
     try {
       const formData = new FormData()
@@ -206,7 +226,7 @@ export default function LoginPage() {
                       <input
                         type="tel"
                         value={signupData.phone}
-                        onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
+                        onChange={handlePhoneChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
                         placeholder="(555) 123-4567"
                         required
