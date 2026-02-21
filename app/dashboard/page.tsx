@@ -330,6 +330,10 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    fetchMyNetworks()
+  }, [])
+
+  useEffect(() => {
     if (showNotebook) {
       fetchMyNetworks()
     }
@@ -1510,17 +1514,22 @@ export default function DashboardPage() {
                               <div className="ml-3">
                                 <div className="text-center mb-2">
                                   <BookOpen className="w-6 h-6 mx-auto text-yellow-600" />
-                                  <div className="text-xs font-bold text-gray-800">Class Network</div>
+                                  <div className="text-xs font-bold text-gray-800">Class Networks</div>
                                 </div>
                                 <div className="flex-1 text-xs space-y-1">
-                                  <div className="bg-white p-1 rounded border">
-                                    <div className="font-semibold">Nick Fisher</div>
-                                    <div className="text-gray-600">Did anybody...</div>
-                                  </div>
-                                  <div className="bg-white p-1 rounded border">
-                                    <div className="font-semibold">Amanda</div>
-                                    <div className="text-gray-600">What was...</div>
-                                  </div>
+                                  {myNetworks.length > 0 ? (
+                                    myNetworks.slice(0, 2).map((net) => (
+                                      <div key={net.id} className="bg-white p-1 rounded border">
+                                        <div className="font-semibold truncate">{net.name}</div>
+                                        <div className="text-gray-600">{net.member_count} member{Number(net.member_count) !== 1 ? "s" : ""}</div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="bg-white p-1 rounded border text-center">
+                                      <div className="text-gray-500">No networks yet</div>
+                                      <div className="text-gray-400">Tap to join</div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
