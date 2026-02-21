@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Mail, Globe, X, Send, Search, Menu, LogOut, LogIn } from "lucide-react"
 
@@ -28,6 +29,7 @@ interface Notification {
 }
 
 export default function Header({ currentPage = "Home" }: HeaderProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [showMessaging, setShowMessaging] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -319,7 +321,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && searchQuery.trim()) {
-                      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
                   className="w-full px-3 py-1 rounded border border-amber-600 bg-amber-50 text-amber-900 placeholder-amber-600"
@@ -334,7 +336,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               <button
                 onClick={() => {
                   if (showSearch && searchQuery.trim()) {
-                    window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
                   } else {
                     setShowSearch(!showSearch)
                   }
@@ -433,7 +435,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && searchQuery.trim()) {
-                      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
                   className="w-full px-3 py-2 rounded border border-amber-600 bg-amber-50 text-amber-900 placeholder-amber-600"
@@ -441,7 +443,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                 <button
                   onClick={() => {
                     if (searchQuery.trim()) {
-                      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 text-amber-600 hover:text-amber-800"

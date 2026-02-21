@@ -3,17 +3,19 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import Link from "next/link"
 import { Search, Sparkles } from "lucide-react"
 
 export default function HomePage() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
-    window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
   }
 
   return (
