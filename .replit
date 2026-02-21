@@ -27,7 +27,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash -c 'pnpm next dev --turbo -H 0.0.0.0 -p 5000 & sleep 5 && curl -s http://localhost:5000/ > /dev/null && curl -s http://localhost:5000/search > /dev/null && echo \"Pages pre-warmed\" && wait'"
+args = "bash -c 'pnpm next dev -H 0.0.0.0 -p 5000 & sleep 5 && curl -s http://localhost:5000/ > /dev/null && curl -s http://localhost:5000/search > /dev/null && echo \"Pages pre-warmed\" && wait'"
 waitForPort = 5000
 
 [[ports]]

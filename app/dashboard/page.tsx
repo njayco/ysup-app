@@ -3,13 +3,11 @@
 import type React from "react"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Document, Page, pdfjs } from "react-pdf"
-import "react-pdf/dist/Page/AnnotationLayer.css"
-import "react-pdf/dist/Page/TextLayer.css"
+import dynamic from "next/dynamic"
 import Header from "@/components/Header"
 import { useAuth } from "@/lib/useAuth"
 
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+const PdfViewer = dynamic(() => import("@/components/PdfViewer"), { ssr: false, loading: () => <div className="text-white p-12">Loading PDF viewer...</div> })
 import {
   Upload,
   Download,
@@ -2287,46 +2285,12 @@ export default function DashboardPage() {
                     <div className="flex shadow-2xl rounded-lg overflow-hidden" style={{ perspective: "1200px" }}>
                       <div className="w-3 bg-gradient-to-r from-stone-900 via-stone-700 to-stone-500 shadow-inner hidden md:block"></div>
 
-                      <Document
-                        file={selectedFile.fileData}
-                        onLoadSuccess={({ numPages }) => setPdfNumPages(numPages)}
-                        loading={<div className="text-white p-12">Loading PDF...</div>}
-                        error={<div className="text-red-400 p-12">Failed to load PDF. The file may be corrupted.</div>}
-                        className="flex"
-                      >
-                        {(() => {
-                          const leftPage = pdfCurrentSpread * 2 + 1
-                          const rightPage = pdfCurrentSpread * 2 + 2
-                          return (
-                            <>
-                              <div className="bg-white border-r border-gray-200 relative" style={{ boxShadow: "inset -10px 0 20px -10px rgba(0,0,0,0.15)" }}>
-                                <Page
-                                  pageNumber={leftPage}
-                                  width={typeof window !== "undefined" && window.innerWidth < 768 ? window.innerWidth - 60 : 380}
-                                  renderTextLayer={true}
-                                  renderAnnotationLayer={true}
-                                />
-                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">
-                                  {leftPage}
-                                </div>
-                              </div>
-                              {rightPage <= pdfNumPages && (
-                                <div className="bg-white relative hidden md:block" style={{ boxShadow: "inset 10px 0 20px -10px rgba(0,0,0,0.1)" }}>
-                                  <Page
-                                    pageNumber={rightPage}
-                                    width={380}
-                                    renderTextLayer={true}
-                                    renderAnnotationLayer={true}
-                                  />
-                                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">
-                                    {rightPage}
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          )
-                        })()}
-                      </Document>
+                      <PdfViewer
+                        fileData={selectedFile.fileData}
+                        pdfCurrentSpread={pdfCurrentSpread}
+                        pdfNumPages={pdfNumPages}
+                        onLoadSuccess={(numPages) => setPdfNumPages(numPages)}
+                      />
 
                       <div className="w-3 bg-gradient-to-l from-stone-900 via-stone-700 to-stone-500 shadow-inner hidden md:block"></div>
                     </div>
