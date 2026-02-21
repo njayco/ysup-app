@@ -57,6 +57,12 @@ export default function LoginPage() {
 
       if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
+        const pendingJoin = localStorage.getItem("pendingNetworkJoin")
+        if (pendingJoin) {
+          localStorage.removeItem("pendingNetworkJoin")
+          window.location.href = `/invite/network/${pendingJoin}`
+          return
+        }
         window.location.href = "/dashboard"
         return
       } else {

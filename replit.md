@@ -11,10 +11,13 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 
 ### Directory Structure
 - `/app` - Next.js App Router pages, API routes, and server actions
-- `/app/api` - API routes: books, scholar, wiki, web-search, ai-overview, summarize, search-users, book-image
+- `/app/api` - API routes: books, scholar, wiki, web-search, ai-overview, summarize, search-users, book-image, networks
+- `/app/api/networks` - Class Networks API: CRUD, search, join, posts, cosign, respond, moderator requests
+- `/app/networks/[slug]` - Network detail page with feed, members, moderator panel
+- `/app/invite/network/[slug]` - Invite link handler with auth redirect
 - `/app/search` - AI-powered academic search engine page
 - `/components` - Shared React components (Header, theme-provider)
-- `/lib` - Utility functions
+- `/lib` - Utility functions (db.ts for PostgreSQL pool)
 - `/public` - Static assets and images
 
 ## Configuration
@@ -44,7 +47,19 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Blue book carousel, emerald journal carousel
 - Search categories ordered: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
 
+## Class Networks Feature
+- PostgreSQL-backed social networking within classes/clubs/organizations
+- API routes: `/api/networks` (CRUD, search, mine, join, posts, cosign, respond, requests, approve, deny)
+- Dashboard notebook modal replaced with real API-backed Class Networks UI
+- Network detail page at `/networks/[slug]` with feed, members, moderator panel
+- Invite links at `/invite/network/[slug]` with login redirect for unauthenticated users
+- Public networks: instant join; Private networks: moderator approval required
+- Post creation, co-signing, and threaded responses
+- PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses
+
 ## Recent Changes
+- Added Class Networks feature: create/join/search networks, post feed, invite links, moderator tools
+- Replaced hardcoded dashboard class network data with real PostgreSQL-backed API
 - Reordered search category sidebar: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
 - Redesigned book carousel: Blue-themed styled covers matching journal carousel design (removed Google Books image loading)
 - Fixed dev server stability: Switched to Turbopack (--turbo) to eliminate constant webpack recompilation loop

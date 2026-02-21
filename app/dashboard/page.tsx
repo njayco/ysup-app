@@ -19,6 +19,13 @@ import {
   Folder,
   FileText,
   StickyNoteIcon,
+  Search,
+  Users,
+  Globe,
+  Lock,
+  Link2,
+  Copy,
+  Check,
 } from "lucide-react"
 
 interface PDFFile {
@@ -269,81 +276,140 @@ export default function DashboardPage() {
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [newPostContent, setNewPostContent] = useState("")
 
-  // Class network data with different users per class
-  const [classNetworks] = useState({
-    "Calculus 2": {
-      students: ["Nick Fisher", "Amanda Winston", "Nick Harper", "Gary Jackson", "Ann Washington", "Theo Robinson"],
-      posts: [
-        {
-          id: "calc1",
-          author: "Nick Fisher",
-          content: "Did anybody answer ex. 45 on page 365",
-          timestamp: "2012-04-25 14:30",
-          cosigns: 3,
-          responses: [],
-          course: "Calculus 2",
-        },
-        {
-          id: "calc2",
-          author: "Amanda Winston",
-          content: "What was the homework last night?",
-          timestamp: "2012-04-25 14:25",
-          cosigns: 2,
-          responses: [
-            {
-              id: "r1",
-              author: "Gary Jackson",
-              content: "Pages 45-50, problems 1-15",
-              timestamp: "2012-04-25 14:27",
-            },
-          ],
-          course: "Calculus 2",
-        },
-      ],
-    },
-    English: {
-      students: ["Sarah Johnson", "Mike Davis", "Lisa Chen", "David Brown", "Emma Wilson", "Alex Rodriguez"],
-      posts: [
-        {
-          id: "eng1",
-          author: "Sarah Johnson",
-          content: "When is the essay due for Shakespeare analysis?",
-          timestamp: "2012-04-25 13:45",
-          cosigns: 5,
-          responses: [],
-          course: "English",
-        },
-      ],
-    },
-    Physics: {
-      students: ["Tom Anderson", "Maria Garcia", "James Lee", "Sophie Taylor", "Ryan Murphy", "Zoe Kim"],
-      posts: [
-        {
-          id: "phys1",
-          author: "Tom Anderson",
-          content: "Lab report guidelines are confusing, anyone else?",
-          timestamp: "2012-04-25 12:30",
-          cosigns: 7,
-          responses: [],
-          course: "Physics",
-        },
-      ],
-    },
-    Chemistry: {
-      students: ["Rachel Green", "Kevin White", "Amy Zhang", "Chris Martin", "Olivia Jones", "Daniel Park"],
-      posts: [
-        {
-          id: "chem1",
-          author: "Rachel Green",
-          content: "Organic chemistry exam next week - study group?",
-          timestamp: "2012-04-25 11:15",
-          cosigns: 4,
-          responses: [],
-          course: "Chemistry",
-        },
-      ],
-    },
+  // Class Networks - API-backed state
+  interface NetworkData {
+    id: number
+    name: string
+    slug: string
+    description: string
+    type: string
+    privacy: string
+    member_count: number
+    is_moderator: boolean
+    mod_first_name: string
+    mod_last_name: string
+  }
+  const [myNetworks, setMyNetworks] = useState<NetworkData[]>([])
+  const [networksLoading, setNetworksLoading] = useState(false)
+  const [showCreateNetwork, setShowCreateNetwork] = useState(false)
+  const [showSearchNetworks, setShowSearchNetworks] = useState(false)
+  const [searchNetworkQuery, setSearchNetworkQuery] = useState("")
+  const [searchNetworkResults, setSearchNetworkResults] = useState<NetworkData[]>([])
+  const [searchingNetworks, setSearchingNetworks] = useState(false)
+  const [newNetwork, setNewNetwork] = useState({
+    name: "",
+    description: "",
+    type: "class" as "club" | "organization" | "class",
+    privacy: "public" as "public" | "private",
   })
+  const [creatingNetwork, setCreatingNetwork] = useState(false)
+  const [inviteLinkCopied, setInviteLinkCopied] = useState("")
+  const [joiningNetwork, setJoiningNetwork] = useState("")
+
+  const fetchMyNetworks = async () => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+    setNetworksLoading(true)
+    try {
+      const res = await fetch(`/api/networks/mine?userId=${userData.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setMyNetworks(data.networks)
+      }
+    } catch (err) {
+      console.error("Failed to fetch networks:", err)
+    } finally {
+      setNetworksLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (showNotebook) {
+      fetchMyNetworks()
+    }
+  }, [showNotebook])
+
+  const handleCreateNetwork = async () => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!newNetwork.name.trim() || !newNetwork.description.trim()) return
+    setCreatingNetwork(true)
+    try {
+      const res = await fetch("/api/networks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newNetwork, userId: userData.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowCreateNetwork(false)
+        setNewNetwork({ name: "", description: "", type: "class", privacy: "public" })
+        fetchMyNetworks()
+      } else {
+        alert(data.message || "Failed to create network")
+      }
+    } catch (err) {
+      console.error("Create network error:", err)
+      alert("Something went wrong. Please try again.")
+    } finally {
+      setCreatingNetwork(false)
+    }
+  }
+
+  const handleSearchNetworks = async () => {
+    if (!searchNetworkQuery.trim()) return
+    setSearchingNetworks(true)
+    try {
+      const res = await fetch(`/api/networks/search?query=${encodeURIComponent(searchNetworkQuery)}`)
+      const data = await res.json()
+      if (data.success) {
+        setSearchNetworkResults(data.networks)
+      }
+    } catch (err) {
+      console.error("Search networks error:", err)
+    } finally {
+      setSearchingNetworks(false)
+    }
+  }
+
+  const handleJoinNetwork = async (slug: string) => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    setJoiningNetwork(slug)
+    try {
+      const res = await fetch(`/api/networks/${slug}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userData.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        if (data.joined) {
+          alert("You've joined the network!")
+          fetchMyNetworks()
+          handleSearchNetworks()
+        } else if (data.requested) {
+          alert("Join request sent! The moderator will review it.")
+          handleSearchNetworks()
+        }
+      }
+    } catch (err) {
+      console.error("Join network error:", err)
+    } finally {
+      setJoiningNetwork("")
+    }
+  }
+
+  const copyInviteLink = (slug: string) => {
+    const domain = window.location.origin
+    navigator.clipboard.writeText(`${domain}/invite/network/${slug}`)
+    setInviteLinkCopied(slug)
+    setTimeout(() => setInviteLinkCopied(""), 2000)
+  }
 
   const [events, setEvents] = useState([
     {
@@ -372,7 +438,6 @@ export default function DashboardPage() {
     selectedInvitees: [] as string[],
   })
 
-  const courses = ["Calculus 2", "Physics", "Chemistry", "English"]
   const classmates = ["Nick Fisher", "Amanda Winston", "Nick Harper", "Gary Jackson", "Ann Washington", "Theo Robinson"]
 
   const nextFile = () => {
@@ -425,29 +490,8 @@ export default function DashboardPage() {
   }
 
   const handleCreatePost = () => {
-    if (newPostContent.trim()) {
-      const newPost = {
-        id: Date.now().toString(),
-        author: `${currentUser.firstName} ${currentUser.lastName}`,
-        content: newPostContent,
-        timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
-        cosigns: 0,
-        responses: [],
-        course: selectedCourse,
-      }
-
-      // Add to current class network
-      const updatedNetworks = { ...classNetworks }
-      updatedNetworks[selectedCourse].posts.unshift(newPost)
-
-      setNewPostContent("")
-      setShowCreatePost(false)
-
-      // Award YBucks for posting
-      const newYBucks = userYBucks + 100
-      setUserYBucks(newYBucks)
-      checkLevelUp(newYBucks)
-    }
+    setNewPostContent("")
+    setShowCreatePost(false)
   }
 
   // Update the handleCreateStickyNote function to create notes in safe areas
@@ -527,48 +571,8 @@ export default function DashboardPage() {
     }
   }
 
-  const handleCosign = (postId: string) => {
-    const updatedNetworks = { ...classNetworks }
-    const post = updatedNetworks[selectedCourse].posts.find((p) => p.id === postId)
-
-    if (post) {
-      post.cosigns += 1
-
-      // Award YBucks to current user for co-signing
-      const newYBucks = userYBucks + 100
-      setUserYBucks(newYBucks)
-      checkLevelUp(newYBucks)
-
-      // If the post author is not the current user, they would get YBucks too
-      // (In a real app, this would be handled server-side)
-    }
-  }
-
-  const handleAddResponse = (postId: string) => {
-    const responseText = newResponse[postId]
-    if (responseText?.trim()) {
-      const newResponseObj: Response = {
-        id: Date.now().toString(),
-        author: `${currentUser.firstName} ${currentUser.lastName}`,
-        content: responseText,
-        timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
-      }
-
-      const updatedNetworks = { ...classNetworks }
-      const post = updatedNetworks[selectedCourse].posts.find((p) => p.id === postId)
-
-      if (post) {
-        post.responses.push(newResponseObj)
-      }
-
-      setNewResponse({ ...newResponse, [postId]: "" })
-
-      // Award YBucks for responding
-      const newYBucks = userYBucks + 100
-      setUserYBucks(newYBucks)
-      checkLevelUp(newYBucks)
-    }
-  }
+  const handleCosign = (_postId: string) => {}
+  const handleAddResponse = (_postId: string) => {}
 
   const toggleResponses = (postId: string) => {
     if (expandedResponses.includes(postId)) {
@@ -577,12 +581,6 @@ export default function DashboardPage() {
       setExpandedResponses([...expandedResponses, postId])
     }
   }
-
-  const postsPerPage = 5
-  const currentPosts =
-    classNetworks[selectedCourse]?.posts.slice(currentPostPage * postsPerPage, (currentPostPage + 1) * postsPerPage) ||
-    []
-  const totalPages = Math.ceil((classNetworks[selectedCourse]?.posts.length || 0) / postsPerPage)
 
   const getFileIcon = (file: PDFFile) => {
     switch (file.type) {
@@ -1315,10 +1313,7 @@ export default function DashboardPage() {
                         <div>
                           <label className="block text-sm font-medium mb-2">Invite Classmates:</label>
                           <div className="max-h-48 overflow-y-auto border rounded p-3 bg-white">
-                            {Object.values(classNetworks)
-                              .flatMap((network) => network.students)
-                              .filter((student, index, arr) => arr.indexOf(student) === index) // Remove duplicates
-                              .map((student) => (
+                            {classmates.map((student) => (
                                 <div key={student} className="flex items-center space-x-2 mb-2">
                                   <input
                                     type="checkbox"
@@ -1428,192 +1423,272 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Expanded Notebook Modal */}
+      {/* Class Networks Modal */}
       {showNotebook && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="wood-background rounded-lg w-full max-w-6xl h-full max-h-[90vh] overflow-hidden">
-            <div className="bg-amber-700 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-amber-100">Class Network - {selectedCourse}</h2>
+          <div className="wood-background rounded-lg w-full max-w-4xl h-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-amber-700 p-4 flex items-center justify-between shrink-0">
+              <h2 className="text-xl font-bold text-amber-100">Class Networks</h2>
               <button onClick={() => setShowNotebook(false)} className="text-amber-100 hover:text-white">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-8 h-full overflow-y-auto">
-              <div className="bg-yellow-200 rounded-lg shadow-2xl p-8 border-l-8 border-gray-400 max-w-4xl mx-auto">
-                <div className="notebook-holes"></div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2">
+                  <div className="text-lg font-bold text-amber-100">Level {userLevel}</div>
+                  <div className="text-sm text-amber-200">{userYBucks} YBucks</div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowSearchNetworks(true)}
+                    className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded flex items-center space-x-2"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>Find Networks</span>
+                  </button>
+                  <button
+                    onClick={() => setShowCreateNetwork(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Network</span>
+                  </button>
+                </div>
+              </div>
 
-                <div className="ml-12">
-                  {/* Course Selector */}
-                  <div className="mb-6">
-                    <select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="px-4 py-2 border rounded-lg"
-                    >
-                      {courses.map((course) => (
-                        <option key={course} value={course}>
-                          {course}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Create Post Section */}
-                  <div className="mb-6 bg-yellow-100 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-lg font-bold text-gray-800">Level {userLevel}</div>
-                        <div className="text-sm text-gray-600">{userYBucks} YBucks</div>
-                      </div>
-                      <button
-                        onClick={() => setShowCreatePost(true)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center space-x-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Create Post</span>
-                      </button>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm text-gray-600 mb-1">
-                        <span>Progress to Level {userLevel + 1}</span>
-                        <span>
-                          {getProgressToNextLevel().progress}/{getProgressToNextLevel().total}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${getProgressToNextLevel().percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {showCreatePost && (
-                      <div className="bg-white p-4 rounded border">
-                        <textarea
-                          value={newPostContent}
-                          onChange={(e) => setNewPostContent(e.target.value)}
-                          placeholder="What's on your mind about this class?"
-                          className="w-full h-20 px-3 py-2 border rounded resize-none"
-                        />
-                        <div className="flex space-x-2 mt-2">
-                          <button
-                            onClick={handleCreatePost}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                          >
-                            Post
-                          </button>
-                          <button
-                            onClick={() => setShowCreatePost(false)}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Posts */}
-                  <div className="space-y-4">
-                    {currentPosts.map((post) => (
-                      <div key={post.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <img
-                                src="/placeholder.svg?height=30&width=30"
-                                alt={post.author}
-                                className="w-8 h-8 rounded-full"
-                              />
-                              <div>
-                                <div className="font-semibold">{post.author}</div>
-                                <div className="text-sm text-gray-500">{post.timestamp}</div>
-                              </div>
-                            </div>
-                            <p className="text-gray-800 mb-3">{post.content}</p>
-
-                            <div className="flex items-center space-x-4">
-                              <button
-                                onClick={() => handleCosign(post.id)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center space-x-1"
-                              >
-                                <ThumbsUp className="w-4 h-4" />
-                                <span>Co-sign ({post.cosigns})</span>
-                              </button>
-
-                              <button
-                                onClick={() => toggleResponses(post.id)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center space-x-1"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                                <span>Respond ({post.responses.length})</span>
-                              </button>
-                            </div>
-
-                            {/* Responses */}
-                            {expandedResponses.includes(post.id) && (
-                              <div className="mt-4 ml-8 space-y-2">
-                                {post.responses.map((response) => (
-                                  <div key={response.id} className="bg-gray-50 p-3 rounded border-l-4 border-blue-400">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      <span className="font-semibold text-sm">{response.author}</span>
-                                      <span className="text-xs text-gray-500">{response.timestamp}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-700">{response.content}</p>
-                                  </div>
-                                ))}
-
-                                {/* Add Response */}
-                                <div className="flex space-x-2">
-                                  <input
-                                    type="text"
-                                    value={newResponse[post.id] || ""}
-                                    onChange={(e) => setNewResponse({ ...newResponse, [post.id]: e.target.value })}
-                                    placeholder="Write a response..."
-                                    className="flex-1 px-3 py-2 border rounded"
-                                  />
-                                  <button
-                                    onClick={() => handleAddResponse(post.id)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  <div className="flex justify-center items-center space-x-4 mt-6">
+              {networksLoading ? (
+                <div className="text-center py-12 text-amber-200">Loading your networks...</div>
+              ) : myNetworks.length === 0 ? (
+                <div className="text-center py-16">
+                  <Users className="w-16 h-16 mx-auto text-amber-400 mb-4" />
+                  <h3 className="text-xl font-bold text-amber-100 mb-2">No Class Networks Yet</h3>
+                  <p className="text-amber-300 mb-6 max-w-md mx-auto">
+                    Join or create a Class Network to connect with your classmates, share notes, and stay updated.
+                  </p>
+                  <div className="flex justify-center space-x-3">
                     <button
-                      onClick={() => setCurrentPostPage(Math.max(0, currentPostPage - 1))}
-                      disabled={currentPostPage === 0}
-                      className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white px-4 py-2 rounded"
+                      onClick={() => setShowSearchNetworks(true)}
+                      className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-lg flex items-center space-x-2"
                     >
-                      Previous Page
+                      <Search className="w-5 h-5" />
+                      <span>Search Networks</span>
                     </button>
-
-                    <span className="text-gray-600">
-                      Page {currentPostPage + 1} of {totalPages}
-                    </span>
-
                     <button
-                      onClick={() => setCurrentPostPage(Math.min(totalPages - 1, currentPostPage + 1))}
-                      disabled={currentPostPage === totalPages - 1}
-                      className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white px-4 py-2 rounded"
+                      onClick={() => setShowCreateNetwork(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2"
                     >
-                      Next Page
+                      <Plus className="w-5 h-5" />
+                      <span>Create a Network</span>
                     </button>
                   </div>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {myNetworks.map((network) => (
+                    <div
+                      key={network.id}
+                      className="bg-amber-900 bg-opacity-50 rounded-lg p-4 border border-amber-700 hover:border-amber-500 transition-colors cursor-pointer"
+                      onClick={() => window.location.href = `/networks/${network.slug}`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-lg">
+                            {network.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-amber-100">{network.name}</h3>
+                            <div className="flex items-center space-x-2 text-xs text-amber-300">
+                              <span className="capitalize">{network.type}</span>
+                              <span>•</span>
+                              {network.privacy === "public" ? (
+                                <span className="flex items-center space-x-1"><Globe className="w-3 h-3" /><span>Public</span></span>
+                              ) : (
+                                <span className="flex items-center space-x-1"><Lock className="w-3 h-3" /><span>Private</span></span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {network.is_moderator && (
+                          <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded">Mod</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-amber-200 mb-2 line-clamp-2">{network.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-amber-300">
+                          <Users className="w-3 h-3 inline mr-1" />{network.member_count} members
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); copyInviteLink(network.slug); }}
+                          className="text-xs text-amber-400 hover:text-amber-200 flex items-center space-x-1"
+                        >
+                          {inviteLinkCopied === network.slug ? (
+                            <><Check className="w-3 h-3" /><span>Copied!</span></>
+                          ) : (
+                            <><Link2 className="w-3 h-3" /><span>Invite Link</span></>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Networks Modal */}
+      {showSearchNetworks && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-amber-700 p-4 flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-bold text-amber-100">Find Class Networks</h3>
+              <button onClick={() => { setShowSearchNetworks(false); setSearchNetworkQuery(""); setSearchNetworkResults([]); }} className="text-amber-100 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 shrink-0">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={searchNetworkQuery}
+                  onChange={(e) => setSearchNetworkQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchNetworks()}
+                  placeholder="Search by network name..."
+                  className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <button
+                  onClick={handleSearchNetworks}
+                  disabled={searchingNetworks}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg"
+                >
+                  {searchingNetworks ? "Searching..." : "Search"}
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {searchNetworkResults.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {searchNetworkQuery ? "No networks found. Try a different search." : "Search for networks to join."}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {searchNetworkResults.map((network) => {
+                    const alreadyJoined = myNetworks.some((n) => n.id === network.id)
+                    return (
+                      <div key={network.id} className="border rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold">
+                            {network.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-800">{network.name}</h4>
+                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                              <span className="capitalize">{network.type}</span>
+                              <span>•</span>
+                              {network.privacy === "public" ? (
+                                <span className="flex items-center space-x-1"><Globe className="w-3 h-3" /><span>Public</span></span>
+                              ) : (
+                                <span className="flex items-center space-x-1"><Lock className="w-3 h-3" /><span>Private</span></span>
+                              )}
+                              <span>•</span>
+                              <span>{network.member_count} members</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-1">{network.description}</p>
+                          </div>
+                        </div>
+                        {alreadyJoined ? (
+                          <span className="text-sm text-green-600 font-medium">Joined</span>
+                        ) : (
+                          <button
+                            onClick={() => handleJoinNetwork(network.slug)}
+                            disabled={joiningNetwork === network.slug}
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+                          >
+                            {joiningNetwork === network.slug ? "..." : network.privacy === "public" ? "Join" : "Request"}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Network Modal */}
+      {showCreateNetwork && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
+            <div className="bg-amber-700 p-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-amber-100">Create a Class Network</h3>
+              <button onClick={() => setShowCreateNetwork(false)} className="text-amber-100 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Network Name</label>
+                <input
+                  type="text"
+                  value={newNetwork.name}
+                  onChange={(e) => setNewNetwork({ ...newNetwork, name: e.target.value })}
+                  placeholder="e.g. Calculus 2 - Spring 2026"
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newNetwork.description}
+                  onChange={(e) => setNewNetwork({ ...newNetwork, description: e.target.value })}
+                  placeholder="What is this network about?"
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 h-20 resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    value={newNetwork.type}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, type: e.target.value as "club" | "organization" | "class" })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="class">Class</option>
+                    <option value="club">Club</option>
+                    <option value="organization">Organization</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Privacy</label>
+                  <select
+                    value={newNetwork.privacy}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, privacy: e.target.value as "public" | "private" })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="public">Public - Anyone can join</option>
+                    <option value="private">Private - Requires approval</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  onClick={() => setShowCreateNetwork(false)}
+                  className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateNetwork}
+                  disabled={creatingNetwork || !newNetwork.name.trim() || !newNetwork.description.trim()}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg disabled:opacity-50"
+                >
+                  {creatingNetwork ? "Creating..." : "Create Network"}
+                </button>
               </div>
             </div>
           </div>
