@@ -212,28 +212,26 @@ export default function BookstorePage() {
     >
       <Header currentPage="HU Bookstore" />
 
-      {/* Store Header */}
-      <div className="bg-amber-700 px-4 py-3">
+      <div className="bg-amber-700 px-3 md:px-4 py-2 md:py-3">
         <div className="flex items-center justify-between">
           <div className="text-white">
-            <span className="text-lg">YsUp Digital Bookstore - PDF Textbooks</span>
+            <span className="text-sm md:text-lg">YsUp Digital Bookstore - PDF Textbooks</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <div className="relative">
-              <ShoppingCart className="w-6 h-6 text-white" />
+              <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-white" />
               {cartItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                   {cartItems.length}
                 </span>
               )}
             </div>
-            <span className="text-white font-medium">${getTotalPrice().toFixed(2)}</span>
+            <span className="text-white font-medium text-sm md:text-base">${getTotalPrice().toFixed(2)}</span>
           </div>
         </div>
       </div>
 
       <div className="relative min-h-[calc(100vh-140px)]">
-        {/* Bookstore Interior Background */}
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -256,11 +254,10 @@ export default function BookstorePage() {
           }}
         />
 
-        <div className="relative z-10 p-8">
-          {/* Search Section */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <div className="bg-white rounded-lg shadow-2xl p-6">
-              <div className="flex items-center space-x-4 mb-4">
+        <div className="relative z-10 p-4 md:p-8">
+          <div className="max-w-4xl mx-auto mb-4 md:mb-8">
+            <div className="bg-white rounded-lg shadow-2xl p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
@@ -268,22 +265,21 @@ export default function BookstorePage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for textbooks, authors, subjects..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                    className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-lg"
                   />
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-colors text-sm md:text-base">
                   Search
                 </button>
               </div>
 
-              {/* Category Filter */}
               <div className="flex items-center space-x-2 overflow-x-auto pb-2">
                 <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex-shrink-0 ${
+                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors flex-shrink-0 ${
                       selectedCategory === category
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -296,26 +292,23 @@ export default function BookstorePage() {
             </div>
           </div>
 
-          {/* Popular/Featured Section */}
-          <div className="max-w-7xl mx-auto mb-8">
-            <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">📚 Popular Textbooks</h2>
+          <div className="max-w-7xl mx-auto mb-4 md:mb-8">
+            <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-4 md:p-6">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">📚 Popular Textbooks</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {filteredBooks.slice(0, 8).map((book) => (
                   <div
                     key={book.id}
                     className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
                   >
-                    {/* Book Cover */}
                     <div className="relative">
                       <img
                         src={book.thumbnail || "/placeholder.svg"}
                         alt={book.title}
-                        className="w-full h-64 object-cover"
+                        className="w-full h-48 md:h-64 object-cover"
                       />
 
-                      {/* Badges */}
                       <div className="absolute top-2 left-2 space-y-1">
                         {book.bestseller && (
                           <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">BESTSELLER</span>
@@ -325,7 +318,6 @@ export default function BookstorePage() {
                         )}
                       </div>
 
-                      {/* Quick Actions */}
                       <div className="absolute top-2 right-2 space-y-1">
                         <button
                           onClick={() => handlePreview(book)}
@@ -337,27 +329,24 @@ export default function BookstorePage() {
                       </div>
                     </div>
 
-                    {/* Book Info */}
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-800 mb-1 line-clamp-2">{book.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2">by {book.author}</p>
+                    <div className="p-3 md:p-4">
+                      <h3 className="font-bold text-gray-800 mb-1 line-clamp-2 text-sm md:text-base">{book.title}</h3>
+                      <p className="text-xs md:text-sm text-gray-600 mb-2">by {book.author}</p>
 
-                      {/* Rating */}
                       <div className="flex items-center space-x-1 mb-2">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-4 h-4 ${
+                              className={`w-3 h-3 md:w-4 md:h-4 ${
                                 i < Math.floor(book.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
                               }`}
                             />
                           ))}
                         </div>
-                        <span className="text-sm text-gray-600">({book.reviews})</span>
+                        <span className="text-xs md:text-sm text-gray-600">({book.reviews})</span>
                       </div>
 
-                      {/* File Info */}
                       <div className="text-xs text-gray-500 mb-3">
                         <div>
                           {book.pages} pages • {book.fileSize}
@@ -365,22 +354,21 @@ export default function BookstorePage() {
                         <div>Subject: {book.subject}</div>
                       </div>
 
-                      {/* Price and Actions */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xl font-bold text-green-600">${book.price}</div>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div className="text-lg md:text-xl font-bold text-green-600">${book.price}</div>
 
                         <div className="flex space-x-2">
                           {cartItems.includes(book.id) ? (
                             <button
                               onClick={() => removeFromCart(book.id)}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                              className="bg-red-500 hover:bg-red-600 text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm transition-colors"
                             >
                               Remove
                             </button>
                           ) : (
                             <button
                               onClick={() => addToCart(book.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm transition-colors"
                             >
                               Add to Cart
                             </button>
@@ -388,7 +376,7 @@ export default function BookstorePage() {
 
                           <button
                             onClick={() => handlePurchase(book)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            className="bg-green-600 hover:bg-green-700 text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm transition-colors"
                           >
                             Buy Now
                           </button>
@@ -401,11 +389,10 @@ export default function BookstorePage() {
             </div>
           </div>
 
-          {/* Shopping Cart Summary */}
           {cartItems.length > 0 && (
             <div className="max-w-7xl mx-auto">
-              <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">🛒 Shopping Cart ({cartItems.length} items)</h3>
+              <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4">🛒 Shopping Cart ({cartItems.length} items)</h3>
 
                 <div className="space-y-3 mb-4">
                   {cartItems.map((bookId) => {
@@ -413,7 +400,7 @@ export default function BookstorePage() {
                     if (!book) return null
 
                     return (
-                      <div key={bookId} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                      <div key={bookId} className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-3 rounded gap-2">
                         <div className="flex items-center space-x-3">
                           <img
                             src={book.thumbnail || "/placeholder.svg"}
@@ -421,13 +408,13 @@ export default function BookstorePage() {
                             className="w-12 h-16 object-cover rounded"
                           />
                           <div>
-                            <div className="font-medium">{book.title}</div>
-                            <div className="text-sm text-gray-600">by {book.author}</div>
+                            <div className="font-medium text-sm md:text-base">{book.title}</div>
+                            <div className="text-xs md:text-sm text-gray-600">by {book.author}</div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 ml-auto">
                           <span className="font-bold text-green-600">${book.price}</span>
-                          <button onClick={() => removeFromCart(bookId)} className="text-red-600 hover:text-red-800">
+                          <button onClick={() => removeFromCart(bookId)} className="text-red-600 hover:text-red-800 text-sm">
                             Remove
                           </button>
                         </div>
@@ -436,10 +423,10 @@ export default function BookstorePage() {
                   })}
                 </div>
 
-                <div className="border-t pt-4 flex items-center justify-between">
-                  <div className="text-xl font-bold">Total: ${getTotalPrice().toFixed(2)}</div>
-                  <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2">
-                    <DollarSign className="w-5 h-5" />
+                <div className="border-t pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="text-lg md:text-xl font-bold">Total: ${getTotalPrice().toFixed(2)}</div>
+                  <button className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm md:text-base">
+                    <DollarSign className="w-4 h-4 md:w-5 md:h-5" />
                     <span>Proceed to Checkout</span>
                   </button>
                 </div>
@@ -448,29 +435,26 @@ export default function BookstorePage() {
           )}
         </div>
 
-        {/* Bookstore Shelves Background Elements */}
-        <div className="absolute left-0 top-20 bottom-0 w-16 bg-gradient-to-r from-amber-800 to-amber-700 opacity-60"></div>
-        <div className="absolute right-0 top-20 bottom-0 w-16 bg-gradient-to-l from-amber-800 to-amber-700 opacity-60"></div>
+        <div className="absolute left-0 top-20 bottom-0 w-4 md:w-16 bg-gradient-to-r from-amber-800 to-amber-700 opacity-60"></div>
+        <div className="absolute right-0 top-20 bottom-0 w-4 md:w-16 bg-gradient-to-l from-amber-800 to-amber-700 opacity-60"></div>
 
-        {/* Floor */}
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-red-900 to-red-700 opacity-40"></div>
       </div>
 
-      {/* Preview Modal */}
       {showPreview && selectedBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-blue-600 text-white p-4 rounded-t-lg">
+            <div className="bg-blue-600 text-white p-3 md:p-4 rounded-t-lg">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Preview: {selectedBook.title}</h2>
-                <button onClick={() => setShowPreview(false)} className="text-white hover:text-gray-200">
+                <h2 className="text-base md:text-xl font-bold line-clamp-1">Preview: {selectedBook.title}</h2>
+                <button onClick={() => setShowPreview(false)} className="text-white hover:text-gray-200 ml-2 flex-shrink-0">
                   <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <img
                     src={selectedBook.thumbnail || "/placeholder.svg"}
@@ -480,23 +464,23 @@ export default function BookstorePage() {
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">{selectedBook.title}</h3>
-                  <p className="text-lg text-gray-600 mb-4">by {selectedBook.author}</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">{selectedBook.title}</h3>
+                  <p className="text-base md:text-lg text-gray-600 mb-4">by {selectedBook.author}</p>
 
                   <div className="space-y-3 mb-6">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-sm md:text-base">
                       <span className="font-medium">Subject:</span>
                       <span>{selectedBook.subject}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-sm md:text-base">
                       <span className="font-medium">Pages:</span>
                       <span>{selectedBook.pages}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-sm md:text-base">
                       <span className="font-medium">File Size:</span>
                       <span>{selectedBook.fileSize}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-sm md:text-base">
                       <span className="font-medium">Rating:</span>
                       <div className="flex items-center space-x-1">
                         <div className="flex">
@@ -509,28 +493,28 @@ export default function BookstorePage() {
                             />
                           ))}
                         </div>
-                        <span>({selectedBook.reviews} reviews)</span>
+                        <span className="text-sm">({selectedBook.reviews} reviews)</span>
                       </div>
                     </div>
                   </div>
 
-                  <p className="text-gray-700 mb-6">{selectedBook.description}</p>
+                  <p className="text-sm md:text-base text-gray-700 mb-6">{selectedBook.description}</p>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-3xl font-bold text-green-600">${selectedBook.price}</div>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="text-2xl md:text-3xl font-bold text-green-600">${selectedBook.price}</div>
 
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                       <button
                         onClick={() => addToCart(selectedBook.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-colors text-sm md:text-base"
                       >
                         Add to Cart
                       </button>
                       <button
                         onClick={() => handlePurchase(selectedBook)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                       >
-                        <Download className="w-5 h-5" />
+                        <Download className="w-4 h-4 md:w-5 md:h-5" />
                         <span>Buy & Download</span>
                       </button>
                     </div>

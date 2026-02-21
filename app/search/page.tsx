@@ -539,13 +539,13 @@ function SearchContent() {
                 {(activeTab === "all" || activeTab === "books") && books.length > 0 && (
                   <section>
                     <div className="relative">
-                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "340px" }}>
+                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "240px" }}>
                         {carouselIndex > 0 && (
                           <button
                             onClick={() => scrollCarousel("left")}
-                            className="absolute left-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute left-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
                           >
-                            <ChevronLeft className="w-6 h-6" />
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                           </button>
                         )}
 
@@ -553,12 +553,14 @@ function SearchContent() {
                           {books.map((book, index) => {
                             const offset = index - carouselIndex
                             const absOffset = Math.abs(offset)
-                            if (absOffset > 3) return null
+                            const isMobile = typeof window !== "undefined" && window.innerWidth < 768
+                            if (absOffset > (isMobile ? 2 : 3)) return null
 
-                            const translateX = offset * 140
-                            const translateZ = -absOffset * 100
+                            const mobileScale = isMobile ? 0.75 : 1
+                            const translateX = offset * (isMobile ? 100 : 140)
+                            const translateZ = -absOffset * (isMobile ? 70 : 100)
                             const rotateY = offset * -15
-                            const scale = 1 - absOffset * 0.12
+                            const scale = (1 - absOffset * 0.12) * mobileScale
                             const opacity = 1 - absOffset * 0.25
                             const zIndex = 10 - absOffset
                             const isFocused = offset === 0
@@ -580,7 +582,7 @@ function SearchContent() {
                                 <div className="relative group">
                                   <BookPlaceholder title={book.title} authors={book.authors} isFocused={isFocused} />
                                   {isFocused && (
-                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2">
+                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 hidden md:block">
                                       <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-blue-300"></div>
                                     </div>
                                   )}
@@ -593,9 +595,9 @@ function SearchContent() {
                         {carouselIndex < books.length - 1 && (
                           <button
                             onClick={() => scrollCarousel("right")}
-                            className="absolute right-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute right-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
                           >
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                           </button>
                         )}
                       </div>
@@ -687,13 +689,13 @@ function SearchContent() {
                       Scholarly Articles ({scholarArticles.length})
                     </h2>
                     <div className="relative">
-                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "340px" }}>
+                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "240px" }}>
                         {scholarCarouselIndex > 0 && (
                           <button
                             onClick={() => scrollScholarCarousel("left")}
-                            className="absolute left-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute left-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
                           >
-                            <ChevronLeft className="w-6 h-6" />
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                           </button>
                         )}
 
@@ -701,12 +703,14 @@ function SearchContent() {
                           {scholarArticles.map((article, index) => {
                             const offset = index - scholarCarouselIndex
                             const absOffset = Math.abs(offset)
-                            if (absOffset > 3) return null
+                            const isMobile = typeof window !== "undefined" && window.innerWidth < 768
+                            if (absOffset > (isMobile ? 2 : 3)) return null
 
-                            const translateX = offset * 140
-                            const translateZ = -absOffset * 100
+                            const mobileScale = isMobile ? 0.75 : 1
+                            const translateX = offset * (isMobile ? 100 : 140)
+                            const translateZ = -absOffset * (isMobile ? 70 : 100)
                             const rotateY = offset * -15
-                            const scale = 1 - absOffset * 0.12
+                            const scale = (1 - absOffset * 0.12) * mobileScale
                             const opacity = 1 - absOffset * 0.25
                             const zIndex = 10 - absOffset
                             const isFocused = offset === 0
@@ -728,7 +732,7 @@ function SearchContent() {
                                 <div className="relative group">
                                   <JournalPlaceholder title={article.title} authors={article.authors} isFocused={isFocused} />
                                   {isFocused && (
-                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2">
+                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 hidden md:block">
                                       <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-emerald-300"></div>
                                     </div>
                                   )}
@@ -741,9 +745,9 @@ function SearchContent() {
                         {scholarCarouselIndex < scholarArticles.length - 1 && (
                           <button
                             onClick={() => scrollScholarCarousel("right")}
-                            className="absolute right-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute right-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
                           >
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                           </button>
                         )}
                       </div>

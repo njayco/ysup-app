@@ -125,38 +125,38 @@ export default function LoginPage() {
     <div className="min-h-screen wood-background">
       <Header currentPage="Login" />
 
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-8">
-        <div className="flex items-center space-x-12 max-w-6xl w-full">
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-6 md:p-8">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start lg:space-x-12 max-w-6xl w-full gap-8 lg:gap-0">
           {/* Left Side - Login */}
-          <div className="flex-1 text-amber-100">
-            <div className="mb-8">
-              <h1 className="text-6xl font-bold text-yellow-400 mb-4">YsUp</h1>
-              <h2 className="text-3xl font-serif mb-6">The Campus Network</h2>
-              <p className="text-lg mb-8 max-w-md">
+          <div className="w-full lg:flex-1 text-amber-100 text-center lg:text-left">
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-4xl md:text-6xl font-bold text-yellow-400 mb-2 md:mb-4">YsUp</h1>
+              <h2 className="text-xl md:text-3xl font-serif mb-3 md:mb-6">The Campus Network</h2>
+              <p className="text-sm md:text-lg mb-4 md:mb-8 max-w-md mx-auto lg:mx-0">
                 YsUp helps you connect and share information with classmates while staying productive.
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-3 md:space-y-4 max-w-sm mx-auto lg:mx-0">
               <div>
-                <label className="block text-lg font-serif mb-2">Username or Phone Number</label>
+                <label className="block text-base md:text-lg font-serif mb-1 md:mb-2">Username or Phone Number</label>
                 <input
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  className="w-full max-w-xs px-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
+                  className="w-full px-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
                   placeholder="+username or (555) 123-4567"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-lg font-serif mb-2">Password</label>
+                <label className="block text-base md:text-lg font-serif mb-1 md:mb-2">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full max-w-xs px-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
+                  className="w-full px-4 py-3 rounded bg-amber-900 border border-amber-700 text-amber-100 placeholder-amber-400"
                   placeholder="Enter password"
                   required
                 />
@@ -175,9 +175,9 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              {error && <div className="bg-red-600 text-white p-3 rounded max-w-xs">{error}</div>}
+              {error && <div className="bg-red-600 text-white p-3 rounded">{error}</div>}
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 justify-center lg:justify-start">
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -193,37 +193,37 @@ export default function LoginPage() {
           </div>
 
           {/* Right Side - Signup Notepad */}
-          <div className="flex-1 flex justify-center">
-            <div className="relative">
+          <div className="w-full lg:flex-1 flex justify-center overflow-hidden">
+            <div className="relative w-full max-w-sm md:max-w-md">
               {/* Notebook Background with realistic spiral binding */}
-              <div className="bg-yellow-200 p-8 rounded-lg shadow-2xl transform rotate-1 relative border-l-8 border-gray-400">
+              <div className="bg-yellow-200 p-5 md:p-8 rounded-lg shadow-2xl transform md:rotate-1 relative border-l-8 border-gray-400">
                 {/* Spiral Holes */}
                 <div className="notebook-holes"></div>
 
                 {/* Red Margin Line */}
-                <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-red-500 opacity-60"></div>
+                <div className="absolute left-10 md:left-12 top-0 bottom-0 w-0.5 bg-red-500 opacity-60"></div>
 
                 {/* Horizontal Lines */}
                 <div
-                  className="absolute left-12 right-4 top-0 bottom-0 opacity-20"
+                  className="absolute left-10 md:left-12 right-4 top-0 bottom-0 opacity-20"
                   style={{
                     backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #666 23px, #666 24px)",
                     backgroundSize: "100% 24px",
                   }}
                 ></div>
 
-                <div className="ml-8 relative z-10">
-                  <div className="text-right mb-4">
-                    <span className="text-sm text-gray-600">it's free,</span>
+                <div className="ml-5 md:ml-8 relative z-10">
+                  <div className="text-right mb-3 md:mb-4">
+                    <span className="text-xs md:text-sm text-gray-600">it's free,</span>
                     <br />
-                    <span className="text-sm text-gray-600">don't worry</span>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-2">SIGN UP</h3>
-                    <p className="text-sm text-gray-600">Welcome to the Future</p>
+                    <span className="text-xs md:text-sm text-gray-600">don't worry</span>
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-800 mt-1 md:mt-2">SIGN UP</h3>
+                    <p className="text-xs md:text-sm text-gray-600">Welcome to the Future</p>
                   </div>
 
-                  <form onSubmit={handleSignup} className="space-y-3">
+                  <form onSubmit={handleSignup} className="space-y-2 md:space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">College/Univ.</label>
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">College/Univ.</label>
                       <select
                         value={signupData.college}
                         onChange={(e) => setSignupData({ ...signupData, college: e.target.value })}
@@ -337,19 +337,19 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                       <input
                         type="tel"
                         value={signupData.phone}
                         onChange={handlePhoneChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm text-sm md:text-base"
                         placeholder="(555) 123-4567"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Username</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
                           +
@@ -367,40 +367,42 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Password</label>
                       <input
                         type="password"
                         value={signupData.password}
                         onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm text-sm md:text-base"
                         placeholder="Create password"
                         minLength={6}
                         required
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                      <input
-                        type="text"
-                        value={signupData.firstName}
-                        onChange={(e) => setSignupData({ ...signupData, firstName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
-                        placeholder="First name"
-                        required
-                      />
-                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input
+                          type="text"
+                          value={signupData.firstName}
+                          onChange={(e) => setSignupData({ ...signupData, firstName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm text-sm md:text-base"
+                          placeholder="First name"
+                          required
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                      <input
-                        type="text"
-                        value={signupData.lastName}
-                        onChange={(e) => setSignupData({ ...signupData, lastName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
-                        placeholder="Last name"
-                        required
-                      />
+                      <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input
+                          type="text"
+                          value={signupData.lastName}
+                          onChange={(e) => setSignupData({ ...signupData, lastName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm text-sm md:text-base"
+                          placeholder="Last name"
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div className="flex items-center space-x-2">

@@ -506,9 +506,9 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
       {/* Messaging Modal */}
       {showMessaging && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[700px] flex">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] md:h-[700px] flex flex-col md:flex-row">
             {/* Conversations Sidebar */}
-            <div className="w-1/3 border-r border-gray-200 flex flex-col">
+            <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col max-h-[40vh] md:max-h-none">
               <div className="bg-blue-600 text-white p-4 rounded-tl-lg flex items-center justify-between">
                 <h2 className="text-xl font-bold">Conversations</h2>
                 <button

@@ -297,42 +297,42 @@ export default function NetworkPage() {
   return (
     <div className="min-h-screen wood-background">
       <Header />
-      <div className="max-w-4xl mx-auto p-6 pt-20">
+      <div className="max-w-4xl mx-auto px-4 md:p-6 pt-16 md:pt-20">
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex items-center space-x-2 text-amber-300 hover:text-amber-100 mb-6"
+          className="flex items-center space-x-2 text-amber-300 hover:text-amber-100 mb-4 md:mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back to Dashboard</span>
         </button>
 
-        <div className="bg-amber-900 bg-opacity-60 rounded-xl p-6 border border-amber-700 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-2xl">
+        <div className="bg-amber-900 bg-opacity-60 rounded-xl p-4 md:p-6 border border-amber-700 mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-start space-x-3 md:space-x-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-lg md:text-2xl flex-shrink-0">
                 {network.name.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-amber-100">{network.name}</h1>
-                <div className="flex items-center space-x-3 text-sm text-amber-300 mt-1">
+              <div className="min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-amber-100">{network.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:text-sm text-amber-300 mt-1">
                   <span className="capitalize">{network.type}</span>
                   <span>•</span>
                   {network.privacy === "public" ? (
-                    <span className="flex items-center space-x-1"><Globe className="w-4 h-4" /><span>Public</span></span>
+                    <span className="flex items-center space-x-1"><Globe className="w-3 h-3 md:w-4 md:h-4" /><span>Public</span></span>
                   ) : (
-                    <span className="flex items-center space-x-1"><Lock className="w-4 h-4" /><span>Private</span></span>
+                    <span className="flex items-center space-x-1"><Lock className="w-3 h-3 md:w-4 md:h-4" /><span>Private</span></span>
                   )}
                   <span>•</span>
-                  <span className="flex items-center space-x-1"><Users className="w-4 h-4" /><span>{network.member_count} members</span></span>
+                  <span className="flex items-center space-x-1"><Users className="w-3 h-3 md:w-4 md:h-4" /><span>{network.member_count} members</span></span>
                 </div>
-                <p className="text-amber-200 mt-2">{network.description}</p>
+                <p className="text-amber-200 mt-2 text-sm md:text-base">{network.description}</p>
                 <p className="text-xs text-amber-400 mt-1">
                   Moderated by {network.mod_first_name} {network.mod_last_name}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {isMember && (
                 <button
                   onClick={copyInviteLink}

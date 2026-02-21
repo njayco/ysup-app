@@ -938,28 +938,28 @@ export default function DashboardPage() {
       )}
 
       {/* Sub Navigation */}
-      <div className="bg-amber-700 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <span className="text-amber-100 font-medium">
+      <div className="bg-amber-700 px-3 md:px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+          <span className="text-amber-100 font-medium text-sm md:text-base">
             {currentUser.firstName} {currentUser.lastName} (+{currentUser.username})
           </span>
-          <span className="text-amber-200">Wednesday, March 21, 2012, 1:35 AM</span>
+          <span className="text-amber-200 text-xs md:text-base hidden sm:inline">Wednesday, March 21, 2012, 1:35 AM</span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search Files"
             value={fileSearchQuery}
             onChange={(e) => setFileSearchQuery(e.target.value)}
-            className="px-3 py-1 rounded border border-amber-600 bg-amber-50 text-amber-900 placeholder-amber-600"
+            className="px-3 py-1 rounded border border-amber-600 bg-amber-50 text-amber-900 placeholder-amber-600 flex-1 sm:flex-none text-sm"
           />
-          <button className="bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700">search</button>
+          <button className="bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700 text-sm">search</button>
         </div>
       </div>
 
       <div
-        className="p-8 relative min-h-[calc(100vh-140px)] transition-all duration-200"
+        className="p-4 md:p-8 relative min-h-[calc(100vh-140px)] transition-all duration-200"
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, "desktop")}
         style={{
@@ -981,16 +981,17 @@ export default function DashboardPage() {
         {/* Upload Button */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-10"
+          className="absolute top-2 md:top-4 right-2 md:right-4 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center space-x-1 md:space-x-2 z-10 text-sm md:text-base"
         >
           <Upload className="w-4 h-4" />
-          <span>Upload File</span>
+          <span className="hidden sm:inline">Upload File</span>
+          <span className="sm:hidden">Upload</span>
         </button>
 
         {/* Move Mode Toggle */}
         <button
           onClick={() => setMoveMode(!moveMode)}
-          className={`absolute top-16 right-20 px-4 py-2 rounded-lg flex items-center space-x-2 z-10 transition-colors ${
+          className={`absolute top-12 md:top-16 right-2 md:right-20 px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center space-x-1 md:space-x-2 z-10 transition-colors text-sm md:text-base ${
             moveMode ? "bg-green-600 hover:bg-green-700 text-white" : "bg-gray-500 hover:bg-gray-600 text-white"
           }`}
         >
