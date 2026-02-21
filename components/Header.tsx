@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Mail, Globe, X, Send, Search, Menu, LogOut } from "lucide-react"
+import { Mail, Globe, X, Send, Search, Menu, LogOut, LogIn } from "lucide-react"
 
 interface HeaderProps {
   currentPage?: string
@@ -60,6 +60,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   const [activeConversation, setActiveConversation] = useState<string>("")
   const [groupChatRecipients, setGroupChatRecipients] = useState<string[]>([])
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // Mock users for search
   const [allUsers] = useState([
@@ -87,6 +88,9 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         firstName: userData.firstName,
         lastName: userData.lastName,
       })
+      setIsLoggedIn(true)
+    } else {
+      setIsLoggedIn(false)
     }
 
     // Simulate some initial notifications
@@ -401,14 +405,25 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               </button>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-1 text-amber-100 hover:text-white hover:bg-amber-800 px-3 py-2 rounded transition-colors ml-2"
-            title="Log Out"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm">Log Out</span>
-          </button>
+          {isLoggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1 text-amber-100 hover:text-white hover:bg-amber-800 px-3 py-2 rounded transition-colors ml-2"
+              title="Log Out"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm">Log Out</span>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center space-x-1 text-amber-100 hover:text-white hover:bg-amber-800 px-3 py-2 rounded transition-colors ml-2"
+              title="Log In"
+            >
+              <LogIn className="w-5 h-5" />
+              <span className="text-sm">Log In</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -516,13 +531,24 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
 
             {/* Mobile Menu Footer */}
             <div className="absolute bottom-0 left-0 right-0 bg-amber-800 border-t border-amber-700">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-6 py-4 text-amber-100 hover:bg-amber-700 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="text-lg">Log Out</span>
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-3 px-6 py-4 text-amber-100 hover:bg-amber-700 transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-lg">Log Out</span>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="w-full flex items-center space-x-3 px-6 py-4 text-amber-100 hover:bg-amber-700 transition-colors"
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span className="text-lg">Log In</span>
+                </Link>
+              )}
               <div className="flex items-center space-x-2 text-amber-100 px-6 py-3 border-t border-amber-700">
                 <Globe className="w-5 h-5" />
                 <span className="text-sm">Connected to Campus Network</span>
