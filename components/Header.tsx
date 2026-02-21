@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Mail, Globe, X, Send, Search, Menu } from "lucide-react"
+import { Mail, Globe, X, Send, Search, Menu, LogOut } from "lucide-react"
 
 interface HeaderProps {
   currentPage?: string
@@ -302,9 +302,14 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     { name: "Academy", href: "/academy", badge: "NEW" },
   ]
 
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser")
+    localStorage.removeItem("onboardingComplete")
+    window.location.href = "/login"
+  }
+
   const handleMobileNavClick = (href: string) => {
     setShowMobileMenu(false)
-    // Navigation will be handled by the Link component
   }
 
   return (
@@ -385,10 +390,8 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               <button
                 onClick={() => {
                   if (showSearch && searchQuery.trim()) {
-                    // If search is open and has content, perform search
                     handleFullSearch(searchQuery)
                   } else {
-                    // Toggle search visibility
                     setShowSearch(!showSearch)
                   }
                 }}
@@ -398,6 +401,14 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               </button>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-1 text-amber-100 hover:text-white hover:bg-amber-800 px-3 py-2 rounded transition-colors ml-2"
+            title="Log Out"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm">Log Out</span>
+          </button>
         </div>
       </div>
 
@@ -504,8 +515,15 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
             </nav>
 
             {/* Mobile Menu Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-amber-800 border-t border-amber-700">
-              <div className="flex items-center space-x-2 text-amber-100">
+            <div className="absolute bottom-0 left-0 right-0 bg-amber-800 border-t border-amber-700">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-6 py-4 text-amber-100 hover:bg-amber-700 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-lg">Log Out</span>
+              </button>
+              <div className="flex items-center space-x-2 text-amber-100 px-6 py-3 border-t border-amber-700">
                 <Globe className="w-5 h-5" />
                 <span className="text-sm">Connected to Campus Network</span>
               </div>
