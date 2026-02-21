@@ -2,9 +2,14 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Document, Page, pdfjs } from "react-pdf"
+import "react-pdf/dist/Page/AnnotationLayer.css"
+import "react-pdf/dist/Page/TextLayer.css"
 import Header from "@/components/Header"
 import { useAuth } from "@/lib/useAuth"
+
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 import {
   Upload,
   Download,
@@ -38,6 +43,7 @@ interface PDFFile {
   position: { x: number; y: number; rotation: number }
   sharedBy?: string
   course?: string
+  fileData?: string
 }
 
 interface Post {
@@ -84,6 +90,8 @@ export default function DashboardPage() {
     college: "",
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const profileImageInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
   const [dashboardPage, setDashboardPage] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(12)
 
@@ -106,9 +114,10 @@ export default function DashboardPage() {
   })
   const [fileSearchQuery, setFileSearchQuery] = useState("")
 
-  // Add state for file viewing:
   const [showFileViewer, setShowFileViewer] = useState(false)
   const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
+  const [pdfNumPages, setPdfNumPages] = useState(0)
+  const [pdfCurrentSpread, setPdfCurrentSpread] = useState(0)
 
   // Update the sticky notes positions to avoid overlapping with the Bluebook and notebook
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([
@@ -192,7 +201,19 @@ export default function DashboardPage() {
         major: userData.major || "",
         year: userData.year || "",
         bio: userData.bio || "",
+        profileImage: userData.profileImage || prev.profileImage,
       }))
+
+      if (userData.id) {
+        fetch(`/api/profile-image?userId=${userData.id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.success && d.profileImage) {
+              setProfileData(prev => ({ ...prev, profileImage: d.profileImage }))
+            }
+          })
+          .catch(() => {})
+      }
     }
   }, [])
 
@@ -212,8 +233,6 @@ export default function DashboardPage() {
 
   // Update the file positions to avoid overlapping with Bluebook and notebook
   const [allFiles, setAllFiles] = useState<PDFFile[]>([
-    // Row 1 - Top row (avoiding ID card area)
-    // Bluebook Calendar - first item in top row
     {
       id: "bluebook",
       name: "YsUp Bluebook",
@@ -221,68 +240,12 @@ export default function DashboardPage() {
       type: "bluebook",
       position: { x: 30, y: 15, rotation: -2 },
     },
-    // Yellow Notebook - second item in top row
     {
       id: "notebook",
       name: "Class Network",
       thumbnail: "/placeholder.svg?height=200&width=150",
       type: "notebook",
       position: { x: 50, y: 15, rotation: 1 },
-    },
-    // PDF 1 - third item in top row
-    {
-      id: "1",
-      name: "calc2-hw.pdf",
-      thumbnail: "/placeholder.svg?height=200&width=150&text=Calculus%20Homework",
-      type: "pdf",
-      position: { x: 70, y: 15, rotation: -1 },
-    },
-
-    // Row 2 - Middle row
-    // PDF 2 - first item in middle row
-    {
-      id: "2",
-      name: "Calculus Transcendentals",
-      thumbnail:
-        "/placeholder.svg?height=250&width=180&text=CALCULUS%0AEarly%20Transcendentals%0A8th%20Edition%0AStewart",
-      type: "pdf",
-      position: { x: 15, y: 45, rotation: 2 },
-    },
-    // PDF 3 - second item in middle row
-    {
-      id: "3",
-      name: "Chemistry: The Central Science",
-      thumbnail:
-        "/placeholder.svg?height=250&width=180&text=CHEMISTRY%0AThe%20Central%20Science%0A13th%20Edition%0ABrown%20LeMay%20Bursten",
-      type: "pdf",
-      position: { x: 40, y: 45, rotation: -1 },
-    },
-    // PDF 4 - third item in middle row
-    {
-      id: "4",
-      name: "Physics For Scientists",
-      thumbnail:
-        "/placeholder.svg?height=250&width=180&text=PHYSICS%0AFor%20Scientists%20and%20Engineers%0A9th%20Edition%0ASerway%20Jewett",
-      type: "pdf",
-      position: { x: 65, y: 45, rotation: 1 },
-    },
-
-    // Row 3 - Bottom row
-    // PPT 1 - first item in bottom row
-    {
-      id: "5",
-      name: "Physics Presentation",
-      thumbnail: "/placeholder.svg?height=200&width=150&text=Physics%0APresentation%0AChapter%205",
-      type: "ppt",
-      position: { x: 25, y: 75, rotation: -2 },
-    },
-    // PPT 2 - second item in bottom row
-    {
-      id: "6",
-      name: "gen-physics1.ppt",
-      thumbnail: "/placeholder.svg?height=150&width=120&text=General%0APhysics%201%0ASlides",
-      type: "ppt",
-      position: { x: 50, y: 75, rotation: 1 },
     },
   ])
 
@@ -563,14 +526,20 @@ export default function DashboardPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const newFile: PDFFile = {
-        id: Date.now().toString(),
-        name: file.name,
-        thumbnail: "/placeholder.svg?height=200&width=150",
-        type: file.type.includes("pdf") ? "pdf" : "doc",
-        position: { x: Math.random() * 60 + 10, y: Math.random() * 40 + 50, rotation: Math.random() * 10 - 5 },
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string
+        const newFile: PDFFile = {
+          id: Date.now().toString(),
+          name: file.name,
+          thumbnail: "/placeholder.svg?height=200&width=150",
+          type: file.type.includes("pdf") ? "pdf" : file.name.endsWith(".ppt") || file.name.endsWith(".pptx") ? "ppt" : "doc",
+          position: { x: Math.random() * 60 + 10, y: Math.random() * 40 + 50, rotation: Math.random() * 10 - 5 },
+          fileData: dataUrl,
+        }
+        setAllFiles([...allFiles, newFile])
       }
-      setAllFiles([...allFiles, newFile])
+      reader.readAsDataURL(file)
     }
   }
 
@@ -865,17 +834,51 @@ export default function DashboardPage() {
       college: profileData.college,
     })
 
-    // Save to localStorage
+    const existingUser = localStorage.getItem("currentUser")
+    const existingId = existingUser ? JSON.parse(existingUser).id : Date.now().toString()
+
     localStorage.setItem(
       "currentUser",
       JSON.stringify({
         ...profileData,
-        id: currentUser.id || Date.now().toString(),
+        id: existingId,
       }),
     )
 
     setShowProfile(false)
     alert("Profile updated successfully!")
+  }
+
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith("image/")) return
+
+    setUploadingProfileImage(true)
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      try {
+        const dataUrl = ev.target?.result as string
+        setProfileData(prev => ({ ...prev, profileImage: dataUrl }))
+
+        const storedUser = localStorage.getItem("currentUser")
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          if (userData.id) {
+            await fetch("/api/profile-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: userData.id, imageData: dataUrl }),
+            })
+          }
+          const updated = { ...userData, profileImage: dataUrl }
+          localStorage.setItem("currentUser", JSON.stringify(updated))
+        }
+      } catch {
+      } finally {
+        setUploadingProfileImage(false)
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleDragStart = (e: React.DragEvent, itemId: string, itemType: "file" | "note" | "folder") => {
@@ -1192,11 +1195,13 @@ export default function DashboardPage() {
           >
             <div className="bg-white rounded-lg shadow-lg p-3 w-full sm:w-56 border-2 border-blue-500">
               <div className="flex items-center space-x-3">
-                <img
-                  src={profileData.profileImage || "/placeholder.svg"}
-                  alt="Profile"
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
-                />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center">
+                  {profileData.profileImage && profileData.profileImage !== "/placeholder.svg?height=150&width=150" ? (
+                    <img src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm text-gray-800 truncate">
                     {profileData.firstName || profileData.lastName
@@ -1261,12 +1266,22 @@ export default function DashboardPage() {
                 {pageItems.map((item) => {
                   if (item.type === "file") {
                     const file = item.data as PDFFile
+                    const canTrash = !["bluebook", "notebook"].includes(file.type)
                     return (
                       <div
                         key={`file-${file.id}`}
-                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
                         onClick={() => handleFileClick(file)}
                       >
+                        {canTrash && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleMoveToTrash(file.id, "file") }}
+                            className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                            title="Send to trash"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <div className={`rounded-lg shadow-lg overflow-hidden border-2 h-44 ${getFileBackground(file)} relative`}>
                           {file.type === "bluebook" ? (
                             <div className="p-2 h-full flex flex-col">
@@ -1334,9 +1349,16 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`folder-${folder.id}`}
-                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
                         onClick={() => handleFolderClick(folder)}
                       >
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleMoveToTrash(folder.id, "folder") }}
+                          className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          title="Send to trash"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                         <div className="h-44 bg-yellow-400 border-2 border-yellow-600 rounded-lg shadow-lg">
                           <div className="p-3 h-full flex flex-col items-center justify-center">
                             <Folder className="w-10 h-10 text-yellow-800 mb-2" />
@@ -1353,9 +1375,16 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`note-${note.id}`}
-                        className="cursor-pointer transform hover:scale-105 transition-all duration-200"
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
                         onClick={() => handleStickyNoteClick(note)}
                       >
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleMoveToTrash(note.id, "note") }}
+                          className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          title="Send to trash"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                         <div className="h-44 bg-yellow-300 border border-yellow-400 rounded-lg shadow-lg relative">
                           <div className="absolute top-0 right-0 w-5 h-5 bg-yellow-400 transform rotate-45 translate-x-1 -translate-y-1 rounded-sm"></div>
                           <div className="p-3 h-full overflow-hidden">
@@ -2065,14 +2094,30 @@ export default function DashboardPage() {
             <div className="p-6">
               <div className="flex items-center space-x-6 mb-6">
                 <div className="relative">
-                  <img
-                    src={profileData.profileImage || "/placeholder.svg"}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-300"
-                  />
-                  <button className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700">
-                    <User className="w-4 h-4" />
+                  <div
+                    onClick={() => profileImageInputRef.current?.click()}
+                    className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-300 cursor-pointer hover:border-blue-400 transition-colors bg-gray-100 flex items-center justify-center"
+                  >
+                    {profileData.profileImage && profileData.profileImage !== "/placeholder.svg?height=150&width=150" ? (
+                      <img src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-12 h-12 text-gray-400" />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => profileImageInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700"
+                  >
+                    <Upload className="w-4 h-4" />
                   </button>
+                  <input
+                    ref={profileImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageUpload}
+                  />
+                  {uploadingProfileImage && <p className="text-xs text-blue-600 text-center mt-1">Uploading...</p>}
                 </div>
 
                 <div className="flex-1">
@@ -2207,178 +2252,120 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* File Viewer Modal */}
+      {/* File Viewer Modal - Two-Page Book Reader */}
       {showFileViewer && selectedFile && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[95vh] overflow-hidden shadow-2xl">
-            {/* Header */}
-            <div className="bg-gray-800 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="text-lg font-bold">{selectedFile.name}</div>
-                <div className="text-sm text-gray-300">{selectedFile.type.toUpperCase()} Document</div>
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-stone-800 rounded-lg w-full max-w-6xl h-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="bg-gray-800 text-white p-3 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-5 h-5 text-gray-400" />
+                <div className="text-sm md:text-base font-bold truncate max-w-[200px] md:max-w-none">{selectedFile.name}</div>
+                <div className="text-xs text-gray-400 hidden sm:block">{selectedFile.type.toUpperCase()}</div>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center space-x-2">
-                  <Download className="w-4 h-4" />
-                  <span>Download</span>
-                </button>
-                <button onClick={() => setShowFileViewer(false)} className="text-white hover:text-gray-300">
+                {selectedFile.fileData && (
+                  <a
+                    href={selectedFile.fileData}
+                    download={selectedFile.name}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center space-x-1.5 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Download</span>
+                  </a>
+                )}
+                <button onClick={() => { setShowFileViewer(false); setPdfCurrentSpread(0); setPdfNumPages(0) }} className="text-white hover:text-gray-300">
                   <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            {/* File Content */}
-            <div className="h-full bg-gray-100 p-8 overflow-y-auto">
-              {selectedFile.type === "pdf" ? (
-                // Virtual Textbook View for PDFs
-                <div className="max-w-4xl mx-auto">
-                  <div
-                    className="bg-white rounded-lg shadow-2xl overflow-hidden"
-                    style={{
-                      background:
-                        "linear-gradient(45deg, #f8f9fa 25%, transparent 25%), linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8f9fa 75%), linear-gradient(-45deg, transparent 75%, #f8f9fa 75%)",
-                      backgroundSize: "20px 20px",
-                      backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-                    }}
-                  >
-                    {/* Book Spine Effect */}
-                    <div className="flex">
-                      <div className="w-8 bg-gradient-to-r from-gray-700 to-gray-600 shadow-inner"></div>
-                      <div className="flex-1 bg-white">
-                        {/* Page Content */}
-                        <div className="p-8 min-h-[600px]">
-                          <div className="text-center mb-8">
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">{selectedFile.name}</h1>
-                            <div className="w-24 h-1 bg-blue-600 mx-auto"></div>
-                          </div>
+            <div className="flex-1 overflow-hidden flex flex-col items-center justify-center bg-stone-700 p-4">
+              {selectedFile.type === "pdf" && selectedFile.fileData ? (
+                <>
+                  <div className="flex-1 flex items-center justify-center w-full overflow-auto">
+                    <div className="flex shadow-2xl rounded-lg overflow-hidden" style={{ perspective: "1200px" }}>
+                      <div className="w-3 bg-gradient-to-r from-stone-900 via-stone-700 to-stone-500 shadow-inner hidden md:block"></div>
 
-                          {/* Sample PDF Content */}
-                          <div className="space-y-6 text-gray-700 leading-relaxed">
-                            <div className="text-xl font-semibold text-gray-800">Chapter 1: Introduction</div>
-                            <p>
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-                              ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                              ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                            </p>
-                            <p>
-                              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-                              nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-                              deserunt mollit anim id est laborum.
-                            </p>
-
-                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 my-6">
-                              <div className="font-semibold text-blue-800">Key Concept:</div>
-                              <div className="text-blue-700">
-                                This is an important concept that students should remember for the exam.
+                      <Document
+                        file={selectedFile.fileData}
+                        onLoadSuccess={({ numPages }) => setPdfNumPages(numPages)}
+                        loading={<div className="text-white p-12">Loading PDF...</div>}
+                        error={<div className="text-red-400 p-12">Failed to load PDF. The file may be corrupted.</div>}
+                        className="flex"
+                      >
+                        {(() => {
+                          const leftPage = pdfCurrentSpread * 2 + 1
+                          const rightPage = pdfCurrentSpread * 2 + 2
+                          return (
+                            <>
+                              <div className="bg-white border-r border-gray-200 relative" style={{ boxShadow: "inset -10px 0 20px -10px rgba(0,0,0,0.15)" }}>
+                                <Page
+                                  pageNumber={leftPage}
+                                  width={typeof window !== "undefined" && window.innerWidth < 768 ? window.innerWidth - 60 : 380}
+                                  renderTextLayer={true}
+                                  renderAnnotationLayer={true}
+                                />
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">
+                                  {leftPage}
+                                </div>
                               </div>
-                            </div>
+                              {rightPage <= pdfNumPages && (
+                                <div className="bg-white relative hidden md:block" style={{ boxShadow: "inset 10px 0 20px -10px rgba(0,0,0,0.1)" }}>
+                                  <Page
+                                    pageNumber={rightPage}
+                                    width={380}
+                                    renderTextLayer={true}
+                                    renderAnnotationLayer={true}
+                                  />
+                                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">
+                                    {rightPage}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
+                      </Document>
 
-                            <div className="text-lg font-semibold text-gray-800">1.1 Basic Principles</div>
-                            <p>
-                              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                              laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi
-                              architecto beatae vitae dicta sunt explicabo.
-                            </p>
-
-                            {/* Sample Math Equation */}
-                            <div className="bg-gray-50 p-4 rounded-lg text-center my-6">
-                              <div className="text-lg font-mono">f(x) = ax² + bx + c</div>
-                            </div>
-
-                            <p>
-                              Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-                              consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-                            </p>
-                          </div>
-
-                          {/* Page Number */}
-                          <div className="text-center mt-12 text-gray-500 text-sm">Page 1 of 247</div>
-                        </div>
-                      </div>
+                      <div className="w-3 bg-gradient-to-l from-stone-900 via-stone-700 to-stone-500 shadow-inner hidden md:block"></div>
                     </div>
                   </div>
 
-                  {/* Page Navigation */}
-                  <div className="flex justify-center items-center space-x-4 mt-6">
-                    <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
-                      Previous Page
-                    </button>
-                    <span className="text-gray-600">Page 1 of 247</span>
-                    <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Next Page</button>
-                  </div>
-                </div>
-              ) : selectedFile.type === "ppt" ? (
-                // PowerPoint Presentation View
-                <div className="max-w-4xl mx-auto">
-                  <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
-                      <h1 className="text-2xl font-bold">{selectedFile.name}</h1>
-                      <p className="text-orange-100">PowerPoint Presentation</p>
-                    </div>
-                    <div className="p-8 min-h-[500px]">
-                      <div className="text-center mb-8">
-                        <h2 className="text-3xl font-bold text-gray-800 mb-4">Slide Title</h2>
-                        <div className="space-y-4 text-left max-w-2xl mx-auto">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            <span>First bullet point about the topic</span>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            <span>Second important point to remember</span>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            <span>Third key concept for understanding</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-orange-50 p-6 rounded-lg">
-                        <img
-                          src="/placeholder.svg?height=200&width=400"
-                          alt="Presentation graphic"
-                          className="mx-auto rounded"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Slide Navigation */}
-                    <div className="bg-gray-100 p-4 flex justify-between items-center">
-                      <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded">
-                        Previous Slide
+                  {pdfNumPages > 0 && (
+                    <div className="flex items-center justify-center gap-4 mt-4 shrink-0">
+                      <button
+                        onClick={() => setPdfCurrentSpread(Math.max(0, pdfCurrentSpread - 1))}
+                        disabled={pdfCurrentSpread === 0}
+                        className={`px-4 py-2 rounded text-sm font-medium ${pdfCurrentSpread === 0 ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-amber-700 hover:bg-amber-800 text-white"}`}
+                      >
+                        <ChevronLeft className="w-4 h-4 inline mr-1" />Previous
                       </button>
-                      <span className="text-gray-600">Slide 1 of 15</span>
-                      <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded">
-                        Next Slide
+                      <span className="text-gray-300 text-sm">
+                        Pages {pdfCurrentSpread * 2 + 1}-{Math.min(pdfCurrentSpread * 2 + 2, pdfNumPages)} of {pdfNumPages}
+                      </span>
+                      <button
+                        onClick={() => setPdfCurrentSpread(pdfCurrentSpread + 1)}
+                        disabled={pdfCurrentSpread * 2 + 2 >= pdfNumPages}
+                        className={`px-4 py-2 rounded text-sm font-medium ${pdfCurrentSpread * 2 + 2 >= pdfNumPages ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-amber-700 hover:bg-amber-800 text-white"}`}
+                      >
+                        Next<ChevronRight className="w-4 h-4 inline ml-1" />
                       </button>
                     </div>
-                  </div>
-                </div>
+                  )}
+                </>
               ) : (
-                // Document View for DOC files
-                <div className="max-w-4xl mx-auto">
-                  <div className="bg-white rounded-lg shadow-2xl p-8 min-h-[600px]">
-                    <div className="text-center mb-8">
-                      <h1 className="text-2xl font-bold text-gray-800 mb-2">{selectedFile.name}</h1>
-                      <div className="w-16 h-1 bg-blue-600 mx-auto"></div>
+                <div className="flex-1 flex items-center justify-center w-full">
+                  <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-8 md:p-12 max-h-[75vh] overflow-y-auto">
+                    <div className="text-center mb-6">
+                      <FileText className="w-16 h-16 mx-auto text-gray-400 mb-3" />
+                      <h1 className="text-2xl font-bold text-gray-800">{selectedFile.name}</h1>
+                      <div className="w-16 h-1 bg-amber-500 mx-auto mt-2"></div>
+                      <p className="text-sm text-gray-500 mt-2">{selectedFile.type.toUpperCase()} Document</p>
                     </div>
-
-                    <div className="space-y-4 text-gray-700 leading-relaxed">
-                      <p>
-                        This is a sample document view. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                        eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                      </p>
-                      <p>
-                        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                        fugiat nulla pariatur.
-                      </p>
-                      <p>
-                        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim
-                        id est laborum.
-                      </p>
+                    <div className="text-center text-gray-500">
+                      <p>Upload a PDF file to view it in the book reader.</p>
+                      <p className="text-sm mt-2">The two-page book view works with PDF files that contain actual content.</p>
                     </div>
                   </div>
                 </div>

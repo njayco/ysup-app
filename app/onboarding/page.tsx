@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Header from "@/components/Header"
 
 interface ProfileData {
@@ -12,6 +12,7 @@ interface ProfileData {
   major: string
   year: string
   bio: string
+  profileImage?: string
 }
 
 const profileChecklist = [
@@ -222,6 +223,8 @@ const featureWalkthroughs = [
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
+  const profileImageRef = useRef<HTMLInputElement>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
     lastName: "",
@@ -231,6 +234,7 @@ export default function OnboardingPage() {
     major: "",
     year: "",
     bio: "",
+    profileImage: "",
   })
 
   useEffect(() => {
@@ -250,7 +254,19 @@ export default function OnboardingPage() {
         major: parsed.major || "",
         year: parsed.year || "",
         bio: parsed.bio || "",
+        profileImage: parsed.profileImage || "",
       })
+
+      if (parsed.id) {
+        fetch(`/api/profile-image?userId=${parsed.id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.success && d.profileImage) {
+              setProfileData(prev => ({ ...prev, profileImage: d.profileImage }))
+            }
+          })
+          .catch(() => {})
+      }
     } catch {
       window.location.href = "/login"
       return
@@ -272,6 +288,37 @@ export default function OnboardingPage() {
         localStorage.setItem("currentUser", JSON.stringify(updated))
       } catch {}
     }
+  }
+
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) return
+
+    setUploadingImage(true)
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string
+      setProfileData(prev => ({ ...prev, profileImage: dataUrl }))
+
+      const storedUser = localStorage.getItem("currentUser")
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          if (userData.id) {
+            await fetch("/api/profile-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: userData.id, imageData: dataUrl }),
+            })
+          }
+          const updated = { ...userData, profileImage: dataUrl }
+          localStorage.setItem("currentUser", JSON.stringify(updated))
+        } catch {}
+      }
+      setUploadingImage(false)
+    }
+    reader.readAsDataURL(file)
   }
 
   const profileComplete = !!(profileData.major && profileData.year && profileData.bio.trim())
@@ -331,7 +378,33 @@ export default function OnboardingPage() {
               {isProfileStep && (
                 <div>
                   <div className="text-center mb-6">
-                    <div className="text-4xl md:text-5xl mb-3">👤</div>
+                    <div className="relative inline-block mb-3">
+                      <div
+                        onClick={() => profileImageRef.current?.click()}
+                        className="w-24 h-24 rounded-full border-4 border-amber-500/60 overflow-hidden cursor-pointer hover:border-amber-400 transition-colors bg-amber-900/40 flex items-center justify-center mx-auto"
+                      >
+                        {profileData.profileImage ? (
+                          <img src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-4xl">👤</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => profileImageRef.current?.click()}
+                        className="absolute -bottom-1 -right-1 w-8 h-8 bg-amber-500 hover:bg-amber-400 rounded-full flex items-center justify-center text-white text-lg shadow-md"
+                      >
+                        +
+                      </button>
+                      <input
+                        ref={profileImageRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfileImageUpload}
+                      />
+                    </div>
+                    {uploadingImage && <p className="text-xs text-amber-300">Uploading...</p>}
+                    <p className="text-xs text-amber-200/50 mb-2">Tap to add a profile photo</p>
                     <h1 className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">
                       Set Up Your Profile, {profileData.firstName || "there"}!
                     </h1>
