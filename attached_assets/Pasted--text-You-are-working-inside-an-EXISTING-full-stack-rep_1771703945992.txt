@@ -1,0 +1,190 @@
+```text
+You are working inside an EXISTING full-stack repo called “ysup-campus-platform” (Node/Express + MongoDB + JWT + Multer already present).
+
+GOAL
+Remove ALL “Class Networks” placeholder data and ALL placeholder posts from the YsUp Dashboard “Class Networks” area, and replace it with a real Class Network system:
+- If a user has NOT joined any networks: show an empty state with a Search + Create Network CTA.
+- Users can JOIN a network by searching its name (public networks join immediately; private networks require approval).
+- Users can CREATE a network with:
+  1) type: club | organization | class
+  2) name
+  3) description
+  4) moderator/teacher name
+  5) privacy: public | private
+  6) logo image upload
+- Each network has a shareable invite link:
+  - If user is logged in and clicks the invite link -> auto join (public) OR create join request (private), then redirect to the network page.
+  - If user is NOT logged in -> redirect to login/signup; after auth, redirect back to the invite link target and show “Join” / “Request to Join”.
+- Moderators can approve/deny join requests for private networks.
+- Joined networks appear in the “Social Network Book” on the dashboard.
+
+IMPORTANT: REMOVE ALL SEED / SAMPLE DATA
+1) Edit /scripts/seed*.js (or any seed script) to STOP creating sample courses/posts/events that appear as “placeholder” class network posts.
+2) Delete existing Post documents tied to course networks OR ensure the dashboard no longer displays posts unless they belong to a real ClassNetwork model.
+3) Ensure the UI does not render any placeholder cards when no networks exist.
+
+DATA MODEL (MongoDB / Mongoose)
+Create new models:
+
+A) models/ClassNetwork.js
+Fields:
+- name (string, required, unique-ish: enforce unique index on lowercase name)
+- slug (string, required, unique) // URL friendly identifier
+- description (string, required)
+- type (enum: ["club","organization","class"], required)
+- privacy (enum: ["public","private"], required)
+- logoUrl (string, optional) // stored file path or cloud URL
+- moderatorName (string, required)
+- moderatorUserId (ObjectId ref User, required) // creator is moderator
+- members (array of ObjectId ref User) // includes moderator by default
+- createdAt, updatedAt
+
+B) models/NetworkJoinRequest.js
+Fields:
+- networkId (ObjectId ref ClassNetwork, required, indexed)
+- userId (ObjectId ref User, required, indexed)
+- status (enum: ["pending","approved","denied"], default "pending")
+- createdAt, updatedAt
+Indexes:
+- unique compound: { networkId, userId } so user can’t request twice
+
+C) models/NetworkPost.js (OPTIONAL but recommended)
+We are removing “placeholder posts” tied to Course. Posts inside networks should be separate.
+Fields:
+- networkId (ObjectId ref ClassNetwork, required, indexed)
+- authorId (ObjectId ref User, required)
+- content (string, required)
+- createdAt, updatedAt
+
+AUTH + ROLES
+- Use existing JWT auth middleware.
+- Moderator permissions: only moderatorUserId can approve/deny requests and edit network settings.
+
+FILE UPLOAD (LOGO)
+- Reuse existing Multer setup if present (files/upload).
+- Add endpoint for network logo upload in the create network flow.
+- Validate: image only (jpeg/png/webp), max size 2MB.
+
+API ENDPOINTS (Express)
+Add new routes: /api/networks
+
+1) GET /api/networks/mine
+Returns networks where req.user.id is in members.
+
+2) GET /api/networks/search?query=...
+Search by name (case-insensitive), return top 20 with:
+{ _id, name, slug, type, privacy, logoUrl, description, memberCount }
+
+3) POST /api/networks
+Create network (auth required)
+Body: { name, description, type, privacy, moderatorName }
+Logo upload: multipart/form-data with “logo” file (optional)
+Server:
+- generate slug from name (kebab-case), ensure unique by appending -2, -3 if needed
+- set moderatorUserId = req.user.id
+- add creator to members automatically
+Return created network + inviteLink
+
+4) GET /api/networks/:slug
+Get network public page:
+- if privacy=public: details visible
+- if privacy=private:
+   - show limited details (name, type, logo) but require membership/approval status to see feed
+Return:
+{ network, isMember, joinStatus: "none|pending|approved|denied", canModerate }
+
+5) POST /api/networks/:slug/join
+Auth required
+If public:
+- add user to members if not already
+- delete any pending request
+Return { joined: true }
+If private:
+- create join request (pending) if not exists
+Return { joined: false, requested: true }
+
+6) GET /api/networks/:slug/requests (moderator only)
+List pending join requests with user info.
+
+7) POST /api/networks/:slug/requests/:requestId/approve (moderator only)
+- mark approved
+- add user to members
+Return updated request
+
+8) POST /api/networks/:slug/requests/:requestId/deny (moderator only)
+- mark denied
+Return updated request
+
+INVITE LINKS
+Implement invite route: /invite/network/:slug
+Frontend behavior:
+- If NOT authenticated: store intended redirect in query param (next=...) or localStorage and push to /login?next=/invite/network/:slug
+- If authenticated:
+   - fetch network by slug
+   - if public: call join, then redirect /dashboard?tab=networks or /networks/:slug
+   - if private: call join (creates request), then redirect /networks/:slug and show “Request sent”
+
+FRONTEND / DASHBOARD REQUIREMENTS
+Update the Dashboard “Class Networks” / “Social Network Book” panel:
+
+1) Remove any hardcoded networks / placeholder cards / placeholder posts.
+2) On load, call GET /api/networks/mine
+- If empty:
+  - show Empty State:
+    - Title: “No Class Networks Yet”
+    - Search input (search by name)
+    - Button: “Create a Network”
+3) Search UX:
+- As user types, call /api/networks/search?query=...
+- Show list results with name + type + privacy badge + logo thumbnail
+- Each result has button:
+   - “Join” if public
+   - “Request to Join” if private
+- After join/request, refresh /mine and show the network in the book.
+4) Create Network modal/page:
+Fields:
+- Type dropdown (club/organization/class)
+- Network name
+- Description (textarea)
+- Moderator/Teacher name
+- Privacy toggle (public/private)
+- Logo upload (image)
+Submit calls POST /api/networks (multipart)
+After create:
+- show success screen with “Copy Invite Link” button
+- navigate to /networks/:slug
+5) Network Page /networks/:slug
+- Header: logo, name, type, privacy
+- If user is member: show Network feed (NetworkPost) OR placeholder “No posts yet” (not seeded!)
+- If not member:
+   - If public: show Join button
+   - If private: show Request to Join / Pending / Denied states
+- If moderator:
+   - Show “Join Requests” tab with approve/deny actions
+
+DATABASE CLEANUP / MIGRATION
+- Add a one-time script or admin route (dev only) to remove old Course-based “posts” displayed in networks UI.
+- Ensure UI only reads posts from NetworkPost (or none at all until you implement posting).
+
+VALIDATION + SECURITY
+- Validate all inputs server-side.
+- Prevent duplicate membership.
+- Prevent non-moderators from accessing requests endpoints.
+- Rate limit search endpoint if rate limiter exists.
+
+DELIVERABLES
+- New Mongoose models: ClassNetwork, NetworkJoinRequest, (optional) NetworkPost
+- New Express routes/controllers for networks + invite behavior
+- Updated dashboard UI that shows zero placeholders and supports create/search/join flows
+- Auth redirect flow for invite links (login/signup -> back to invite -> join/request -> network page)
+- Moderator approve/deny workflow for private networks
+
+QUALITY BAR
+- No placeholder networks or placeholder posts appear anywhere.
+- Empty states are clean and intentional.
+- Invite links work both logged-in and logged-out.
+- Public networks join instantly; private networks create pending requests.
+- Networks the user joined appear in the dashboard “Social Network Book”.
+
+Now implement these changes end-to-end in this repo. Use the repo’s existing patterns for routing, auth middleware, error handling, and uploads. Add minimal but clear UI styling consistent with the current YsUp dashboard.
+```
