@@ -425,34 +425,132 @@ export default function DashboardPage() {
     setTimeout(() => setInviteLinkCopied(""), 2000)
   }
 
-  const [events, setEvents] = useState([
-    {
-      id: "1",
-      title: "Calculus 2 Lecture",
-      time: "3:00pm",
-      date: "December 19",
-      attendees: ["You"],
-      creator: "Professor Johnson",
-    },
-    {
-      id: "2",
-      title: "Movie Night: Harry Potter Part 2",
-      time: "3:00pm",
-      date: "December 20",
-      attendees: ["You"],
-      creator: "Student Center",
-    },
-  ])
+  interface CalendarEvent {
+    id: number
+    title: string
+    description: string | null
+    event_date: string
+    event_time: string
+    location: string | null
+    creator_id: number
+    creator_first_name: string
+    creator_last_name: string
+    creator_username: string
+    total_invited: string
+    going_count: string
+    maybe_count: string
+    not_going_count: string
+    my_rsvp: string | null
+  }
+
+  interface NetworkForInvite {
+    id: number
+    name: string
+    slug: string
+    type: string
+    member_count: string
+  }
+
+  interface NetworkMember {
+    id: number
+    first_name: string
+    last_name: string
+    username: string
+  }
+
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [pendingInvites, setPendingInvites] = useState<any[]>([])
 
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [newEvent, setNewEvent] = useState({
     title: "",
-    time: "",
+    description: "",
     date: "",
-    selectedInvitees: [] as string[],
+    time: "",
+    location: "",
+    selectedNetworkIds: [] as number[],
+    selectedUserIds: [] as number[],
   })
+  const [inviteNetworks, setInviteNetworks] = useState<NetworkForInvite[]>([])
+  const [networkMembers, setNetworkMembers] = useState<{ [networkId: number]: NetworkMember[] }>({})
+  const [expandedNetwork, setExpandedNetwork] = useState<number | null>(null)
+  const [creatingEvent, setCreatingEvent] = useState(false)
+  const [rsvpingEvent, setRsvpingEvent] = useState<number | null>(null)
 
-  const classmates = ["Nick Fisher", "Amanda Winston", "Nick Harper", "Gary Jackson", "Ann Washington", "Theo Robinson"]
+  const fetchCalendarEvents = async () => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+    setEventsLoading(true)
+    try {
+      const res = await fetch(`/api/events?userId=${userData.id}`)
+      const data = await res.json()
+      if (data.success) setCalendarEvents(data.events)
+    } catch (err) {
+      console.error("Fetch events error:", err)
+    } finally {
+      setEventsLoading(false)
+    }
+  }
+
+  const fetchPendingInvites = async () => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+    try {
+      const res = await fetch(`/api/events/invites?userId=${userData.id}`)
+      const data = await res.json()
+      if (data.success) setPendingInvites(data.invites)
+    } catch (err) {
+      console.error("Fetch invites error:", err)
+    }
+  }
+
+  const fetchInviteNetworks = async () => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+    try {
+      const res = await fetch(`/api/events/network-members?userId=${userData.id}`)
+      const data = await res.json()
+      if (data.success) setInviteNetworks(data.networks)
+    } catch (err) {
+      console.error("Fetch invite networks error:", err)
+    }
+  }
+
+  const fetchNetworkMembers = async (networkId: number) => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+    try {
+      const res = await fetch(`/api/events/network-members?userId=${userData.id}&networkId=${networkId}`)
+      const data = await res.json()
+      if (data.success) {
+        setNetworkMembers(prev => ({ ...prev, [networkId]: data.members }))
+      }
+    } catch (err) {
+      console.error("Fetch members error:", err)
+    }
+  }
+
+  useEffect(() => {
+    if (showBluebook) {
+      fetchCalendarEvents()
+      fetchPendingInvites()
+    }
+  }, [showBluebook])
+
+  useEffect(() => {
+    if (showCreateEvent) {
+      fetchInviteNetworks()
+    }
+  }, [showCreateEvent])
 
   const nextFile = () => {
     setCurrentFileIndex((prev) => (prev + 1) % allFiles.length)
@@ -552,37 +650,133 @@ export default function DashboardPage() {
     setNoteContent("")
   }
 
-  const toggleInvitee = (studentName: string) => {
-    const currentInvitees = newEvent.selectedInvitees
-    if (currentInvitees.includes(studentName)) {
-      setNewEvent({
-        ...newEvent,
-        selectedInvitees: currentInvitees.filter((name) => name !== studentName),
-      })
-    } else {
-      setNewEvent({
-        ...newEvent,
-        selectedInvitees: [...currentInvitees, studentName],
-      })
+  const toggleNetworkInvite = (networkId: number) => {
+    setNewEvent(prev => ({
+      ...prev,
+      selectedNetworkIds: prev.selectedNetworkIds.includes(networkId)
+        ? prev.selectedNetworkIds.filter(id => id !== networkId)
+        : [...prev.selectedNetworkIds, networkId],
+    }))
+  }
+
+  const toggleUserInvite = (userId: number) => {
+    setNewEvent(prev => ({
+      ...prev,
+      selectedUserIds: prev.selectedUserIds.includes(userId)
+        ? prev.selectedUserIds.filter(id => id !== userId)
+        : [...prev.selectedUserIds, userId],
+    }))
+  }
+
+  const handleExpandNetwork = async (networkId: number) => {
+    if (expandedNetwork === networkId) {
+      setExpandedNetwork(null)
+      return
+    }
+    setExpandedNetwork(networkId)
+    if (!networkMembers[networkId]) {
+      await fetchNetworkMembers(networkId)
     }
   }
 
-  const handleCreateEvent = () => {
-    if (newEvent.title && newEvent.time && newEvent.date) {
-      const event = {
-        id: Date.now().toString(),
-        title: newEvent.title,
-        time: newEvent.time,
-        date: newEvent.date,
-        attendees: [currentUser.firstName + " " + currentUser.lastName, ...newEvent.selectedInvitees],
-        creator: currentUser.firstName + " " + currentUser.lastName,
-      }
+  const handleCreateEvent = async () => {
+    if (!newEvent.title || !newEvent.time || !newEvent.date) return
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
 
-      setEvents([...events, event])
-      setNewEvent({ title: "", time: "", date: "", selectedInvitees: [] })
-      setShowCreateEvent(false)
-      alert(`Event created and invitations sent to ${newEvent.selectedInvitees.length} classmates!`)
+    setCreatingEvent(true)
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newEvent.title,
+          description: newEvent.description,
+          eventDate: newEvent.date,
+          eventTime: newEvent.time,
+          location: newEvent.location,
+          creatorId: userData.id,
+          inviteNetworkIds: newEvent.selectedNetworkIds,
+          inviteUserIds: newEvent.selectedUserIds,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setNewEvent({ title: "", description: "", date: "", time: "", location: "", selectedNetworkIds: [], selectedUserIds: [] })
+        setShowCreateEvent(false)
+        setExpandedNetwork(null)
+        fetchCalendarEvents()
+      } else {
+        alert(data.message || "Failed to create event")
+      }
+    } catch (err) {
+      console.error("Create event error:", err)
+    } finally {
+      setCreatingEvent(false)
     }
+  }
+
+  const handleRsvp = async (eventId: number, rsvp: string) => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+
+    setRsvpingEvent(eventId)
+    try {
+      const res = await fetch("/api/events/rsvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, userId: userData.id, rsvp }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        fetchCalendarEvents()
+        fetchPendingInvites()
+      }
+    } catch (err) {
+      console.error("RSVP error:", err)
+    } finally {
+      setRsvpingEvent(null)
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: number) => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+
+    if (!confirm("Are you sure you want to delete this event?")) return
+
+    try {
+      const res = await fetch("/api/events/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, userId: userData.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        fetchCalendarEvents()
+      }
+    } catch (err) {
+      console.error("Delete event error:", err)
+    }
+  }
+
+  const formatEventDate = (dateStr: string) => {
+    const d = new Date(dateStr + "T00:00:00")
+    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+  }
+
+  const formatEventTime = (timeStr: string) => {
+    const [h, m] = timeStr.split(":")
+    const hour = parseInt(h)
+    const ampm = hour >= 12 ? "PM" : "AM"
+    const h12 = hour % 12 || 12
+    return `${h12}:${m} ${ampm}`
   }
 
   const handleCosign = (_postId: string) => {}
@@ -1225,162 +1419,315 @@ export default function DashboardPage() {
       {/* Expanded Bluebook Modal */}
       {showBluebook && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="wood-background rounded-lg w-full max-w-6xl h-full max-h-[90vh] overflow-hidden">
-            <div className="bg-blue-700 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-blue-100">YsUp Bluebook - Academic Calendar</h2>
-              <button onClick={() => setShowBluebook(false)} className="text-blue-100 hover:text-white">
-                <X className="w-6 h-6" />
-              </button>
+          <div className="wood-background rounded-lg w-full max-w-4xl h-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-blue-700 p-3 md:p-4 flex items-center justify-between shrink-0">
+              <h2 className="text-lg md:text-xl font-bold text-blue-100">YsUp Bluebook - Calendar</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-blue-200 text-sm hidden sm:inline">
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </span>
+                <button onClick={() => setShowBluebook(false)} className="text-blue-100 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-8 h-full overflow-y-auto">
-              <div className="bg-blue-200 rounded-lg shadow-2xl p-8 border-l-8 border-blue-400 max-w-4xl mx-auto">
-                <div className="notebook-holes"></div>
+            <div className="p-4 md:p-6 overflow-y-auto flex-1">
+              <div className="mb-4 text-center">
+                <button
+                  onClick={() => setShowCreateEvent(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg flex items-center space-x-2 mx-auto text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create New Event</span>
+                </button>
+              </div>
 
-                <div className="ml-12">
-                  {/* Create Event Section */}
-                  <div className="mb-6 text-center">
-                    <button
-                      onClick={() => setShowCreateEvent(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 mx-auto"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span>Create New Event</span>
-                    </button>
-                  </div>
-
-                  {showCreateEvent && (
-                    <div className="mb-6 bg-blue-50 p-6 rounded-lg border">
-                      <h3 className="text-lg font-bold text-blue-800 mb-4">Create New Event</h3>
-                      <div className="space-y-4">
+              {/* Create Event Form */}
+              {showCreateEvent && (
+                <div className="mb-6 bg-blue-50 p-4 md:p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-bold text-blue-800 mb-4">Create New Event</h3>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Event Title *"
+                      value={newEvent.title}
+                      onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                      className="w-full px-3 py-2 border rounded text-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Description (optional)"
+                      value={newEvent.description}
+                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                      className="w-full px-3 py-2 border rounded text-sm"
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Date *</label>
                         <input
-                          type="text"
-                          placeholder="Event Title"
-                          value={newEvent.title}
-                          onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                          className="w-full px-3 py-2 border rounded"
+                          type="date"
+                          value={newEvent.date}
+                          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                          className="w-full px-3 py-2 border rounded text-sm"
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                          <input
-                            type="time"
-                            value={newEvent.time}
-                            onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                            className="px-3 py-2 border rounded"
-                          />
-                          <input
-                            type="date"
-                            value={newEvent.date}
-                            onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                            className="px-3 py-2 border rounded"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Invite Classmates:</label>
-                          <div className="max-h-48 overflow-y-auto border rounded p-3 bg-white">
-                            {classmates.map((student) => (
-                                <div key={student} className="flex items-center space-x-2 mb-2">
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Time *</label>
+                        <input
+                          type="time"
+                          value={newEvent.time}
+                          onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                          className="w-full px-3 py-2 border rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Location (optional)"
+                      value={newEvent.location}
+                      onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                      className="w-full px-3 py-2 border rounded text-sm"
+                    />
+
+                    {/* Invite from Networks */}
+                    <div>
+                      <label className="block text-sm font-medium text-blue-800 mb-2">Invite from your Networks:</label>
+                      {inviteNetworks.length === 0 ? (
+                        <p className="text-sm text-gray-500 italic">Join a Class Network first to invite people to events.</p>
+                      ) : (
+                        <div className="border rounded bg-white max-h-64 overflow-y-auto">
+                          {inviteNetworks.map((net) => (
+                            <div key={net.id} className="border-b last:border-b-0">
+                              <div className="flex items-center justify-between p-3">
+                                <div className="flex items-center space-x-2">
                                   <input
                                     type="checkbox"
-                                    id={`invite-${student}`}
-                                    checked={newEvent.selectedInvitees.includes(student)}
-                                    onChange={() => toggleInvitee(student)}
+                                    checked={newEvent.selectedNetworkIds.includes(net.id)}
+                                    onChange={() => toggleNetworkInvite(net.id)}
                                     className="w-4 h-4 text-blue-600"
                                   />
-                                  <label htmlFor={`invite-${student}`} className="text-sm cursor-pointer">
-                                    {student}
-                                  </label>
+                                  <div>
+                                    <span className="text-sm font-medium">{net.name}</span>
+                                    <span className="text-xs text-gray-500 ml-2">({net.member_count} members)</span>
+                                  </div>
                                 </div>
-                              ))}
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            Selected: {newEvent.selectedInvitees.length} classmates
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={handleCreateEvent}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-                          >
-                            Create Event
-                          </button>
-                          <button
-                            onClick={() => setShowCreateEvent(false)}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                                <button
+                                  onClick={() => handleExpandNetwork(net.id)}
+                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  {expandedNetwork === net.id ? "Hide Members" : "Pick Members"}
+                                </button>
+                              </div>
 
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="bg-blue-100 p-6 rounded-lg">
-                      <div className="flex justify-between items-center mb-4">
-                        <button className="text-blue-600 text-sm hover:underline">Back to Top</button>
-                        <button className="text-blue-600 text-sm hover:underline">Previous Day</button>
-                      </div>
-                      <div className="space-y-4 text-sm">
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">3:00pm</strong>
-                          <div>Calculus 2 Lecture</div>
-                          <div className="text-gray-600">Professor Johnson - Science Hall 201</div>
+                              {expandedNetwork === net.id && networkMembers[net.id] && (
+                                <div className="bg-gray-50 px-3 pb-3">
+                                  {networkMembers[net.id].length === 0 ? (
+                                    <p className="text-xs text-gray-500 py-2">No other members in this network yet.</p>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {networkMembers[net.id].map((member) => (
+                                        <div key={member.id} className="flex items-center space-x-2 py-1">
+                                          <input
+                                            type="checkbox"
+                                            checked={newEvent.selectedUserIds.includes(member.id)}
+                                            onChange={() => toggleUserInvite(member.id)}
+                                            className="w-3.5 h-3.5 text-blue-600"
+                                          />
+                                          <span className="text-xs">{member.first_name} {member.last_name} (+{member.username})</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">5:00pm</strong>
-                          <div>Principles of Economics 3 Lecture</div>
-                          <div className="text-gray-600">Professor Smith - Business Building 105</div>
+                      )}
+                      {(newEvent.selectedNetworkIds.length > 0 || newEvent.selectedUserIds.length > 0) && (
+                        <div className="mt-2 text-xs text-blue-700">
+                          {newEvent.selectedNetworkIds.length > 0 && <span>{newEvent.selectedNetworkIds.length} network(s) selected. </span>}
+                          {newEvent.selectedUserIds.length > 0 && <span>{newEvent.selectedUserIds.length} individual(s) selected.</span>}
                         </div>
-                      </div>
-                      <div className="text-center mt-6 p-4 bg-blue-50 rounded">
-                        <div className="text-2xl font-bold text-blue-800">December 19</div>
-                        <div className="text-lg text-blue-600">Friday</div>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="bg-blue-100 p-6 rounded-lg">
-                      <div className="flex justify-between items-center mb-4">
-                        <button className="text-blue-600 text-sm hover:underline">Back to Top</button>
-                        <button className="text-blue-600 text-sm hover:underline">Next Day</button>
-                      </div>
-                      <div className="space-y-4 text-sm">
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">3:00pm</strong>
-                          <div>Movie Night: Harry Potter Part 2</div>
-                          <div className="text-gray-600">Student Center Theater</div>
-                        </div>
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">5:30pm</strong>
-                          <div>Freshman Composition Term Paper Due</div>
-                          <div className="text-gray-600">Submit online via portal</div>
-                        </div>
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">7:30pm</strong>
-                          <div>Finish Laundry</div>
-                          <div className="text-gray-600">Dormitory basement</div>
-                        </div>
-                        <div className="bg-white p-3 rounded shadow">
-                          <strong className="text-blue-800">8:30pm</strong>
-                          <div>Usher @ Ibiza Ladies Free</div>
-                          <div className="text-gray-600">Downtown venue</div>
-                        </div>
-                      </div>
-                      <div className="text-center mt-6 p-4 bg-blue-50 rounded">
-                        <div className="text-2xl font-bold text-blue-800">December 20</div>
-                        <div className="text-lg text-blue-600">Saturday</div>
-                      </div>
+                    <div className="flex space-x-2 pt-2">
+                      <button
+                        onClick={handleCreateEvent}
+                        disabled={creatingEvent || !newEvent.title || !newEvent.date || !newEvent.time}
+                        className={`px-4 py-2 rounded text-sm font-medium ${
+                          creatingEvent || !newEvent.title || !newEvent.date || !newEvent.time
+                            ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700 text-white"
+                        }`}
+                      >
+                        {creatingEvent ? "Creating..." : "Create Event"}
+                      </button>
+                      <button
+                        onClick={() => { setShowCreateEvent(false); setExpandedNetwork(null) }}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  </div>
-
-                  {/* Calendar Navigation */}
-                  <div className="flex justify-center items-center space-x-4 mt-8">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                      Previous Week
-                    </button>
-                    <span className="text-blue-800 font-medium">Week of December 19-25, 2012</span>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Next Week</button>
                   </div>
                 </div>
+              )}
+
+              {/* Pending Invites */}
+              {pendingInvites.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-bold text-blue-200 uppercase tracking-wider mb-3">Pending Invitations</h3>
+                  <div className="space-y-3">
+                    {pendingInvites.map((invite: any) => (
+                      <div key={invite.invite_id} className="bg-blue-900/40 border border-blue-500/40 rounded-lg p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-blue-100">{invite.title}</h4>
+                            <p className="text-xs text-blue-300">
+                              {formatEventDate(invite.event_date)} at {formatEventTime(invite.event_time)}
+                              {invite.location && ` - ${invite.location}`}
+                            </p>
+                            <p className="text-xs text-blue-400 mt-1">
+                              Invited by {invite.creator_first_name} {invite.creator_last_name}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleRsvp(invite.event_id, "going")}
+                              disabled={rsvpingEvent === invite.event_id}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium"
+                            >
+                              I'm Going
+                            </button>
+                            <button
+                              onClick={() => handleRsvp(invite.event_id, "maybe")}
+                              disabled={rsvpingEvent === invite.event_id}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded text-xs font-medium"
+                            >
+                              Maybe
+                            </button>
+                            <button
+                              onClick={() => handleRsvp(invite.event_id, "not_going")}
+                              disabled={rsvpingEvent === invite.event_id}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium"
+                            >
+                              Not Going
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar Events */}
+              <div>
+                <h3 className="text-sm font-bold text-blue-200 uppercase tracking-wider mb-3">Your Events</h3>
+                {eventsLoading ? (
+                  <div className="text-center py-12 text-blue-200">Loading events...</div>
+                ) : calendarEvents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="w-12 h-12 mx-auto text-blue-400 mb-3" />
+                    <p className="text-blue-200">No events yet. Create your first event above!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {calendarEvents.map((event) => {
+                      const isCreator = (() => {
+                        try {
+                          const u = JSON.parse(localStorage.getItem("currentUser") || "{}")
+                          return u.id === event.creator_id
+                        } catch { return false }
+                      })()
+
+                      return (
+                        <div key={event.id} className="bg-blue-100 rounded-lg p-4 border border-blue-300">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-blue-800 text-base">{event.title}</h4>
+                              {event.description && <p className="text-sm text-blue-700 mt-0.5">{event.description}</p>}
+                              <p className="text-sm text-blue-600 mt-1">
+                                {formatEventDate(event.event_date)} at {formatEventTime(event.event_time)}
+                              </p>
+                              {event.location && <p className="text-xs text-blue-500 mt-0.5">{event.location}</p>}
+                              <p className="text-xs text-blue-500 mt-1">
+                                Created by {event.creator_first_name} {event.creator_last_name}
+                              </p>
+                            </div>
+
+                            {isCreator && (
+                              <button
+                                onClick={() => handleDeleteEvent(event.id)}
+                                className="text-red-500 hover:text-red-700 text-xs self-start"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* RSVP Tallies */}
+                          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                            <span className="bg-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-medium">
+                              Invited: {event.total_invited}
+                            </span>
+                            <span className="bg-green-200 text-green-800 px-2.5 py-1 rounded-full font-medium">
+                              Going: {event.going_count}
+                            </span>
+                            <span className="bg-yellow-200 text-yellow-800 px-2.5 py-1 rounded-full font-medium">
+                              Maybe: {event.maybe_count}
+                            </span>
+                            <span className="bg-red-200 text-red-800 px-2.5 py-1 rounded-full font-medium">
+                              Not Going: {event.not_going_count}
+                            </span>
+                          </div>
+
+                          {/* My RSVP status (for invited events) */}
+                          {event.my_rsvp && !isCreator && (
+                            <div className="mt-3 flex items-center gap-2">
+                              <span className="text-xs text-blue-600 font-medium">Your response:</span>
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => handleRsvp(event.id, "going")}
+                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                    event.my_rsvp === "going"
+                                      ? "bg-green-600 text-white"
+                                      : "bg-green-100 text-green-700 hover:bg-green-200"
+                                  }`}
+                                >
+                                  Going
+                                </button>
+                                <button
+                                  onClick={() => handleRsvp(event.id, "maybe")}
+                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                    event.my_rsvp === "maybe"
+                                      ? "bg-yellow-600 text-white"
+                                      : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                  }`}
+                                >
+                                  Maybe
+                                </button>
+                                <button
+                                  onClick={() => handleRsvp(event.id, "not_going")}
+                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                    event.my_rsvp === "not_going"
+                                      ? "bg-red-600 text-white"
+                                      : "bg-red-100 text-red-700 hover:bg-red-200"
+                                  }`}
+                                >
+                                  Not Going
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
