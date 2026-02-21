@@ -22,17 +22,23 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    const books = (data.items || []).map((item: any) => ({
-      id: item.id,
-      title: item.volumeInfo?.title || "Untitled",
-      authors: item.volumeInfo?.authors || [],
-      description: item.volumeInfo?.description || "",
-      thumbnail: item.volumeInfo?.imageLinks?.thumbnail || "",
-      publishedDate: item.volumeInfo?.publishedDate || "",
-      pageCount: item.volumeInfo?.pageCount || 0,
-      previewLink: item.volumeInfo?.previewLink || "",
-      infoLink: item.volumeInfo?.infoLink || "",
-    }));
+    const books = (data.items || []).map((item: any) => {
+      let thumbnail = item.volumeInfo?.imageLinks?.thumbnail || item.volumeInfo?.imageLinks?.smallThumbnail || "";
+      if (thumbnail.startsWith("http://")) {
+        thumbnail = thumbnail.replace("http://", "https://");
+      }
+      return {
+        id: item.id,
+        title: item.volumeInfo?.title || "Untitled",
+        authors: item.volumeInfo?.authors || [],
+        description: item.volumeInfo?.description || "",
+        thumbnail,
+        publishedDate: item.volumeInfo?.publishedDate || "",
+        pageCount: item.volumeInfo?.pageCount || 0,
+        previewLink: item.volumeInfo?.previewLink || "",
+        infoLink: item.volumeInfo?.infoLink || "",
+      };
+    });
 
     return NextResponse.json(books);
   } catch (error) {
