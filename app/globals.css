@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Times New Roman", serif;
+  }
+}
+
+.wood-background {
+  background-image: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+    linear-gradient(135deg, #8b4513 0%, #a0522d 25%, #cd853f 50%, #d2691e 75%, #8b4513 100%);
+  background-size: 400px 400px, 200px 200px, 300px 300px, 100% 100%;
+  position: relative;
+}
+
+.wood-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.1) 2px,
+      rgba(0, 0, 0, 0.1) 4px
+    ), repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.05) 1px, rgba(0, 0, 0, 0.05) 2px);
+  pointer-events: none;
+}
+
+.brick-background {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><defs><pattern id="brick" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse"><rect width="100" height="50" fill="%23B22222"/><rect width="48" height="23" x="1" y="1" fill="%23CD5C5C"/><rect width="48" height="23" x="51" y="26" fill="%23CD5C5C"/></pattern></defs><rect width="100" height="100" fill="url(%23brick)"/></svg>');
+}
+
+.notebook-spiral-left {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 28px,
+    #666 28px,
+    #666 32px,
+    transparent 32px,
+    transparent 60px
+  );
+  position: relative;
+}
+
+.notebook-spiral-left::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ff6b6b;
+  z-index: 1;
+}
+
+.notebook-holes {
+  position: absolute;
+  left: 20px;
+  top: 40px;
+  bottom: 40px;
+  width: 8px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 25px,
+    #333 25px,
+    #333 35px,
+    transparent 35px,
+    transparent 60px
+  );
+  border-radius: 4px;
+}
+
+.notebook-holes::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 25px,
+    rgba(0, 0, 0, 0.8) 30px,
+    rgba(0, 0, 0, 0.8) 30px,
+    transparent 35px,
+    transparent 60px
+  );
+  border-radius: 50%;
+}
+
+.chalkboard-background {
+  background-color: #2d4a2b;
+  background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%),
+    linear-gradient(-45deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%);
+  background-size: 200px 200px, 150px 150px, 100px 100px, 100px 100px;
+  position: relative;
+}
+
+.chalkboard-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    );
+  pointer-events: none;
+}
+
+.chalk-text {
+  color: #f0f0f0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.clipboard {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  border: 3px solid #654321;
+  position: relative;
+}
+
+.clipboard::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 20px;
+  background: #c0c0c0;
+  border-radius: 5px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.clipboard-paper {
+  background: #fffef7;
+  margin: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.clipboard-paper::before {
+  content: "";
+  position: absolute;
+  left: 40px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ff6b6b;
+}
+
+.clipboard-lines {
+  background-image: repeating-linear-gradient(transparent, transparent 23px, #e0e0e0 23px, #e0e0e0 24px);
+  background-size: 100% 24px;
+}
