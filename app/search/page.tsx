@@ -176,7 +176,7 @@ function SearchContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
-      performSearch(query)
+      window.location.href = `/search?q=${encodeURIComponent(query)}`
     }
   }
 
