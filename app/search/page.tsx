@@ -43,6 +43,18 @@ interface WikiArticle {
   url: string
 }
 
+interface ScholarArticle {
+  id: string
+  title: string
+  authors: string
+  snippet: string
+  url: string
+  citedBy: number
+  year: string
+  source: string
+  pdfUrl: string
+}
+
 interface CampusUser {
   id: number
   username: string
@@ -51,7 +63,7 @@ interface CampusUser {
   college: string
 }
 
-type TabType = "all" | "books" | "wikipedia" | "users"
+type TabType = "all" | "scholar" | "books" | "wikipedia" | "users"
 
 function SearchContent() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
@@ -60,6 +72,7 @@ function SearchContent() {
   const [query, setQuery] = useState("")
   const [activeTab, setActiveTab] = useState<TabType>("all")
   const [books, setBooks] = useState<Book[]>([])
+  const [scholarArticles, setScholarArticles] = useState<ScholarArticle[]>([])
   const [wikiArticles, setWikiArticles] = useState<WikiArticle[]>([])
   const [campusUsers, setCampusUsers] = useState<CampusUser[]>([])
   const [loading, setLoading] = useState(false)
@@ -106,6 +119,20 @@ function SearchContent() {
         )
       } else {
         setBooks([])
+      }
+
+      if (activeTab === "all" || activeTab === "scholar") {
+        fetches.push(
+          fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              if (Array.isArray(data)) setScholarArticles(data)
+              else setScholarArticles([])
+            })
+            .catch(() => setScholarArticles([]))
+        )
+      } else {
+        setScholarArticles([])
       }
 
       if (activeTab === "all" || activeTab === "wikipedia") {
@@ -189,11 +216,12 @@ function SearchContent() {
     }
   }
 
-  const totalResults = books.length + wikiArticles.length + campusUsers.length
+  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length
 
   const sidebarCategories = [
     { label: "Everything", icon: <Search className="w-4 h-4" />, tab: "all" as TabType, count: totalResults },
-    { label: "Scholarly Sources", icon: <GraduationCap className="w-4 h-4" />, tab: "books" as TabType, count: books.length },
+    { label: "Scholarly Articles", icon: <GraduationCap className="w-4 h-4" />, tab: "scholar" as TabType, count: scholarArticles.length },
+    { label: "Books", icon: <BookOpen className="w-4 h-4" />, tab: "books" as TabType, count: books.length },
     { label: "Encyclopedia", icon: <Globe className="w-4 h-4" />, tab: "wikipedia" as TabType, count: wikiArticles.length },
     { label: "Campus Users", icon: <Users className="w-4 h-4" />, tab: "users" as TabType, count: campusUsers.length },
   ]
@@ -510,6 +538,122 @@ function SearchContent() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </section>
+                )}
+
+                {/* Scholarly Articles */}
+                {(activeTab === "all" || activeTab === "scholar") && scholarArticles.length > 0 && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                      Scholarly Articles ({scholarArticles.length})
+                    </h2>
+                    <div className="space-y-3">
+                      {scholarArticles.map((article) => {
+                        const summaryKey = `scholar-${article.id}`
+                        return (
+                          <div
+                            key={article.id}
+                            className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 transition-all"
+                          >
+                            <div className="flex gap-3">
+                              <div className="w-10 h-10 bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-green-300" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-bold text-amber-200 mb-1" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
+                                  {article.url ? (
+                                    <a href={article.url} target="_blank" rel="noopener noreferrer" className="hover:text-amber-100 transition-colors">
+                                      {article.title}
+                                    </a>
+                                  ) : (
+                                    article.title
+                                  )}
+                                </h3>
+                                <p className="text-amber-400 text-xs mb-1">
+                                  {article.authors}
+                                  {article.year && <span> &middot; {article.year}</span>}
+                                  {article.source && <span> &middot; {article.source}</span>}
+                                </p>
+                                {article.citedBy > 0 && (
+                                  <p className="text-amber-500 text-xs mb-2">
+                                    Cited by {article.citedBy.toLocaleString()}
+                                  </p>
+                                )}
+                                <p className="text-amber-200 text-sm line-clamp-2 mb-3 opacity-80">
+                                  {article.snippet}
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    onClick={() =>
+                                      handleSummarize(
+                                        article.title,
+                                        article.snippet,
+                                        "scholar",
+                                        article.id
+                                      )
+                                    }
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg text-sm font-medium transition-colors"
+                                  >
+                                    {loadingSummaries[summaryKey] ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="w-4 h-4" />
+                                    )}
+                                    AI Summary
+                                    {summaries[summaryKey] &&
+                                      (expandedSummaries[summaryKey] ? (
+                                        <ChevronUp className="w-3 h-3" />
+                                      ) : (
+                                        <ChevronDown className="w-3 h-3" />
+                                      ))}
+                                  </button>
+                                  {article.url && (
+                                    <a
+                                      href={article.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-200 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      <ExternalLink className="w-4 h-4" />
+                                      View Article
+                                    </a>
+                                  )}
+                                  {article.pdfUrl && (
+                                    <a
+                                      href={article.pdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 px-3 py-1.5 bg-green-800 hover:bg-green-700 text-green-100 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                      PDF
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {expandedSummaries[summaryKey] && (
+                              <div className="mt-3 bg-amber-900 bg-opacity-50 border border-amber-700 rounded-lg p-4">
+                                {loadingSummaries[summaryKey] ? (
+                                  <div className="flex items-center gap-2 text-amber-300">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Generating AI summary...
+                                  </div>
+                                ) : (
+                                  <p className="text-amber-200 text-sm leading-relaxed">
+                                    {summaries[summaryKey]}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </section>
                 )}
