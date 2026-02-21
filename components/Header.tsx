@@ -297,7 +297,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               >
                 <input
                   type="text"
-                  placeholder="Search Online"
+                  placeholder="Search YsUp"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -411,7 +411,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search Online"
+                  placeholder="Search YsUp"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
