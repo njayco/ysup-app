@@ -331,8 +331,8 @@ export default function OnboardingPage() {
               {isProfileStep && (
                 <div>
                   <div className="text-center mb-6">
-                    <div className="text-5xl mb-3">👤</div>
-                    <h1 className="text-3xl font-bold text-yellow-400 mb-2">
+                    <div className="text-4xl md:text-5xl mb-3">👤</div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">
                       Set Up Your Profile, {profileData.firstName || "there"}!
                     </h1>
                     <p className="text-amber-100/60 text-sm">
