@@ -70,6 +70,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "userId and name required" }, { status: 400 });
     }
 
+    const storageResult = await pool.query(
+      `SELECT COALESCE(SUM(LENGTH(file_data)), 0) as total_bytes
+       FROM user_files WHERE user_id = $1`,
+      [userId]
+    );
+    const tierResult = await pool.query(
+      `SELECT subscription_tier, storage_limit_bytes FROM users WHERE id = $1`,
+      [userId]
+    );
+    const currentUsed = parseInt(storageResult.rows[0]?.total_bytes || "0");
+    const limitBytes = parseInt(tierResult.rows[0]?.storage_limit_bytes || "104857600");
+    const newFileSize = fileData ? fileData.length : 0;
+
+    if (currentUsed + newFileSize > limitBytes) {
+      const tier = tierResult.rows[0]?.subscription_tier || "free";
+      return NextResponse.json({
+        error: "storage_limit_exceeded",
+        tier,
+        usedBytes: currentUsed,
+        limitBytes,
+        message: tier === "free"
+          ? "You've reached your 100MB storage limit. Upgrade to YsUp Honors for 10GB of storage and access to YsUp Academy for $5/mo."
+          : "You've reached your storage limit.",
+      }, { status: 413 });
+    }
+
     const result = await pool.query(
       `INSERT INTO user_files (user_id, name, type, file_data, thumbnail, position_x, position_y, position_rotation, shared_by, course)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,

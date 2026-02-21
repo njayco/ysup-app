@@ -152,6 +152,8 @@ export default function DashboardPage() {
   const [dragOverTrash, setDragOverTrash] = useState(false)
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null)
   const [isDraggingExternalFile, setIsDraggingExternalFile] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [storageInfo, setStorageInfo] = useState<{ usedMB: number; limitMB: number; tier: string } | null>(null)
 
   const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
@@ -265,6 +267,10 @@ export default function DashboardPage() {
               setAllFiles([...defaultFiles, ...dbFiles])
             }
           })
+          .catch(() => {})
+        fetch(`/api/storage?userId=${userData.id}`)
+          .then((r) => r.json())
+          .then((info) => setStorageInfo(info))
           .catch(() => {})
       }
     }
@@ -614,6 +620,12 @@ export default function DashboardPage() {
                 fileData: dataUrl,
               }
               setAllFiles((prev) => [...prev, newFile])
+              fetch(`/api/storage?userId=${userId}`)
+                .then((r) => r.json())
+                .then((info) => setStorageInfo(info))
+                .catch(() => {})
+            } else if (result.error === "storage_limit_exceeded") {
+              setShowUpgradeModal(true)
             }
           } catch {
             const newFile: PDFFile = {
@@ -1646,6 +1658,20 @@ export default function DashboardPage() {
             <p className="text-amber-500/40 text-xs mt-0.5">or click to browse</p>
           </div>
         </div>
+        {storageInfo && (
+          <div className="mt-3 px-1">
+            <div className="flex items-center justify-between text-xs text-amber-400/70 mb-1">
+              <span>{storageInfo.usedMB}MB of {storageInfo.limitMB}MB used</span>
+              <span>{storageInfo.tier === "free" ? "Free" : "Honors"}</span>
+            </div>
+            <div className="w-full bg-amber-900/30 rounded-full h-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all ${storageInfo.usedMB / storageInfo.limitMB > 0.9 ? "bg-red-500" : "bg-amber-500"}`}
+                style={{ width: `${Math.min((storageInfo.usedMB / storageInfo.limitMB) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
         </div>
       </div>
 
@@ -2752,6 +2778,50 @@ export default function DashboardPage() {
                 className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-md font-medium transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">Storage Limit Reached</h3>
+              <button onClick={() => setShowUpgradeModal(false)} className="text-gray-600 hover:text-gray-800">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mb-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-700 text-sm font-medium">You have reached your {storageInfo?.limitMB || 100}MB free storage limit.</p>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-bold text-yellow-800 mb-2">Upgrade to YsUp Honors</h4>
+                <ul className="text-sm text-yellow-700 space-y-1 mb-3">
+                  <li>- 10GB file storage</li>
+                  <li>- Full access to YsUp Academy</li>
+                  <li>- Priority support</li>
+                </ul>
+                <p className="text-lg font-bold text-yellow-800">$5/month</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowUpgradeModal(false)
+                  window.location.href = "/bookstore"
+                }}
+                className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-md font-medium transition-colors"
+              >
+                Upgrade Now
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-md font-medium transition-colors"
+              >
+                Maybe Later
               </button>
             </div>
           </div>
