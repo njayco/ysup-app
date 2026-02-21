@@ -38,6 +38,11 @@ export default function LoginPage() {
     setSignupData({ ...signupData, phone: formatted })
   }
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-zA-Z0-9_.]/g, "")
+    setSignupData({ ...signupData, username: value })
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -72,6 +77,12 @@ export default function LoginPage() {
     const phoneDigits = signupData.phone.replace(/\D/g, "")
     if (phoneDigits.length !== 10) {
       setError("Please enter a valid 10-digit phone number")
+      setIsLoading(false)
+      return
+    }
+
+    if (!/^[a-zA-Z0-9_.]+$/.test(signupData.username)) {
+      setError("Username can only contain letters, numbers, underscores, and dots")
       setIsLoading(false)
       return
     }
@@ -242,9 +253,9 @@ export default function LoginPage() {
                         <input
                           type="text"
                           value={signupData.username}
-                          onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
+                          onChange={handleUsernameChange}
                           className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded bg-white text-gray-800 shadow-sm"
-                          placeholder="username (min 4 characters)"
+                          placeholder="letters, numbers, _ and . only"
                           minLength={4}
                           required
                         />

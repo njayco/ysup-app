@@ -30,6 +30,10 @@ export async function signupUser(formData: FormData) {
       return { success: false, error: "Username must be at least 4 characters long" }
     }
 
+    if (!/^[a-zA-Z0-9_.]+$/.test(username)) {
+      return { success: false, error: "Username can only contain letters, numbers, underscores, and dots" }
+    }
+
     if (password.length < 6) {
       return { success: false, error: "Password must be at least 6 characters long" }
     }
