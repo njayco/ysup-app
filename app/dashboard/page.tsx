@@ -151,6 +151,7 @@ export default function DashboardPage() {
   >([])
   const [dragOverTrash, setDragOverTrash] = useState(false)
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null)
+  const [isDraggingExternalFile, setIsDraggingExternalFile] = useState(false)
 
   const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
@@ -541,6 +542,39 @@ export default function DashboardPage() {
 
   const prevFile = () => {
     setCurrentFileIndex((prev) => (prev - 1 + allFiles.length) % allFiles.length)
+  }
+
+  const handleExternalFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingExternalFile(false)
+    if (e.dataTransfer.getData("text/plain")) return
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      const file = files[0]
+      const validTypes = [".pdf", ".doc", ".docx", ".ppt", ".pptx"]
+      const isValid = validTypes.some((ext) => file.name.toLowerCase().endsWith(ext))
+      if (!isValid) return
+
+      const fakeEvent = {
+        target: { files: [file] },
+      } as unknown as React.ChangeEvent<HTMLInputElement>
+      handleFileUpload(fakeEvent)
+    }
+  }
+
+  const handleExternalDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDraggingExternalFile(true)
+    }
+  }
+
+  const handleExternalDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingExternalFile(false)
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1394,6 +1428,21 @@ export default function DashboardPage() {
         </div>
 
         {/* Grid Items: files + folders + sticky notes, paginated */}
+        <div
+          onDrop={handleExternalFileDrop}
+          onDragOver={handleExternalDragOver}
+          onDragLeave={handleExternalDragLeave}
+          className={`relative rounded-xl transition-all duration-200 ${isDraggingExternalFile ? "ring-2 ring-dashed ring-amber-500 bg-amber-50/50" : ""}`}
+        >
+          {isDraggingExternalFile && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-amber-50/80 rounded-xl pointer-events-none">
+              <div className="text-center">
+                <Upload className="w-12 h-12 mx-auto text-amber-600 mb-2" />
+                <p className="text-amber-800 font-semibold text-lg">Drop your file here</p>
+                <p className="text-amber-600 text-sm">PDF, DOC, DOCX, PPT, PPTX</p>
+              </div>
+            </div>
+          )}
         {(() => {
           const gridItems: ({ type: "file"; data: PDFFile } | { type: "folder"; data: typeof folders[0] } | { type: "note"; data: StickyNote })[] = []
 
@@ -1587,6 +1636,17 @@ export default function DashboardPage() {
             </>
           )
         })()}
+
+        <div className="flex items-center justify-center py-6 mt-4 border-2 border-dashed border-amber-600/40 rounded-xl bg-amber-900/10 cursor-pointer hover:border-amber-500/60 hover:bg-amber-900/20 transition-all"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="text-center">
+            <Upload className="w-8 h-8 mx-auto text-amber-500/60 mb-1" />
+            <p className="text-amber-400/80 font-medium text-sm">Drag and Drop PDF Files Here</p>
+            <p className="text-amber-500/40 text-xs mt-0.5">or click to browse</p>
+          </div>
+        </div>
+        </div>
       </div>
 
       {/* Expanded Bluebook Modal */}
