@@ -29,7 +29,11 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
 
 ## Recent Changes
-- Added onboarding page (/onboarding) with multi-step feature walkthrough and profile setup checklist
+- Rebuilt onboarding page (/onboarding) with full guided setup wizard:
+  - Step 1: Student Profile Setup with major, year, bio fields and completion checklist (required before proceeding)
+  - Steps 2-10: Feature walkthroughs for Dashboard, YsUp Book, YBucks system, HU Bookstore, Bulletin Board, The Hilltop, The Game, Bison Web, Academy with detailed explanations and tips
+  - Final completion step with summary and Go to Dashboard button
+  - Profile data saved to localStorage on step transitions and completion
 - Signup now redirects to onboarding instead of dashboard; uses window.location.href for reliable navigation
 - Fixed signup getting stuck by adding proper error handling (finally block resets loading state)
 - Added PostgreSQL database with users table for authentication (username, phone, password_hash, first_name, last_name, college)
