@@ -1642,7 +1642,7 @@ export default function DashboardPage() {
         >
           <div className="text-center">
             <Upload className="w-8 h-8 mx-auto text-amber-500/60 mb-1" />
-            <p className="text-amber-400/80 font-medium text-sm">Drag and Drop PDF Files Here</p>
+            <p className="text-amber-400/80 font-medium text-sm">Drag and Drop Files Here (PDF, DOC, DOCX, PPT, or PPTX supported)</p>
             <p className="text-amber-500/40 text-xs mt-0.5">or click to browse</p>
           </div>
         </div>
