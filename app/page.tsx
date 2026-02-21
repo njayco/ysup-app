@@ -3,74 +3,17 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import Link from "next/link"
-import { Search, Book, Globe, Sparkles } from "lucide-react"
+import { Search, Sparkles } from "lucide-react"
 
 export default function HomePage() {
-  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [showResults, setShowResults] = useState(false)
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
-
-    setIsSearching(true)
-    setShowResults(true)
-
-    // Simulate AI search results
-    setTimeout(() => {
-      const mockResults = [
-        {
-          type: "scholarly",
-          title: "Understanding Machine Learning: From Theory to Algorithms",
-          author: "Shai Shalev-Shwartz, Shai Ben-David",
-          source: "Cambridge University Press",
-          snippet:
-            "Machine learning is one of the fastest growing areas of computer science, with far-reaching applications...",
-          image: "/placeholder.svg?height=120&width=80&text=ML+Book",
-          url: "#",
-        },
-        {
-          type: "book",
-          title: "Introduction to Algorithms",
-          author: "Thomas H. Cormen",
-          source: "Google Books",
-          snippet: "This book provides a comprehensive introduction to the modern study of computer algorithms...",
-          image: "/placeholder.svg?height=120&width=80&text=Algorithms",
-          url: "#",
-        },
-        {
-          type: "user",
-          username: "+emmettill",
-          name: "Emmett Till",
-          college: "Howard University",
-          major: "Computer Science",
-          image: "/placeholder.svg?height=40&width=40",
-          online: true,
-        },
-        {
-          type: "user",
-          username: "+sarahjohnson",
-          name: "Sarah Johnson",
-          college: "Howard University",
-          major: "Mathematics",
-          image: "/placeholder.svg?height=40&width=40",
-          online: false,
-        },
-      ]
-      setSearchResults(mockResults)
-      setIsSearching(false)
-    }, 1500)
-  }
-
-  const handleUserMessage = (username: string) => {
-    // This would open the messaging system with the selected user
-    router.push(`/dashboard?message=${username}`)
+    window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
   }
 
   return (
@@ -136,89 +79,13 @@ export default function HomePage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isSearching}
-                  className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-yellow-600 text-amber-900 px-6 py-3 transition-colors"
+                  className="bg-yellow-500 hover:bg-yellow-400 text-amber-900 px-6 py-3 transition-colors"
                 >
-                  {isSearching ? (
-                    <div className="animate-spin w-6 h-6 border-2 border-amber-900 border-t-transparent rounded-full"></div>
-                  ) : (
-                    <Search className="w-6 h-6" />
-                  )}
+                  <Search className="w-6 h-6" />
                 </button>
               </div>
             </div>
           </form>
-
-          {/* Search Results */}
-          {showResults && (
-            <div className="max-w-4xl mx-auto bg-amber-50 rounded-lg shadow-2xl p-6 max-h-96 overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-amber-900">Search Results</h3>
-                <button onClick={() => setShowResults(false)} className="text-amber-700 hover:text-amber-900">
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {searchResults.map((result, index) => (
-                  <div key={index} className="border-b border-amber-200 pb-4 last:border-b-0">
-                    {result.type === "user" ? (
-                      // User Profile Result
-                      <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={result.image || "/placeholder.svg"}
-                            alt={result.name}
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <div>
-                            <div className="font-semibold text-gray-800">{result.name}</div>
-                            <div className="text-sm text-gray-600">{result.username}</div>
-                            <div className="text-xs text-gray-500">
-                              {result.major} • {result.college}
-                            </div>
-                          </div>
-                          {result.online && <div className="w-3 h-3 bg-green-500 rounded-full"></div>}
-                        </div>
-                        <button
-                          onClick={() => handleUserMessage(result.username)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
-                        >
-                          Message
-                        </button>
-                      </div>
-                    ) : (
-                      // Book/Article Result
-                      <div className="flex space-x-4 p-3 bg-white rounded-lg shadow">
-                        <img
-                          src={result.image || "/placeholder.svg"}
-                          alt={result.title}
-                          className="w-16 h-20 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            {result.type === "book" ? (
-                              <Book className="w-4 h-4 text-blue-600" />
-                            ) : (
-                              <Globe className="w-4 h-4 text-green-600" />
-                            )}
-                            <span className="text-xs font-medium text-gray-500 uppercase">{result.source}</span>
-                          </div>
-                          <h4 className="font-semibold text-gray-800 mb-1">{result.title}</h4>
-                          <p className="text-sm text-gray-600 mb-1">by {result.author}</p>
-                          <p className="text-sm text-gray-700">{result.snippet}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {searchResults.length === 0 && !isSearching && (
-                <div className="text-center py-8 text-gray-500">No results found. Try a different search term.</div>
-              )}
-            </div>
-          )}
 
           {/* Quick Access Buttons */}
           <div className="flex justify-center space-x-6 mt-12">
