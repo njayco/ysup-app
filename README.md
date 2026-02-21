@@ -284,7 +284,7 @@ For support and questions:
 **YsUp Campus Network** - Revolutionizing education through engagement and gamification! 🎓✨
 \`\`\`
 
-```typescriptreact file="scripts/seedDatabase.js"
+\`\`\`typescriptreact file="scripts/seedDatabase.js"
 [v0-no-op-code-block-prefix]const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 require("dotenv").config()
