@@ -235,19 +235,22 @@ function SearchContent() {
     }
   }
 
+  const urlQuery = searchParams.get("q") || ""
+
   useEffect(() => {
-    const q = searchParams.get("q")
-    if (q) {
-      setQuery(q)
-      performSearch(q)
+    if (urlQuery) {
+      searchedQueryRef.current = ""
+      setQuery(urlQuery)
+      performSearch(urlQuery)
     }
-  }, [searchParams])
+  }, [urlQuery])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
       searchedQueryRef.current = ""
-      window.location.href = `/search?q=${encodeURIComponent(query)}`
+      const newUrl = `/search?q=${encodeURIComponent(query.trim())}`
+      window.location.href = newUrl
     }
   }
 
