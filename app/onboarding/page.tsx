@@ -74,11 +74,11 @@ const featureWalkthroughs = [
     descriptions: [
       "The YsUp Book is your class network — a social space where you connect with classmates in each of your courses.",
       "Post questions, share study tips, or ask for help with homework. Your classmates in the same course will see your posts.",
-      "When someone helps you or posts something useful, give them a Co-Sign (like a thumbs up). Co-Signs earn the poster YBucks!",
+      "When someone helps you or posts something useful, give them a TRUE (like a thumbs up). TRUEs earn the poster YBucks!",
       "Respond to classmates' questions to earn YBucks yourself. The more you help, the more you earn.",
     ],
     tips: [
-      "Co-Sign helpful posts — it rewards the poster with YBucks",
+      "TRUE helpful posts — it rewards the poster with YBucks",
       "Respond to questions to earn YBucks for yourself",
       "Switch between your different courses using the dropdown",
       "The YsUp Book is found inside your Dashboard notebook",
@@ -92,14 +92,14 @@ const featureWalkthroughs = [
     heading: "Earn Rewards for Helping Others",
     descriptions: [
       "YBucks are the currency of YsUp. You earn them by being an active, helpful member of your campus community.",
-      "Every time you co-sign a classmate's post, respond to a question, or create a helpful post, you earn 100 YBucks.",
+      "Every time you TRUE a classmate's post, respond to a question, or create a helpful post, you earn 100 YBucks.",
       "As you accumulate YBucks, you level up! Each level requires 1,000 YBucks. Higher levels unlock bragging rights and recognition.",
       "Your YBucks balance and current level are always visible on your student ID card on the Dashboard.",
     ],
     tips: [
       "Post a question = +100 YBucks",
       "Respond to a classmate = +100 YBucks",
-      "Co-Sign a helpful post = +100 YBucks",
+      "TRUE a helpful post = +100 YBucks",
       "Every 1,000 YBucks = Level Up!",
     ],
   },
@@ -560,7 +560,7 @@ export default function OnboardingPage() {
                     </div>
                     <div className="bg-amber-900/30 rounded-lg p-3 border border-amber-700/20">
                       <div className="text-2xl mb-1">👍</div>
-                      <p className="text-xs text-amber-200/50">Co-Sign Posts</p>
+                      <p className="text-xs text-amber-200/50">TRUE Posts</p>
                     </div>
                     <div className="bg-amber-900/30 rounded-lg p-3 border border-amber-700/20">
                       <div className="text-2xl mb-1">💰</div>

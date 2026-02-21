@@ -95,7 +95,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         id: "2",
         type: "cosign",
         from: "+amandawinston",
-        content: "co-signed your post about the midterm",
+        content: "TRUE'd your post about the midterm",
         timestamp: new Date().toISOString(),
         read: false,
       },

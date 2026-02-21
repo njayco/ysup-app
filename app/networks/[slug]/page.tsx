@@ -521,7 +521,7 @@ export default function NetworkPage() {
                         className="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center space-x-1 text-sm"
                       >
                         <ThumbsUp className="w-4 h-4" />
-                        <span>Co-sign ({post.cosigns})</span>
+                        <span>TRUE ({post.cosigns})</span>
                       </button>
                       <button
                         onClick={() => toggleResponses(post.id)}
