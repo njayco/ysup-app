@@ -1,77 +1,58 @@
 # YsUp Campus Platform
 
 ## Overview
-YsUp Campus Network is an educational platform built with Next.js 14 (App Router) and an Express.js backend API. It features a campus social network with dashboard, bookstore, academy, bulletin board, game features, and messaging.
+YsUp Campus Network is an HBCU-focused educational platform built with Next.js 14 (App Router). It features an AI-powered academic search engine, campus social network with dashboard, bookstore, academy, bulletin board, game features, and messaging.
 
 ## Project Architecture
 - **Frontend**: Next.js 14 with TypeScript, Tailwind CSS, shadcn/ui components
-- **Backend**: Express.js API server (server.js) with MongoDB (Mongoose)
-- **Real-time**: Socket.io for messaging
+- **Backend**: Next.js API routes (App Router) for search, AI, and auth
 - **Auth**: Next.js server actions with PostgreSQL + bcryptjs password hashing, localStorage session on client
+- **AI**: OpenAI (gpt-4o-mini) via Replit AI Integrations for summaries and overviews
 
 ### Directory Structure
-- `/app` - Next.js App Router pages and server actions
+- `/app` - Next.js App Router pages, API routes, and server actions
+- `/app/api` - API routes: books, scholar, wiki, web-search, ai-overview, summarize, search-users, book-image
+- `/app/search` - AI-powered academic search engine page
 - `/components` - Shared React components (Header, theme-provider)
 - `/lib` - Utility functions
-- `/config` - Database configuration
-- `/middleware` - Express middleware (auth, error handling, validation)
-- `/models` - Mongoose models (User, Course, Event, File, etc.)
-- `/routes` - Express API routes
-- `/scripts` - Database seed and setup scripts
-- `/socket` - Socket.io handlers
 - `/public` - Static assets and images
 
 ## Configuration
 - **Dev server**: `pnpm next dev --turbo -H 0.0.0.0 -p 5000` (Turbopack for fast compilation, no recompilation loop)
 - **Package manager**: pnpm
 - **Deployment**: Autoscale with `pnpm build` and `pnpm next-start`
-- **Backend**: Express server on separate port (not currently integrated with frontend dev workflow)
-- **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
-- **React**: v18.3.1 (downgraded from 19 for Next.js 14 compatibility)
+- **Database**: PostgreSQL (Replit built-in) for user auth and AI summary caching
+- **React**: v18.3.1 (required for Next.js 14 compatibility)
 - **All API routes**: Use `export const dynamic = 'force-dynamic'` for production builds
+- **Pre-warm**: Dev workflow pre-requests / and /search pages after startup for faster first load
+
+## Search Engine Features
+- **Google Books API** (`/api/books`) - Book search with 3D blue-themed carousel
+- **OpenAlex API** (`/api/scholar`) - Scholarly articles with 3D emerald-themed journal carousel
+- **Wikipedia API** (`/api/wiki`) - Encyclopedia article search
+- **DuckDuckGo** (`/api/web-search`) - Free web search via HTML parsing
+- **Campus Users** (`/api/search-users`) - PostgreSQL user search by name/username
+- **AI Overview** (`/api/ai-overview`) - OpenAI-generated topic overviews with PostgreSQL caching
+- **AI Summarize** (`/api/summarize`) - OpenAI-generated summaries with PostgreSQL caching
+- **Book Image Proxy** (`/api/book-image`) - Server-side proxy for Google Books covers
+- **Search categories** (sidebar order): Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
+- All searches run once via Promise.allSettled; tab switching filters cached results
+
+## User Preferences
+- HBCU-focused platform with all 100+ HBCUs in signup dropdown
+- Wood/amber themed UI design
+- Blue book carousel, emerald journal carousel
+- Search categories ordered: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
 
 ## Recent Changes
+- Reordered search category sidebar: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
+- Redesigned book carousel: Blue-themed styled covers matching journal carousel design (removed Google Books image loading)
 - Fixed dev server stability: Switched to Turbopack (--turbo) to eliminate constant webpack recompilation loop
 - Fixed React version: Downgraded from React 19 to 18.3.1 for Next.js 14 compatibility
 - Fixed AI overview/summarize duplicate key errors: Added ON CONFLICT DO UPDATE to PostgreSQL inserts
 - Added force-dynamic exports to all API routes for production build compatibility
-- Pre-warm workflow: Dev server pre-requests / and /search pages after startup for faster first load
-- Major search improvements:
-  - Book images: Added onError fallback with styled 3D book placeholders showing title + author when Google Books image fails
-  - Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)
-  - Scholar carousel: Added 3D journal carousel for scholarly articles (emerald-themed, shows title + author on each journal)
-  - Single search: Search now runs once on submit, results are stored and tab switching just filters (no re-fetch)
-  - Book image proxy improved: Better Referer header, zoom=2 for higher quality, 100-byte minimum size check
-- Fixed book cover images not loading in 3D carousel:
-  - Created /api/book-image server-side proxy route to bypass Google Books CORS/referrer restrictions
-  - Proxy validates URLs (only allows books.google.com and googleapis.com domains)
-  - Carousel now loads thumbnails through proxy with 24-hour cache headers
-- Fixed Wikipedia results not appearing in search:
-  - Refactored performSearch to fetch all categories in parallel with Promise.allSettled
-  - Initial URL-based searches (from ?q= param) now explicitly fetch all categories
-- Added AI-powered academic search engine (/search page):
-  - Google Books API integration (/api/books) - searches and displays book results with thumbnails and 3D carousel
-  - OpenAlex API integration (/api/scholar) - free academic search API with citations, authors, PDF links, abstracts
-  - Wikipedia API integration (/api/wiki) - searches and displays article results with snippets
-  - Campus user search (/api/search-users) - searches PostgreSQL users table by name/username
-  - AI summarization (/api/summarize) - generates academic summaries using OpenAI (gpt-4o-mini) with PostgreSQL caching in summary_cache table
-  - DuckDuckGo web search (/api/web-search) - free web search via HTML parsing, no API key needed
-  - AI Overview (/api/ai-overview) - generates brief topic overviews using OpenAI with PostgreSQL caching
-  - Wood/amber themed UI with filter tabs (Everything, Web, Scholarly Articles, Books, Encyclopedia, Campus Users)
-  - Homepage and header search bars redirect to /search?q=... (no mock results modals)
-  - Installed OpenAI via Replit AI Integrations (uses Replit credits, no API key needed)
-  - OpenAI client configured with AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL
-- Rebuilt onboarding page (/onboarding) with full guided setup wizard:
-  - Step 1: Student Profile Setup with major, year, bio fields and completion checklist (required before proceeding)
-  - Steps 2-10: Feature walkthroughs for Dashboard, YsUp Book, YBucks system, HU Bookstore, Bulletin Board, The Hilltop, The Game, Bison Web, Academy with detailed explanations and tips
-  - Final completion step with summary and Go to Dashboard button
-  - Profile data saved to localStorage on step transitions and completion
-- Signup now redirects to onboarding instead of dashboard; uses window.location.href for reliable navigation
-- Fixed signup getting stuck by adding proper error handling (finally block resets loading state)
-- Added PostgreSQL database with users table for authentication (username, phone, password_hash, first_name, last_name, college)
-- Simplified login to single identifier field (accepts +username or phone number)
-- Auth uses bcryptjs for password hashing, pg for database queries
-- Phone numbers normalized on signup/login for consistent matching
-- Auth guard (useAuth hook) on protected pages redirects to /login
-- Configured for Replit environment (port 5000, host 0.0.0.0)
-- Set up deployment configuration
+- Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)
+- Single search: Search runs once on submit, results cached, tab switching just filters
+- AI-powered academic search engine with wood/amber themed UI
+- Onboarding wizard with 10-step guided setup for new students
+- PostgreSQL auth with bcryptjs password hashing
