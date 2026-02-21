@@ -37,13 +37,15 @@ export default function LoginPage() {
 
       const result = await loginUser(formData)
 
-      if (result.success) {
+      if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
         window.location.href = "/dashboard"
         return
+      } else {
+        setError(result.error || "Login failed")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed")
+      setError("Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -68,13 +70,15 @@ export default function LoginPage() {
 
       const result = await signupUser(formData)
 
-      if (result.success) {
+      if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
         window.location.href = "/onboarding"
         return
+      } else {
+        setError(result.error || "Signup failed")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed")
+      setError("Signup failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
