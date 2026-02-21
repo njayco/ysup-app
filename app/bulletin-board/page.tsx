@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import { X, RotateCcw, Upload, CreditCard, DollarSign, Pin } from "lucide-react"
 
 interface Flyer {
@@ -17,6 +18,7 @@ interface Flyer {
 }
 
 export default function BulletinBoardPage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [selectedFlyer, setSelectedFlyer] = useState<Flyer | null>(null)
   const [showingBack, setShowingBack] = useState(false)
   const [showAdForm, setShowAdForm] = useState(false)
@@ -151,6 +153,10 @@ export default function BulletinBoardPage() {
       default:
         return "w-40 h-52"
     }
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return null
   }
 
   return (

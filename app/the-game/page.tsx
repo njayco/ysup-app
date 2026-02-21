@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import {
   Plus,
   Minus,
@@ -40,6 +41,7 @@ interface GameSession {
 }
 
 export default function TheGamePage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [showRules, setShowRules] = useState(false)
   const [showCreateSession, setShowCreateSession] = useState(false)
   const [currentSession, setCurrentSession] = useState<GameSession | null>(null)
@@ -307,6 +309,10 @@ export default function TheGamePage() {
     a.download = `ysup-game-${currentSession.className}-${currentSession.date}.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return null
   }
 
   return (

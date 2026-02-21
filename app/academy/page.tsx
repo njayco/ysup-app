@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import { Play, ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function AcademyPage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [currentVideo, setCurrentVideo] = useState({
     title: "MIT Calculus Fall 2007",
     subtitle: "Massachusetts Institute of Technology (Lec 29) Integration by Partial Fractions",
@@ -17,6 +19,10 @@ export default function AcademyPage() {
     { name: "Most Popular", active: false },
     { name: "Recently Added", active: false },
   ]
+
+  if (isLoading || !isAuthenticated) {
+    return null
+  }
 
   return (
     <div className="min-h-screen brick-background">

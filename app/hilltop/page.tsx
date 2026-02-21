@@ -4,9 +4,11 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import { ChevronLeft, ChevronRight, Upload, Download, Eye, EyeOff, User, Lock } from "lucide-react"
 
 export default function HilltopPage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -64,6 +66,10 @@ export default function HilltopPage() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
     }
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return null
   }
 
   return (

@@ -4,9 +4,11 @@ import type React from "react"
 
 import { useState } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import { Calendar, Clock, User, BookOpen, GraduationCap } from "lucide-react"
 
 export default function BisonWebPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loginData, setLoginData] = useState({
     userId: "",
@@ -92,6 +94,10 @@ export default function BisonWebPage() {
   const handleLogout = () => {
     setIsLoggedIn(false)
     setLoginData({ userId: "", pin: "" })
+  }
+
+  if (authLoading || !isAuthenticated) {
+    return null
   }
 
   if (!isLoggedIn) {

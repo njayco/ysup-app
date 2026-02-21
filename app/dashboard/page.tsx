@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import {
   Upload,
   Download,
@@ -55,6 +56,7 @@ interface StickyNote {
 }
 
 export default function DashboardPage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [showNotebook, setShowNotebook] = useState(false)
   const [showBluebook, setShowBluebook] = useState(false)
@@ -885,6 +887,10 @@ export default function DashboardPage() {
 
   const handleDeleteForever = (itemId: string) => {
     setRecycleBin(recycleBin.filter((i) => i.id !== itemId))
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return null
   }
 
   return (

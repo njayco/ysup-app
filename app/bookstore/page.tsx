@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Header from "@/components/Header"
+import { useAuth } from "@/lib/useAuth"
 import { Search, ShoppingCart, Star, Download, Eye, Filter, DollarSign, X } from "lucide-react"
 
 interface PDFBook {
@@ -21,6 +22,7 @@ interface PDFBook {
 }
 
 export default function BookstorePage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [cartItems, setCartItems] = useState<string[]>([])
@@ -186,6 +188,10 @@ export default function BookstorePage() {
 
   const handlePurchase = (book: PDFBook) => {
     alert(`Purchase initiated for "${book.title}" - $${book.price}`)
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return null
   }
 
   return (
