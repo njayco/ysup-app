@@ -84,16 +84,9 @@ function SearchContent() {
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [searchTime, setSearchTime] = useState(0)
 
-  useEffect(() => {
-    const q = searchParams.get("q")
-    if (q) {
-      setQuery(q)
-      performSearch(q)
-    }
-  }, [searchParams])
-
-  const performSearch = async (searchQuery: string) => {
+  const performSearch = async (searchQuery: string, tabOverride?: TabType) => {
     if (!searchQuery.trim()) return
+    const tab = tabOverride || activeTab
     setLoading(true)
     setHasSearched(true)
     setCarouselIndex(0)
@@ -103,7 +96,7 @@ function SearchContent() {
     try {
       const fetches: Promise<any>[] = []
 
-      if (activeTab === "all" || activeTab === "books") {
+      if (tab === "all" || tab === "books") {
         fetches.push(
           fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`)
             .then((r) => r.json())
@@ -121,7 +114,7 @@ function SearchContent() {
         setBooks([])
       }
 
-      if (activeTab === "all" || activeTab === "scholar") {
+      if (tab === "all" || tab === "scholar") {
         fetches.push(
           fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`)
             .then((r) => r.json())
@@ -135,7 +128,7 @@ function SearchContent() {
         setScholarArticles([])
       }
 
-      if (activeTab === "all" || activeTab === "wikipedia") {
+      if (tab === "all" || tab === "wikipedia") {
         fetches.push(
           fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`)
             .then((r) => r.json())
@@ -149,7 +142,7 @@ function SearchContent() {
         setWikiArticles([])
       }
 
-      if (activeTab === "all" || activeTab === "users") {
+      if (tab === "all" || tab === "users") {
         fetches.push(
           fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`)
             .then((r) => r.json())
@@ -171,6 +164,14 @@ function SearchContent() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const q = searchParams.get("q")
+    if (q) {
+      setQuery(q)
+      performSearch(q, "all")
+    }
+  }, [searchParams])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -419,7 +420,7 @@ function SearchContent() {
                                 <div className="relative group">
                                   {book.thumbnail ? (
                                     <img
-                                      src={book.thumbnail}
+                                      src={`/api/book-image?url=${encodeURIComponent(book.thumbnail)}`}
                                       alt={book.title}
                                       className="w-40 h-56 object-cover rounded-lg shadow-2xl border-2 border-amber-800"
                                       style={{
