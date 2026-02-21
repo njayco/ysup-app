@@ -15,12 +15,12 @@
   "main": "server.js",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0 -p 5000",
     "format": "prettier --write .",
     "lint": "eslint .",
     "next-build": "next build",
     "next-dev": "next dev",
-    "next-start": "next start",
+    "next-start": "next start -H 0.0.0.0 -p 5000",
     "start": "node server.js"
   },
   "dependencies": {
