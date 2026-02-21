@@ -68,11 +68,11 @@ export default function DashboardPage() {
   const [newResponse, setNewResponse] = useState<{ [key: string]: string }>({})
   const [userYBucks, setUserYBucks] = useState(950)
   const [currentUser, setCurrentUser] = useState({
-    firstName: "Najee",
-    lastName: "Jeremiah",
-    phone: "(202) 555-0123",
-    username: "najeejeremiah",
-    college: "Howard University",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    username: "",
+    college: "",
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -82,15 +82,15 @@ export default function DashboardPage() {
   // Add these new state variables after the existing useState declarations:
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({
-    firstName: "Najee",
-    lastName: "Jeremiah",
-    username: "najeejeremiah",
-    email: "najee.jeremiah@howard.edu",
-    phone: "(202) 555-0123",
-    college: "Howard University",
-    major: "Computer Science",
-    year: "Junior",
-    bio: "Passionate about technology and education. Love helping classmates succeed!",
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    phone: "",
+    college: "",
+    major: "",
+    year: "",
+    bio: "",
     profileImage: "/placeholder.svg?height=150&width=150",
   })
   const [fileSearchQuery, setFileSearchQuery] = useState("")
@@ -150,17 +150,28 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    // Load user data from localStorage
     const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
       const userData = JSON.parse(storedUser)
       setCurrentUser({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone,
-        username: userData.username,
-        college: userData.college,
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        phone: userData.phone || "",
+        username: userData.username || "",
+        college: userData.college || "",
       })
+      setProfileData((prev) => ({
+        ...prev,
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        username: userData.username || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        college: userData.college || "",
+        major: userData.major || "",
+        year: userData.year || "",
+        bio: userData.bio || "",
+      }))
     }
   }, [])
 
@@ -340,7 +351,7 @@ export default function DashboardPage() {
       title: "Calculus 2 Lecture",
       time: "3:00pm",
       date: "December 19",
-      attendees: ["Najee Jeremiah"],
+      attendees: ["You"],
       creator: "Professor Johnson",
     },
     {
@@ -348,7 +359,7 @@ export default function DashboardPage() {
       title: "Movie Night: Harry Potter Part 2",
       time: "3:00pm",
       date: "December 20",
-      attendees: ["Najee Jeremiah"],
+      attendees: ["You"],
       creator: "Student Center",
     },
   ])
@@ -1027,10 +1038,12 @@ export default function DashboardPage() {
               />
               <div className="flex-1">
                 <div className="font-bold text-sm text-gray-800">
-                  {profileData.firstName} {profileData.lastName}
+                  {profileData.firstName || profileData.lastName
+                    ? `${profileData.firstName} ${profileData.lastName}`.trim()
+                    : "Set up profile"}
                 </div>
-                <div className="text-xs text-gray-600">+{profileData.username}</div>
-                <div className="text-xs text-blue-600">{profileData.major}</div>
+                <div className="text-xs text-gray-600">{profileData.username ? `+${profileData.username}` : ""}</div>
+                <div className="text-xs text-blue-600">{profileData.major || "Tap to add major"}</div>
               </div>
             </div>
             <div className="mt-2 text-xs text-gray-500 text-center">Click to edit profile</div>
