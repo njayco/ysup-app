@@ -231,8 +231,7 @@ export default function DashboardPage() {
     }
   }, [moveMode, draggedItem])
 
-  // Update the file positions to avoid overlapping with Bluebook and notebook
-  const [allFiles, setAllFiles] = useState<PDFFile[]>([
+  const defaultFiles: PDFFile[] = [
     {
       id: "bluebook",
       name: "YsUp Bluebook",
@@ -247,7 +246,25 @@ export default function DashboardPage() {
       type: "notebook",
       position: { x: 50, y: 15, rotation: 1 },
     },
-  ])
+  ]
+  const [allFiles, setAllFiles] = useState<PDFFile[]>(defaultFiles)
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      if (userData.id) {
+        fetch(`/api/files?userId=${userData.id}`)
+          .then((r) => r.json())
+          .then((dbFiles) => {
+            if (Array.isArray(dbFiles)) {
+              setAllFiles([...defaultFiles, ...dbFiles])
+            }
+          })
+          .catch(() => {})
+      }
+    }
+  }, [])
 
   const [userLevel, setUserLevel] = useState(1)
   const [showCreatePost, setShowCreatePost] = useState(false)
@@ -527,28 +544,90 @@ export default function DashboardPage() {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const dataUrl = ev.target?.result as string
-        const newFile: PDFFile = {
-          id: Date.now().toString(),
-          name: file.name,
-          thumbnail: "",
-          type: file.type.includes("pdf") ? "pdf" : file.name.endsWith(".ppt") || file.name.endsWith(".pptx") ? "ppt" : "doc",
-          position: { x: Math.random() * 60 + 10, y: Math.random() * 40 + 50, rotation: Math.random() * 10 - 5 },
-          fileData: dataUrl,
+        const fileType = file.type.includes("pdf") ? "pdf" : file.name.endsWith(".ppt") || file.name.endsWith(".pptx") ? "ppt" : "doc"
+        const position = { x: Math.random() * 60 + 10, y: Math.random() * 40 + 50, rotation: Math.random() * 10 - 5 }
+
+        const storedUser = localStorage.getItem("currentUser")
+        const userId = storedUser ? JSON.parse(storedUser).id : null
+
+        if (userId) {
+          try {
+            const res = await fetch("/api/files", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                name: file.name,
+                type: fileType,
+                fileData: dataUrl,
+                thumbnail: "",
+                position,
+              }),
+            })
+            const result = await res.json()
+            if (result.success) {
+              const newFile: PDFFile = {
+                id: result.id,
+                name: file.name,
+                thumbnail: "",
+                type: fileType as PDFFile["type"],
+                position,
+                fileData: dataUrl,
+              }
+              setAllFiles((prev) => [...prev, newFile])
+            }
+          } catch {
+            const newFile: PDFFile = {
+              id: Date.now().toString(),
+              name: file.name,
+              thumbnail: "",
+              type: fileType as PDFFile["type"],
+              position,
+              fileData: dataUrl,
+            }
+            setAllFiles((prev) => [...prev, newFile])
+          }
+        } else {
+          const newFile: PDFFile = {
+            id: Date.now().toString(),
+            name: file.name,
+            thumbnail: "",
+            type: fileType as PDFFile["type"],
+            position,
+            fileData: dataUrl,
+          }
+          setAllFiles((prev) => [...prev, newFile])
         }
-        setAllFiles([...allFiles, newFile])
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleFileClick = (file: PDFFile) => {
+  const handleFileClick = async (file: PDFFile) => {
     if (file.type === "bluebook") {
       setShowBluebook(true)
     } else if (file.type === "notebook") {
       setShowNotebook(true)
     } else {
+      if ((file as any).fromDb && !file.fileData) {
+        const storedUser = localStorage.getItem("currentUser")
+        const userId = storedUser ? JSON.parse(storedUser).id : null
+        if (userId) {
+          try {
+            const res = await fetch(`/api/files?userId=${userId}&fileId=${file.id}`)
+            const data = await res.json()
+            if (data.fileData) {
+              const updatedFile = { ...file, fileData: data.fileData }
+              setAllFiles((prev) => prev.map((f) => (f.id === file.id ? updatedFile : f)))
+              setSelectedFile(updatedFile)
+              setShowFileViewer(true)
+              return
+            }
+          } catch {}
+        }
+      }
       setSelectedFile(file)
       setShowFileViewer(true)
     }
@@ -1052,6 +1131,11 @@ export default function DashboardPage() {
       if (file && !["bluebook", "notebook"].includes(file.type)) {
         setRecycleBin([...recycleBin, file])
         setAllFiles(allFiles.filter((f) => f.id !== itemId))
+        const storedUser = localStorage.getItem("currentUser")
+        const userId = storedUser ? JSON.parse(storedUser).id : null
+        if (userId) {
+          fetch(`/api/files?fileId=${itemId}&userId=${userId}`, { method: "DELETE" }).catch(() => {})
+        }
       }
     } else if (itemType === "note") {
       const note = stickyNotes.find((n) => n.id === itemId)
