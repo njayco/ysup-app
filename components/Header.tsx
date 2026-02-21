@@ -226,6 +226,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     { name: "Bulletin Board", href: "/bulletin-board" },
     { name: "HU Bookstore", href: "/bookstore" },
     { name: "Academy", href: "/academy", badge: "NEW" },
+    { name: "About Us", href: "https://ysup.co", external: true },
   ]
 
   const handleLogout = () => {
@@ -268,22 +269,34 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         </div>
 
         <nav className="flex items-center space-x-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`px-4 py-2 text-amber-100 hover:bg-amber-800 rounded transition-colors relative ${
-                currentPage === item.name ? "bg-amber-800" : ""
-              }`}
-            >
-              {item.name}
-              {item.badge && (
-                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.external ? (
+              <a
+                key={item.name}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-amber-100 hover:bg-amber-800 rounded transition-colors relative"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`px-4 py-2 text-amber-100 hover:bg-amber-800 rounded transition-colors relative ${
+                  currentPage === item.name ? "bg-amber-800" : ""
+                }`}
+              >
+                {item.name}
+                {item.badge && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center space-x-2">
@@ -438,23 +451,38 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
 
             {/* Mobile Navigation Items */}
             <nav className="flex flex-col">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => handleMobileNavClick(item.href)}
-                  className={`px-6 py-4 text-amber-100 hover:bg-amber-800 transition-colors border-b border-amber-700 relative ${
-                    currentPage === item.name ? "bg-amber-800" : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg">{item.name}</span>
-                    {item.badge && (
-                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">{item.badge}</span>
-                    )}
-                  </div>
-                </Link>
-              ))}
+              {navItems.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleMobileNavClick(item.href)}
+                    className="px-6 py-4 text-amber-100 hover:bg-amber-800 transition-colors border-b border-amber-700 relative"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg">{item.name}</span>
+                    </div>
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => handleMobileNavClick(item.href)}
+                    className={`px-6 py-4 text-amber-100 hover:bg-amber-800 transition-colors border-b border-amber-700 relative ${
+                      currentPage === item.name ? "bg-amber-800" : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg">{item.name}</span>
+                      {item.badge && (
+                        <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">{item.badge}</span>
+                      )}
+                    </div>
+                  </Link>
+                )
+              )}
             </nav>
 
             {/* Mobile Menu Footer */}
