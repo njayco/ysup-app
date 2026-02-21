@@ -255,8 +255,8 @@ function SearchContent() {
     e.preventDefault()
     if (query.trim()) {
       searchedQueryRef.current = ""
-      const newUrl = `/search?q=${encodeURIComponent(query.trim())}`
-      window.location.href = newUrl
+      performSearch(query.trim())
+      window.history.pushState({}, "", `/search?q=${encodeURIComponent(query.trim())}`)
     }
   }
 
