@@ -8,6 +8,30 @@ import Header from "@/components/Header"
 import { useAuth } from "@/lib/useAuth"
 
 const PdfViewer = dynamic(() => import("@/components/PdfViewer"), { ssr: false, loading: () => <div className="text-white p-12">Loading PDF viewer...</div> })
+
+async function generatePdfThumbnail(dataUrl: string): Promise<string> {
+  try {
+    // @ts-ignore - pdfjs-dist types handled by react-pdf
+    const pdfjsLib = await import("pdfjs-dist")
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+    const data = atob(dataUrl.split(",")[1])
+    const uint8Array = new Uint8Array(data.length)
+    for (let i = 0; i < data.length; i++) {
+      uint8Array[i] = data.charCodeAt(i)
+    }
+    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise
+    const page = await pdf.getPage(1)
+    const viewport = page.getViewport({ scale: 0.5 })
+    const canvas = document.createElement("canvas")
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    const ctx = canvas.getContext("2d")!
+    await page.render({ canvasContext: ctx, viewport }).promise
+    return canvas.toDataURL("image/jpeg", 0.8)
+  } catch {
+    return "/placeholder.svg?height=200&width=150"
+  }
+}
 import {
   Upload,
   Download,
@@ -525,13 +549,18 @@ export default function DashboardPage() {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const dataUrl = ev.target?.result as string
+        const isPdf = file.type.includes("pdf")
+        let thumbnail = "/placeholder.svg?height=200&width=150"
+        if (isPdf) {
+          thumbnail = await generatePdfThumbnail(dataUrl)
+        }
         const newFile: PDFFile = {
           id: Date.now().toString(),
           name: file.name,
-          thumbnail: "/placeholder.svg?height=200&width=150",
-          type: file.type.includes("pdf") ? "pdf" : file.name.endsWith(".ppt") || file.name.endsWith(".pptx") ? "ppt" : "doc",
+          thumbnail,
+          type: isPdf ? "pdf" : file.name.endsWith(".ppt") || file.name.endsWith(".pptx") ? "ppt" : "doc",
           position: { x: Math.random() * 60 + 10, y: Math.random() * 40 + 50, rotation: Math.random() * 10 - 5 },
           fileData: dataUrl,
         }
