@@ -29,6 +29,13 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
 
 ## Recent Changes
+- Fixed book cover images not loading in 3D carousel:
+  - Created /api/book-image server-side proxy route to bypass Google Books CORS/referrer restrictions
+  - Proxy validates URLs (only allows books.google.com and googleapis.com domains)
+  - Carousel now loads thumbnails through proxy with 24-hour cache headers
+- Fixed Wikipedia results not appearing in search:
+  - Refactored performSearch to accept tabOverride parameter, eliminating stale closure issues
+  - Initial URL-based searches (from ?q= param) now explicitly fetch all categories
 - Added AI-powered academic search engine (/search page):
   - Google Books API integration (/api/books) - searches and displays book results with thumbnails and 3D carousel
   - Google Scholar integration (/api/scholar) - scrapes scholarly articles with citation counts, authors, PDF links
