@@ -39,10 +39,12 @@ export default function LoginPage() {
 
       if (result.success) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
-        router.push("/dashboard")
+        window.location.href = "/dashboard"
+        return
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
+    } finally {
       setIsLoading(false)
     }
   }
@@ -68,10 +70,12 @@ export default function LoginPage() {
 
       if (result.success) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
-        router.push("/dashboard?welcome=true")
+        window.location.href = "/onboarding"
+        return
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
+    } finally {
       setIsLoading(false)
     }
   }

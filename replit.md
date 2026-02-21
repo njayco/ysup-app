@@ -29,6 +29,9 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
 
 ## Recent Changes
+- Added onboarding page (/onboarding) with multi-step feature walkthrough and profile setup checklist
+- Signup now redirects to onboarding instead of dashboard; uses window.location.href for reliable navigation
+- Fixed signup getting stuck by adding proper error handling (finally block resets loading state)
 - Added PostgreSQL database with users table for authentication (username, phone, password_hash, first_name, last_name, college)
 - Simplified login to single identifier field (accepts +username or phone number)
 - Auth uses bcryptjs for password hashing, pg for database queries
