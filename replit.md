@@ -29,16 +29,22 @@ YsUp Campus Network is an educational platform built with Next.js 14 (App Router
 - **Database**: PostgreSQL (Replit built-in) for user auth; MongoDB via Mongoose for backend API (requires MONGODB_URI env var)
 
 ## Recent Changes
+- Major search improvements:
+  - Book images: Added onError fallback with styled 3D book placeholders showing title + author when Google Books image fails
+  - Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)
+  - Scholar carousel: Added 3D journal carousel for scholarly articles (emerald-themed, shows title + author on each journal)
+  - Single search: Search now runs once on submit, results are stored and tab switching just filters (no re-fetch)
+  - Book image proxy improved: Better Referer header, zoom=2 for higher quality, 100-byte minimum size check
 - Fixed book cover images not loading in 3D carousel:
   - Created /api/book-image server-side proxy route to bypass Google Books CORS/referrer restrictions
   - Proxy validates URLs (only allows books.google.com and googleapis.com domains)
   - Carousel now loads thumbnails through proxy with 24-hour cache headers
 - Fixed Wikipedia results not appearing in search:
-  - Refactored performSearch to accept tabOverride parameter, eliminating stale closure issues
+  - Refactored performSearch to fetch all categories in parallel with Promise.allSettled
   - Initial URL-based searches (from ?q= param) now explicitly fetch all categories
 - Added AI-powered academic search engine (/search page):
   - Google Books API integration (/api/books) - searches and displays book results with thumbnails and 3D carousel
-  - Google Scholar integration (/api/scholar) - scrapes scholarly articles with citation counts, authors, PDF links
+  - OpenAlex API integration (/api/scholar) - free academic search API with citations, authors, PDF links, abstracts
   - Wikipedia API integration (/api/wiki) - searches and displays article results with snippets
   - Campus user search (/api/search-users) - searches PostgreSQL users table by name/username
   - AI summarization (/api/summarize) - generates academic summaries using OpenAI (gpt-4o-mini) with PostgreSQL caching in summary_cache table

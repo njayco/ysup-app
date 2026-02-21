@@ -64,6 +64,75 @@ interface CampusUser {
 
 type TabType = "all" | "scholar" | "books" | "wikipedia" | "users"
 
+function BookPlaceholder({ title, authors, isFocused }: { title: string; authors: string[]; isFocused: boolean }) {
+  const authorText = authors.length > 0 ? authors[0] : ""
+  return (
+    <div
+      className="w-40 h-56 rounded-lg border-2 border-amber-700 flex flex-col items-center justify-between overflow-hidden relative"
+      style={{
+        background: "linear-gradient(135deg, #5c3d1e 0%, #8b6914 40%, #6b4c1e 60%, #4a3410 100%)",
+        boxShadow: isFocused
+          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,193,7,0.3), inset -3px 0 8px rgba(0,0,0,0.3)"
+          : "0 10px 30px rgba(0,0,0,0.4), inset -3px 0 8px rgba(0,0,0,0.3)",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 5px)" }} />
+      <div className="absolute left-0 top-0 bottom-0 w-3" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 100%)" }} />
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-4 z-10">
+        <div className="w-8 h-0.5 bg-amber-500 opacity-60 mb-3 rounded-full" />
+        <p className="text-amber-100 text-xs text-center font-bold leading-tight line-clamp-4" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+          {title}
+        </p>
+        <div className="w-6 h-0.5 bg-amber-500 opacity-40 mt-3 rounded-full" />
+      </div>
+      {authorText && (
+        <div className="w-full px-3 pb-3 z-10">
+          <p className="text-amber-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+            {authorText}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function JournalPlaceholder({ title, authors, isFocused }: { title: string; authors: string; isFocused: boolean }) {
+  return (
+    <div
+      className="w-40 h-56 rounded-lg border-2 border-emerald-700 flex flex-col items-center justify-between overflow-hidden relative"
+      style={{
+        background: "linear-gradient(135deg, #1a3a2a 0%, #2d5a3d 40%, #1e4a30 60%, #0f2e1d 100%)",
+        boxShadow: isFocused
+          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(16,185,129,0.3), inset -3px 0 8px rgba(0,0,0,0.3)"
+          : "0 10px 30px rgba(0,0,0,0.4), inset -3px 0 8px rgba(0,0,0,0.3)",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)" }} />
+      <div className="absolute left-0 top-0 bottom-0 w-3" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 100%)" }} />
+      <div className="w-full px-3 pt-3 z-10">
+        <div className="flex items-center gap-1 mb-1">
+          <GraduationCap className="w-3 h-3 text-emerald-400 opacity-70" />
+          <p className="text-emerald-400 text-[8px] uppercase tracking-wider opacity-70">Journal</p>
+        </div>
+        <div className="w-full h-0.5 bg-emerald-500 opacity-30 rounded-full" />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-2 z-10">
+        <p className="text-emerald-100 text-xs text-center font-bold leading-tight line-clamp-4" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+          {title}
+        </p>
+      </div>
+      {authors && (
+        <div className="w-full px-3 pb-3 z-10">
+          <div className="w-full h-0.5 bg-emerald-500 opacity-30 rounded-full mb-1" />
+          <p className="text-emerald-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+            {authors}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SearchContent() {
   const searchParams = useSearchParams()
 
@@ -80,82 +149,48 @@ function SearchContent() {
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({})
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const [scholarCarouselIndex, setScholarCarouselIndex] = useState(0)
+  const [selectedScholar, setSelectedScholar] = useState<ScholarArticle | null>(null)
   const [searchTime, setSearchTime] = useState(0)
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
+  const searchedQueryRef = useRef<string>("")
 
-  const performSearch = async (searchQuery: string, tabOverride?: TabType) => {
+  const performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return
-    const tab = tabOverride || activeTab
+    if (searchedQueryRef.current === searchQuery.trim()) return
+    searchedQueryRef.current = searchQuery.trim()
+
     setLoading(true)
     setHasSearched(true)
     setCarouselIndex(0)
+    setScholarCarouselIndex(0)
     setSelectedBook(null)
+    setSelectedScholar(null)
+    setFailedImages(new Set())
     const startTime = Date.now()
 
     try {
-      const fetches: Promise<any>[] = []
+      const [booksRes, scholarRes, wikiRes, usersRes] = await Promise.allSettled([
+        fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+      ])
 
-      if (tab === "all" || tab === "books") {
-        fetches.push(
-          fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`)
-            .then((r) => r.json())
-            .then((data) => {
-              if (Array.isArray(data)) {
-                setBooks(data)
-                if (data.length > 0) setSelectedBook(data[0])
-              } else {
-                setBooks([])
-              }
-            })
-            .catch(() => setBooks([]))
-        )
-      } else {
-        setBooks([])
-      }
+      const booksData = booksRes.status === "fulfilled" && Array.isArray(booksRes.value) ? booksRes.value : []
+      const scholarData = scholarRes.status === "fulfilled" && Array.isArray(scholarRes.value) ? scholarRes.value : []
+      const wikiData = wikiRes.status === "fulfilled" && Array.isArray(wikiRes.value) ? wikiRes.value : []
+      const usersData = usersRes.status === "fulfilled" && Array.isArray(usersRes.value) ? usersRes.value : []
 
-      if (tab === "all" || tab === "scholar") {
-        fetches.push(
-          fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`)
-            .then((r) => r.json())
-            .then((data) => {
-              if (Array.isArray(data)) setScholarArticles(data)
-              else setScholarArticles([])
-            })
-            .catch(() => setScholarArticles([]))
-        )
-      } else {
-        setScholarArticles([])
-      }
+      setBooks(booksData)
+      setScholarArticles(scholarData)
+      setWikiArticles(wikiData)
+      setCampusUsers(usersData)
 
-      if (tab === "all" || tab === "wikipedia") {
-        fetches.push(
-          fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`)
-            .then((r) => r.json())
-            .then((data) => {
-              if (Array.isArray(data)) setWikiArticles(data)
-              else setWikiArticles([])
-            })
-            .catch(() => setWikiArticles([]))
-        )
-      } else {
-        setWikiArticles([])
-      }
+      if (booksData.length > 0) setSelectedBook(booksData[0])
+      if (scholarData.length > 0) setSelectedScholar(scholarData[0])
 
-      if (tab === "all" || tab === "users") {
-        fetches.push(
-          fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`)
-            .then((r) => r.json())
-            .then((data) => {
-              if (Array.isArray(data)) setCampusUsers(data)
-              else setCampusUsers([])
-            })
-            .catch(() => setCampusUsers([]))
-        )
-      } else {
-        setCampusUsers([])
-      }
-
-      await Promise.all(fetches)
-      setSearchTime(((Date.now() - startTime) / 1000))
+      setSearchTime((Date.now() - startTime) / 1000)
     } catch (error) {
       console.error("Search error:", error)
     } finally {
@@ -167,13 +202,14 @@ function SearchContent() {
     const q = searchParams.get("q")
     if (q) {
       setQuery(q)
-      performSearch(q, "all")
+      performSearch(q)
     }
   }, [searchParams])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
+      searchedQueryRef.current = ""
       window.location.href = `/search?q=${encodeURIComponent(query)}`
     }
   }
@@ -233,11 +269,29 @@ function SearchContent() {
     }
   }
 
+  const scrollScholarCarousel = (direction: "left" | "right") => {
+    if (direction === "left" && scholarCarouselIndex > 0) {
+      setScholarCarouselIndex(scholarCarouselIndex - 1)
+    } else if (direction === "right" && scholarCarouselIndex < scholarArticles.length - 1) {
+      setScholarCarouselIndex(scholarCarouselIndex + 1)
+    }
+  }
+
   useEffect(() => {
     if (books.length > 0 && carouselIndex < books.length) {
       setSelectedBook(books[carouselIndex])
     }
   }, [carouselIndex, books])
+
+  useEffect(() => {
+    if (scholarArticles.length > 0 && scholarCarouselIndex < scholarArticles.length) {
+      setSelectedScholar(scholarArticles[scholarCarouselIndex])
+    }
+  }, [scholarCarouselIndex, scholarArticles])
+
+  const handleImageError = (bookId: string) => {
+    setFailedImages((prev) => new Set(prev).add(bookId))
+  }
 
   return (
     <div className="min-h-screen wood-background">
@@ -260,12 +314,7 @@ function SearchContent() {
               {sidebarCategories.map((cat) => (
                 <button
                   key={cat.label}
-                  onClick={() => {
-                    setActiveTab(cat.tab)
-                    if (hasSearched && query.trim()) {
-                      setTimeout(() => performSearch(query), 0)
-                    }
-                  }}
+                  onClick={() => setActiveTab(cat.tab)}
                   className={`w-full text-left px-3 py-2 rounded transition-colors ${
                     activeTab === cat.tab
                       ? "bg-amber-900 bg-opacity-60 text-yellow-300 font-bold"
@@ -278,7 +327,7 @@ function SearchContent() {
                     <span className="font-semibold">{cat.label}</span>
                   </div>
                   {hasSearched && (
-                    <div className="text-sm opacity-80 ml-6">{cat.count.toLocaleString()} Results</div>
+                    <p className="text-xs text-amber-400 mt-0.5 ml-6">{cat.count} results</p>
                   )}
                 </button>
               ))}
@@ -312,12 +361,7 @@ function SearchContent() {
               {sidebarCategories.map((cat) => (
                 <button
                   key={cat.label}
-                  onClick={() => {
-                    setActiveTab(cat.tab)
-                    if (hasSearched && query.trim()) {
-                      setTimeout(() => performSearch(query), 0)
-                    }
-                  }}
+                  onClick={() => setActiveTab(cat.tab)}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     activeTab === cat.tab
                       ? "bg-amber-700 text-white shadow-md"
@@ -360,6 +404,22 @@ function SearchContent() {
               </div>
             )}
 
+            {/* Per-tab empty state */}
+            {!loading && hasSearched && totalResults > 0 && activeTab !== "all" && (
+              (activeTab === "books" && books.length === 0) ||
+              (activeTab === "scholar" && scholarArticles.length === 0) ||
+              (activeTab === "wikipedia" && wikiArticles.length === 0) ||
+              (activeTab === "users" && campusUsers.length === 0)
+            ) && (
+              <div className="text-center py-20">
+                <FolderSearch className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-60" />
+                <p className="text-amber-200 text-lg" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
+                  No {activeTab === "books" ? "books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
+                </p>
+                <p className="text-amber-400 text-sm mt-2 opacity-70">Try checking other categories for results</p>
+              </div>
+            )}
+
             {/* Results */}
             {!loading && hasSearched && totalResults > 0 && (
               <div className="space-y-8">
@@ -367,9 +427,7 @@ function SearchContent() {
                 {(activeTab === "all" || activeTab === "books") && books.length > 0 && (
                   <section>
                     <div className="relative">
-                      {/* Carousel Container */}
                       <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "340px" }}>
-                        {/* Left Arrow */}
                         {carouselIndex > 0 && (
                           <button
                             onClick={() => scrollCarousel("left")}
@@ -379,7 +437,6 @@ function SearchContent() {
                           </button>
                         )}
 
-                        {/* Books */}
                         <div className="flex items-center justify-center" style={{ transformStyle: "preserve-3d" }}>
                           {books.map((book, index) => {
                             const offset = index - carouselIndex
@@ -392,6 +449,8 @@ function SearchContent() {
                             const scale = 1 - absOffset * 0.12
                             const opacity = 1 - absOffset * 0.25
                             const zIndex = 10 - absOffset
+                            const isFocused = offset === 0
+                            const showPlaceholder = !book.thumbnail || failedImages.has(book.id)
 
                             return (
                               <div
@@ -408,33 +467,22 @@ function SearchContent() {
                                 }}
                               >
                                 <div className="relative group">
-                                  {book.thumbnail ? (
+                                  {showPlaceholder ? (
+                                    <BookPlaceholder title={book.title} authors={book.authors} isFocused={isFocused} />
+                                  ) : (
                                     <img
                                       src={`/api/book-image?url=${encodeURIComponent(book.thumbnail)}`}
                                       alt={book.title}
                                       className="w-40 h-56 object-cover rounded-lg shadow-2xl border-2 border-amber-800"
                                       style={{
-                                        boxShadow: offset === 0
+                                        boxShadow: isFocused
                                           ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,193,7,0.3)"
                                           : "0 10px 30px rgba(0,0,0,0.4)",
                                       }}
+                                      onError={() => handleImageError(book.id)}
                                     />
-                                  ) : (
-                                    <div
-                                      className="w-40 h-56 bg-amber-800 rounded-lg flex flex-col items-center justify-center border-2 border-amber-700 shadow-2xl"
-                                      style={{
-                                        boxShadow: offset === 0
-                                          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,193,7,0.3)"
-                                          : "0 10px 30px rgba(0,0,0,0.4)",
-                                      }}
-                                    >
-                                      <BookOpen className="w-10 h-10 text-amber-400 mb-2" />
-                                      <p className="text-amber-200 text-xs text-center px-2 line-clamp-3">
-                                        {book.title}
-                                      </p>
-                                    </div>
                                   )}
-                                  {offset === 0 && (
+                                  {isFocused && (
                                     <div className="absolute -left-2 top-1/2 -translate-y-1/2">
                                       <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-amber-300"></div>
                                     </div>
@@ -445,7 +493,6 @@ function SearchContent() {
                           })}
                         </div>
 
-                        {/* Right Arrow */}
                         {carouselIndex < books.length - 1 && (
                           <button
                             onClick={() => scrollCarousel("right")}
@@ -511,7 +558,6 @@ function SearchContent() {
                               )}
                             </div>
 
-                            {/* AI Summary for selected book */}
                             {expandedSummaries[`books-${selectedBook.id}`] && (
                               <div className="mt-3 bg-amber-900 bg-opacity-50 border border-amber-700 rounded-lg p-4">
                                 {loadingSummaries[`books-${selectedBook.id}`] ? (
@@ -533,118 +579,166 @@ function SearchContent() {
                   </section>
                 )}
 
-                {/* Scholarly Articles */}
+                {/* 3D Scholar Journal Carousel */}
                 {(activeTab === "all" || activeTab === "scholar") && scholarArticles.length > 0 && (
-                  <section className="max-w-3xl mx-auto">
+                  <section>
                     <h2
-                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      className="text-xl font-bold text-amber-200 mb-2 flex items-center gap-2 max-w-3xl mx-auto"
                       style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
                     >
                       <GraduationCap className="w-5 h-5" />
                       Scholarly Articles ({scholarArticles.length})
                     </h2>
-                    <div className="space-y-3">
-                      {scholarArticles.map((article) => {
-                        const summaryKey = `scholar-${article.id}`
-                        return (
-                          <div
-                            key={article.id}
-                            className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 transition-all"
+                    <div className="relative">
+                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "340px" }}>
+                        {scholarCarouselIndex > 0 && (
+                          <button
+                            onClick={() => scrollScholarCarousel("left")}
+                            className="absolute left-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-2 rounded-full shadow-lg transition-all"
                           >
-                            <div className="flex gap-3">
-                              <div className="w-10 h-10 bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-5 h-5 text-green-300" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-lg font-bold text-amber-200 mb-1" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
-                                  {article.url ? (
-                                    <a href={article.url} target="_blank" rel="noopener noreferrer" className="hover:text-amber-100 transition-colors">
-                                      {article.title}
-                                    </a>
-                                  ) : (
-                                    article.title
-                                  )}
-                                </h3>
-                                <p className="text-amber-400 text-xs mb-1">
-                                  {article.authors}
-                                  {article.year && <span> &middot; {article.year}</span>}
-                                  {article.source && <span> &middot; {article.source}</span>}
-                                </p>
-                                {article.citedBy > 0 && (
-                                  <p className="text-amber-500 text-xs mb-2">
-                                    Cited by {article.citedBy.toLocaleString()}
-                                  </p>
-                                )}
-                                <p className="text-amber-200 text-sm line-clamp-2 mb-3 opacity-80">
-                                  {article.snippet}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    onClick={() =>
-                                      handleSummarize(
-                                        article.title,
-                                        article.snippet,
-                                        "scholar",
-                                        article.id
-                                      )
-                                    }
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg text-sm font-medium transition-colors"
-                                  >
-                                    {loadingSummaries[summaryKey] ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Sparkles className="w-4 h-4" />
-                                    )}
-                                    AI Summary
-                                    {summaries[summaryKey] &&
-                                      (expandedSummaries[summaryKey] ? (
-                                        <ChevronUp className="w-3 h-3" />
-                                      ) : (
-                                        <ChevronDown className="w-3 h-3" />
-                                      ))}
-                                  </button>
-                                  {article.url && (
-                                    <a
-                                      href={article.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-200 rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                      <ExternalLink className="w-4 h-4" />
-                                      View Article
-                                    </a>
-                                  )}
-                                  {article.pdfUrl && (
-                                    <a
-                                      href={article.pdfUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 px-3 py-1.5 bg-green-800 hover:bg-green-700 text-green-100 rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                      <FileText className="w-4 h-4" />
-                                      PDF
-                                    </a>
+                            <ChevronLeft className="w-6 h-6" />
+                          </button>
+                        )}
+
+                        <div className="flex items-center justify-center" style={{ transformStyle: "preserve-3d" }}>
+                          {scholarArticles.map((article, index) => {
+                            const offset = index - scholarCarouselIndex
+                            const absOffset = Math.abs(offset)
+                            if (absOffset > 3) return null
+
+                            const translateX = offset * 140
+                            const translateZ = -absOffset * 100
+                            const rotateY = offset * -15
+                            const scale = 1 - absOffset * 0.12
+                            const opacity = 1 - absOffset * 0.25
+                            const zIndex = 10 - absOffset
+                            const isFocused = offset === 0
+
+                            return (
+                              <div
+                                key={article.id}
+                                onClick={() => {
+                                  setScholarCarouselIndex(index)
+                                  setSelectedScholar(article)
+                                }}
+                                className="absolute cursor-pointer transition-all duration-500 ease-out"
+                                style={{
+                                  transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                                  zIndex,
+                                  opacity,
+                                }}
+                              >
+                                <div className="relative group">
+                                  <JournalPlaceholder title={article.title} authors={article.authors} isFocused={isFocused} />
+                                  {isFocused && (
+                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2">
+                                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-emerald-300"></div>
+                                    </div>
                                   )}
                                 </div>
                               </div>
+                            )
+                          })}
+                        </div>
+
+                        {scholarCarouselIndex < scholarArticles.length - 1 && (
+                          <button
+                            onClick={() => scrollScholarCarousel("right")}
+                            className="absolute right-0 z-30 bg-emerald-900 bg-opacity-70 hover:bg-opacity-90 text-emerald-200 p-2 rounded-full shadow-lg transition-all"
+                          >
+                            <ChevronRight className="w-6 h-6" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Selected Scholar Details */}
+                      {selectedScholar && (
+                        <div className="mt-2 max-w-3xl mx-auto">
+                          <div className="bg-emerald-950 bg-opacity-60 rounded-xl p-4 border border-emerald-800">
+                            <p className="text-emerald-100 text-sm leading-relaxed" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
+                              <span className="text-emerald-300 font-semibold">
+                                &ldquo;{selectedScholar.title}&rdquo;
+                              </span>
+                              {selectedScholar.authors && (
+                                <span> by {selectedScholar.authors}</span>
+                              )}
+                              {selectedScholar.year && (
+                                <span> &middot; {selectedScholar.year}</span>
+                              )}
+                              {selectedScholar.source && (
+                                <span> &middot; {selectedScholar.source}</span>
+                              )}
+                            </p>
+                            {selectedScholar.citedBy > 0 && (
+                              <p className="text-emerald-400 text-xs mt-1">
+                                Cited by {selectedScholar.citedBy.toLocaleString()}
+                              </p>
+                            )}
+                            {selectedScholar.snippet && (
+                              <p className="text-emerald-200 text-sm mt-2 line-clamp-3 opacity-80">
+                                {selectedScholar.snippet}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <button
+                                onClick={() =>
+                                  handleSummarize(
+                                    selectedScholar.title,
+                                    selectedScholar.snippet,
+                                    "scholar",
+                                    selectedScholar.id
+                                  )
+                                }
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-emerald-100 rounded-lg text-sm font-medium transition-colors"
+                              >
+                                {loadingSummaries[`scholar-${selectedScholar.id}`] ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4" />
+                                )}
+                                AI Summary
+                              </button>
+                              {selectedScholar.url && (
+                                <a
+                                  href={selectedScholar.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-200 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  View Article
+                                </a>
+                              )}
+                              {selectedScholar.pdfUrl && (
+                                <a
+                                  href={selectedScholar.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-green-800 hover:bg-green-700 text-green-100 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  PDF
+                                </a>
+                              )}
                             </div>
-                            {expandedSummaries[summaryKey] && (
-                              <div className="mt-3 bg-amber-900 bg-opacity-50 border border-amber-700 rounded-lg p-4">
-                                {loadingSummaries[summaryKey] ? (
-                                  <div className="flex items-center gap-2 text-amber-300">
+
+                            {expandedSummaries[`scholar-${selectedScholar.id}`] && (
+                              <div className="mt-3 bg-emerald-900 bg-opacity-50 border border-emerald-700 rounded-lg p-4">
+                                {loadingSummaries[`scholar-${selectedScholar.id}`] ? (
+                                  <div className="flex items-center gap-2 text-emerald-300">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Generating AI summary...
                                   </div>
                                 ) : (
-                                  <p className="text-amber-200 text-sm leading-relaxed">
-                                    {summaries[summaryKey]}
+                                  <p className="text-emerald-200 text-sm leading-relaxed">
+                                    {summaries[`scholar-${selectedScholar.id}`]}
                                   </p>
                                 )}
                               </div>
                             )}
                           </div>
-                        )
-                      })}
+                        </div>
+                      )}
                     </div>
                   </section>
                 )}

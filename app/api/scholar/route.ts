@@ -12,130 +12,78 @@ export async function GET(request: Request) {
       );
     }
 
-    const url = `https://scholar.google.com/scholar?q=${encodeURIComponent(query)}&hl=en&num=10`;
-
-    const userAgents = [
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-    ];
-    const ua = userAgents[Math.floor(Math.random() * userAgents.length)];
+    const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=12&select=id,title,authorships,publication_year,cited_by_count,doi,primary_location,abstract_inverted_index,open_access&mailto=campus@ysup.edu`;
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": ua,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Cache-Control": "no-cache",
+        Accept: "application/json",
       },
     });
 
-    if (response.status === 429 || response.status === 503) {
-      console.warn("Google Scholar rate limited, returning empty results");
-      return NextResponse.json([]);
-    }
-
     if (!response.ok) {
-      console.error(`Google Scholar responded with status ${response.status}`);
+      console.error(`OpenAlex API responded with status ${response.status}`);
       return NextResponse.json([]);
     }
 
-    const html = await response.text();
+    const data = await response.json();
 
-    if (html.includes("unusual traffic") || html.includes("CAPTCHA")) {
-      console.warn("Google Scholar CAPTCHA detected, returning empty results");
-      return NextResponse.json([]);
-    }
+    const articles = (data.results || []).map((work: any, index: number) => {
+      const authors = (work.authorships || [])
+        .map((a: any) => a.author?.display_name)
+        .filter(Boolean)
+        .join(", ");
 
-    const articles = parseScholarHTML(html);
+      const year = work.publication_year?.toString() || "";
+
+      const source =
+        work.primary_location?.source?.display_name || "";
+
+      let articleUrl = "";
+      if (work.doi) {
+        articleUrl = work.doi.startsWith("http")
+          ? work.doi
+          : `https://doi.org/${work.doi}`;
+      } else if (work.primary_location?.landing_page_url) {
+        articleUrl = work.primary_location.landing_page_url;
+      }
+
+      const pdfUrl = work.open_access?.oa_url || work.primary_location?.pdf_url || "";
+
+      let snippet = "";
+      if (work.abstract_inverted_index) {
+        const wordPositions: [string, number][] = [];
+        for (const [word, positions] of Object.entries(
+          work.abstract_inverted_index
+        )) {
+          for (const pos of positions as number[]) {
+            wordPositions.push([word, pos]);
+          }
+        }
+        wordPositions.sort((a, b) => a[1] - b[1]);
+        snippet = wordPositions.map((wp) => wp[0]).join(" ");
+        if (snippet.length > 300) {
+          snippet = snippet.substring(0, 300) + "...";
+        }
+      }
+
+      const citedBy = work.cited_by_count || 0;
+
+      return {
+        id: `scholar-${index}`,
+        title: work.title || "Untitled",
+        authors,
+        snippet,
+        url: articleUrl,
+        citedBy,
+        year,
+        source,
+        pdfUrl,
+      };
+    });
 
     return NextResponse.json(articles);
   } catch (error) {
     console.error("Scholar API error:", error);
     return NextResponse.json([]);
   }
-}
-
-interface ScholarArticle {
-  id: string;
-  title: string;
-  authors: string;
-  snippet: string;
-  url: string;
-  citedBy: number;
-  year: string;
-  source: string;
-  pdfUrl: string;
-}
-
-function parseScholarHTML(html: string): ScholarArticle[] {
-  const articles: ScholarArticle[] = [];
-
-  const resultBlocks = html.split(/class="gs_r gs_or gs_scl"/);
-  resultBlocks.shift();
-
-  for (const block of resultBlocks) {
-    try {
-      const titleMatch = block.match(
-        /class="gs_rt"[^>]*>(?:<a[^>]*href="([^"]*)"[^>]*>)?(?:<span[^>]*>[^<]*<\/span>)?\s*([\s\S]*?)(?:<\/a>|<\/h3>)/
-      );
-      let title = "";
-      let url = "";
-      if (titleMatch) {
-        url = titleMatch[1] || "";
-        title = titleMatch[2]?.replace(/<[^>]+>/g, "").trim() || "";
-      }
-
-      if (!title) continue;
-
-      const authorMatch = block.match(/class="gs_a"[^>]*>([\s\S]*?)<\/div>/);
-      let authors = "";
-      let year = "";
-      let source = "";
-      if (authorMatch) {
-        const authorText = authorMatch[1].replace(/<[^>]+>/g, "").trim();
-        const parts = authorText.split(" - ");
-        authors = parts[0]?.trim() || "";
-        if (parts.length >= 2) {
-          const yearMatch = parts[1]?.match(/\b(19|20)\d{2}\b/);
-          year = yearMatch ? yearMatch[0] : "";
-          source = parts[1]?.replace(/,?\s*\d{4}.*$/, "").trim() || "";
-        }
-        if (parts.length >= 3) {
-          source = parts[1]?.replace(/,?\s*\d{4}.*$/, "").trim() || "";
-        }
-      }
-
-      const snippetMatch = block.match(/class="gs_rs"[^>]*>([\s\S]*?)<\/div>/);
-      let snippet = "";
-      if (snippetMatch) {
-        snippet = snippetMatch[1].replace(/<[^>]+>/g, "").trim();
-      }
-
-      const citedByMatch = block.match(/Cited by (\d+)/);
-      const citedBy = citedByMatch ? parseInt(citedByMatch[1], 10) : 0;
-
-      const pdfMatch = block.match(
-        /class="gs_or_ggsm"[^>]*>.*?<a[^>]*href="([^"]*)"[^>]*>/
-      );
-      const pdfUrl = pdfMatch ? pdfMatch[1] : "";
-
-      articles.push({
-        id: `scholar-${articles.length}`,
-        title,
-        authors,
-        snippet,
-        url,
-        citedBy,
-        year,
-        source,
-        pdfUrl,
-      });
-    } catch {
-      continue;
-    }
-  }
-
-  return articles;
 }
