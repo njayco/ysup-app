@@ -77,26 +77,32 @@ function BookPlaceholder({ title, authors, isFocused }: { title: string; authors
   const authorText = authors.length > 0 ? authors[0] : ""
   return (
     <div
-      className="w-40 h-56 rounded-lg border-2 border-amber-700 flex flex-col items-center justify-between overflow-hidden relative"
+      className="w-40 h-56 rounded-lg border-2 border-blue-700 flex flex-col items-center justify-between overflow-hidden relative"
       style={{
-        background: "linear-gradient(135deg, #5c3d1e 0%, #8b6914 40%, #6b4c1e 60%, #4a3410 100%)",
+        background: "linear-gradient(135deg, #1a2a4a 0%, #2d4a7a 40%, #1e3a6a 60%, #0f2040 100%)",
         boxShadow: isFocused
-          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,193,7,0.3), inset -3px 0 8px rgba(0,0,0,0.3)"
+          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(59,130,246,0.3), inset -3px 0 8px rgba(0,0,0,0.3)"
           : "0 10px 30px rgba(0,0,0,0.4), inset -3px 0 8px rgba(0,0,0,0.3)",
       }}
     >
-      <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 5px)" }} />
+      <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)" }} />
       <div className="absolute left-0 top-0 bottom-0 w-3" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 100%)" }} />
-      <div className="flex-1 flex flex-col items-center justify-center px-3 py-4 z-10">
-        <div className="w-8 h-0.5 bg-amber-500 opacity-60 mb-3 rounded-full" />
-        <p className="text-amber-100 text-xs text-center font-bold leading-tight line-clamp-4" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+      <div className="w-full px-3 pt-3 z-10">
+        <div className="flex items-center gap-1 mb-1">
+          <BookOpen className="w-3 h-3 text-blue-400 opacity-70" />
+          <p className="text-blue-400 text-[8px] uppercase tracking-wider opacity-70">Book</p>
+        </div>
+        <div className="w-full h-0.5 bg-blue-500 opacity-30 rounded-full" />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-2 z-10">
+        <p className="text-blue-100 text-xs text-center font-bold leading-tight line-clamp-4" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
           {title}
         </p>
-        <div className="w-6 h-0.5 bg-amber-500 opacity-40 mt-3 rounded-full" />
       </div>
       {authorText && (
         <div className="w-full px-3 pb-3 z-10">
-          <p className="text-amber-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+          <div className="w-full h-0.5 bg-blue-500 opacity-30 rounded-full mb-1" />
+          <p className="text-blue-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
             {authorText}
           </p>
         </div>
@@ -537,7 +543,7 @@ function SearchContent() {
                         {carouselIndex > 0 && (
                           <button
                             onClick={() => scrollCarousel("left")}
-                            className="absolute left-0 z-30 bg-amber-900 bg-opacity-70 hover:bg-opacity-90 text-amber-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute left-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-2 rounded-full shadow-lg transition-all"
                           >
                             <ChevronLeft className="w-6 h-6" />
                           </button>
@@ -556,7 +562,6 @@ function SearchContent() {
                             const opacity = 1 - absOffset * 0.25
                             const zIndex = 10 - absOffset
                             const isFocused = offset === 0
-                            const showPlaceholder = !book.thumbnail || failedImages.has(book.id)
 
                             return (
                               <div
@@ -573,24 +578,10 @@ function SearchContent() {
                                 }}
                               >
                                 <div className="relative group">
-                                  {showPlaceholder ? (
-                                    <BookPlaceholder title={book.title} authors={book.authors} isFocused={isFocused} />
-                                  ) : (
-                                    <img
-                                      src={`/api/book-image?url=${encodeURIComponent(book.thumbnail)}`}
-                                      alt={book.title}
-                                      className="w-40 h-56 object-cover rounded-lg shadow-2xl border-2 border-amber-800"
-                                      style={{
-                                        boxShadow: isFocused
-                                          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,193,7,0.3)"
-                                          : "0 10px 30px rgba(0,0,0,0.4)",
-                                      }}
-                                      onError={() => handleImageError(book.id)}
-                                    />
-                                  )}
+                                  <BookPlaceholder title={book.title} authors={book.authors} isFocused={isFocused} />
                                   {isFocused && (
                                     <div className="absolute -left-2 top-1/2 -translate-y-1/2">
-                                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-amber-300"></div>
+                                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-blue-300"></div>
                                     </div>
                                   )}
                                 </div>
@@ -602,7 +593,7 @@ function SearchContent() {
                         {carouselIndex < books.length - 1 && (
                           <button
                             onClick={() => scrollCarousel("right")}
-                            className="absolute right-0 z-30 bg-amber-900 bg-opacity-70 hover:bg-opacity-90 text-amber-200 p-2 rounded-full shadow-lg transition-all"
+                            className="absolute right-0 z-30 bg-blue-900 bg-opacity-70 hover:bg-opacity-90 text-blue-200 p-2 rounded-full shadow-lg transition-all"
                           >
                             <ChevronRight className="w-6 h-6" />
                           </button>
