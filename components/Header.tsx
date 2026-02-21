@@ -27,19 +27,6 @@ interface Notification {
   read: boolean
 }
 
-interface SearchResult {
-  type: "user" | "content"
-  id: string
-  title: string
-  username?: string
-  name?: string
-  college?: string
-  major?: string
-  image?: string
-  online?: boolean
-  snippet?: string
-}
-
 export default function Header({ currentPage = "Home" }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showMessaging, setShowMessaging] = useState(false)
@@ -48,7 +35,6 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   const [messageRecipient, setMessageRecipient] = useState("")
   const [messageContent, setMessageContent] = useState("")
   const [searchResults, setSearchResults] = useState<string[]>([])
-  const [fullSearchResults, setFullSearchResults] = useState<SearchResult[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [currentUser, setCurrentUser] = useState({
@@ -168,55 +154,6 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
       setSearchResults(filtered.slice(0, 5))
     } else {
       setSearchResults([])
-    }
-  }
-
-  const handleFullSearch = (query: string) => {
-    if (query.length > 0) {
-      // Simulate full search results
-      const mockResults: SearchResult[] = [
-        {
-          type: "user",
-          id: "1",
-          title: "Nick Fisher",
-          username: "+nickfisher",
-          name: "Nick Fisher",
-          college: "Howard University",
-          major: "Mathematics",
-          image: "/placeholder.svg?height=40&width=40",
-          online: true,
-        },
-        {
-          type: "user",
-          id: "2",
-          title: "Amanda Winston",
-          username: "+amandawinston",
-          name: "Amanda Winston",
-          college: "Howard University",
-          major: "Computer Science",
-          image: "/placeholder.svg?height=40&width=40",
-          online: false,
-        },
-        {
-          type: "content",
-          id: "3",
-          title: "YsUp Academy Course: Introduction to Calculus",
-          snippet: "Learn the fundamentals of calculus with interactive lessons and practice problems...",
-        },
-        {
-          type: "content",
-          id: "4",
-          title: "Study Group: Physics Midterm Prep",
-          snippet: "Join fellow students preparing for the upcoming physics midterm exam...",
-        },
-      ].filter(
-        (result) =>
-          result.title.toLowerCase().includes(query.toLowerCase()) ||
-          (result.username && result.username.toLowerCase().includes(query.toLowerCase())),
-      )
-      setFullSearchResults(mockResults)
-    } else {
-      setFullSearchResults([])
     }
   }
 
@@ -558,89 +495,6 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               <div className="flex items-center space-x-2 text-amber-100 px-6 py-3 border-t border-amber-700">
                 <Globe className="w-5 h-5" />
                 <span className="text-sm">Connected to Campus Network</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Full Search Modal */}
-      {showSearch && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[600px] flex flex-col">
-            <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
-              <h2 className="text-xl font-bold">YsUp Search</h2>
-              <button onClick={() => setShowSearch(false)} className="text-white hover:text-gray-200">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 flex-1 overflow-y-auto">
-              <div className="mb-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      handleFullSearch(e.target.value)
-                    }}
-                    placeholder="Search for users, content, courses..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {fullSearchResults.map((result) => (
-                  <div key={result.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                    {result.type === "user" ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={result.image || "/placeholder.svg"}
-                            alt={result.name}
-                            className="w-12 h-12 rounded-full"
-                          />
-                          <div>
-                            <div className="font-semibold text-gray-800">{result.name}</div>
-                            <div className="text-sm text-gray-600">{result.username}</div>
-                            <div className="text-xs text-gray-500">
-                              {result.major} • {result.college}
-                            </div>
-                          </div>
-                          {result.online && <div className="w-3 h-3 bg-green-500 rounded-full"></div>}
-                        </div>
-                        <button
-                          onClick={() => {
-                            setMessageRecipient(result.username || "")
-                            setShowSearch(false)
-                            setShowMessaging(true)
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                        >
-                          Message
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">{result.title}</h3>
-                        <p className="text-sm text-gray-600">{result.snippet}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {fullSearchResults.length === 0 && searchQuery && (
-                  <div className="text-center py-8 text-gray-500">No results found for "{searchQuery}"</div>
-                )}
-
-                {!searchQuery && (
-                  <div className="text-center py-8 text-gray-500">
-                    Start typing to search for users, content, and more...
-                  </div>
-                )}
               </div>
             </div>
           </div>
