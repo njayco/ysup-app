@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   if (meetingId) {
     const result = await pool.query(
-      `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+      `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     if (result.rows.length === 0) return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
 
     const participants = await pool.query(
-      `SELECT cp.*, u.username, u."firstName", u."lastName"
+      `SELECT cp.*, u.username, u.first_name, u.last_name
        FROM chalkboard_participants cp
        JOIN users u ON cp.user_id = u.id
        WHERE cp.meeting_id = $1
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   let params: any[] = [userId]
 
   if (filter === "my") {
-    query = `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+    query = `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
        WHERE m.host_user_id = $1
        ORDER BY m.created_at DESC LIMIT 50`
   } else if (filter === "active") {
-    query = `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+    query = `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
        WHERE m.status = 'active'
        ORDER BY m.created_at DESC LIMIT 50`
   } else if (filter === "scheduled") {
-    query = `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+    query = `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
          AND m.scheduled_start > NOW()
        ORDER BY m.scheduled_start ASC LIMIT 50`
   } else if (filter === "invited") {
-    query = `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+    query = `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
        WHERE m.status IN ('active', 'scheduled')
        ORDER BY m.created_at DESC LIMIT 50`
   } else {
-    query = `SELECT m.*, u.username as host_username, u."firstName" as host_first_name, u."lastName" as host_last_name,
+    query = `SELECT m.*, u.username as host_username, u.first_name as host_first_name, u.last_name as host_last_name,
         cn.name as network_name,
         (SELECT COUNT(*) FROM chalkboard_participants WHERE meeting_id = m.id AND left_at IS NULL AND rsvp_status = 'joined') as participant_count
        FROM chalkboard_meetings m
