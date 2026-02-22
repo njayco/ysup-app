@@ -181,7 +181,7 @@ const featureWalkthroughs = [
     ],
   },
   {
-    id: "bison-web",
+    id: "bison-homepage",
     title: "Bison Web",
     icon: "🌐",
     color: "from-blue-600 to-indigo-700",

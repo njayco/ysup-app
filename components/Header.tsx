@@ -321,7 +321,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   }
 
   const allNavItems = [
-    { name: "Homepage", href: "/bison-web", public: true },
+    { name: "Homepage", href: "/bison-homepage", public: true },
     { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game" },
     { name: "The Hilltop", href: "/hilltop" },
