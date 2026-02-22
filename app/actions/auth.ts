@@ -2,6 +2,7 @@
 
 import { Pool } from "pg"
 import bcrypt from "bcryptjs"
+import { sendVerificationCode } from "./sms"
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -86,8 +87,20 @@ export async function signupUser(formData: FormData) {
       }
     }
 
+    let smsResult: { success: boolean; maskedPhone?: string; error?: string } = { success: false }
+    let requiresVerification = false
+    try {
+      smsResult = await sendVerificationCode(phone, "signup", newUser.id)
+      requiresVerification = smsResult.success
+    } catch (e) {
+      console.error("Failed to send verification SMS:", e)
+    }
+
     return {
       success: true,
+      requiresVerification,
+      smsSendFailed: !smsResult.success,
+      smsResult,
       user: {
         id: newUser.id.toString(),
         phone: newUser.phone,

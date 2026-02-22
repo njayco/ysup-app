@@ -120,7 +120,18 @@ export default function LoginPage() {
 
       if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user))
-        window.location.href = "/onboarding"
+
+        if (result.requiresVerification) {
+          const phoneDigits = signupData.phone.replace(/\D/g, "")
+          localStorage.setItem("pendingPhoneVerification", JSON.stringify({
+            phone: phoneDigits,
+            userId: parseInt(result.user.id),
+            maskedPhone: result.smsResult?.maskedPhone || `(•••) •••-${phoneDigits.slice(-4)}`,
+          }))
+          window.location.href = "/verify-phone"
+        } else {
+          window.location.href = "/onboarding"
+        }
         return
       } else {
         setError(result.error || "Signup failed")
