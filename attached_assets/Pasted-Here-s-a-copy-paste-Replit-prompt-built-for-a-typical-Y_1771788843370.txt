@@ -1,0 +1,215 @@
+Here’s a copy/paste Replit prompt (built for a typical YsUp Campus Next.js 14 + Postgres (Prisma) + auth + notifications architecture) to add public profiles at /{username} with the special-case “+username” display (e.g. +nawwg) while keeping the actual route clean.
+
+⸻
+
+Replit Prompt: YsUp Campus Public Profiles + Yearbook UI + Gallery + TRUEs + Tagging + DMs
+
+You are working inside the existing YsUp Campus Network codebase. Do not rewrite the app. Implement this feature using the current architecture (Next.js App Router, PostgreSQL via Prisma, existing auth/session, existing UI system, existing notifications if present). Add new tables/models only as needed.
+
+Goal
+
+Create public user profiles accessible at:
+	•	/{username} (example: /nawwg)
+	•	If a user’s username is stored/displayed as +nawwg, the public route is still /{usernameWithoutPlus} (so +nawwg → /nawwg), but the page visually displays +nawwg as their handle everywhere.
+	•	Usernames must be globally unique ignoring + prefix and case.
+
+Profiles should look like a skeuomorphic opened yearbook:
+	•	Left page: Profile picture + editable “resume” (LinkedIn-style sections)
+	•	Right page: Instagram-style gallery (photos/videos) with comments, tagging +usernames, and TRUEs (thumbs up)
+
+Profiles must be reachable from:
+	•	YsUp Search results
+	•	Class Networks member lists
+	•	Clicking a user’s profile picture anywhere in Class Network posts/messages
+
+Routing & Username Rules
+	1.	Add a route: app/[username]/page.tsx
+	2.	Route param should accept nawwg and show user whose canonical username is either:
+	•	nawwg or
+	•	+nawwg
+	3.	Implement a normalizeUsername() helper used everywhere:
+	•	trim spaces
+	•	lowercase
+	•	remove leading + for lookup key
+	4.	Store two values:
+	•	usernameDisplay (example: +nawwg)
+	•	usernameKey (example: nawwg) used for routing/lookup and uniqueness
+
+Database (Prisma)
+
+Add models (or extend existing ones if already present):
+
+User
+	•	usernameDisplay String (existing or new)
+	•	usernameKey String @unique (new if missing)
+	•	image String? (existing)
+	•	bio String?
+	•	statusNote String? (like IG Notes; short text)
+	•	timestamps
+
+ProfileResumeSection
+	•	id
+	•	userId
+	•	type enum: HEADLINE, ABOUT, EXPERIENCE, EDUCATION, PROJECT, SKILL, LINK
+	•	title String?
+	•	org String?
+	•	startDate DateTime?
+	•	endDate DateTime?
+	•	isCurrent Boolean @default(false)
+	•	description String?
+	•	url String?
+	•	order Int @default(0)
+	•	timestamps
+
+ProfileMedia
+	•	id
+	•	userId
+	•	type enum IMAGE | VIDEO
+	•	url String
+	•	caption String?
+	•	visibility enum PUBLIC default
+	•	timestamps
+
+ProfileMediaComment
+	•	id
+	•	mediaId
+	•	userId (comment author)
+	•	body String
+	•	mentions String[] (store mentioned usernameKeys)
+	•	timestamps
+
+ProfileMediaTrue
+	•	id
+	•	mediaId
+	•	userId (who TRUE’d)
+	•	unique constraint: (mediaId, userId)
+
+ProfileMediaTag
+	•	id
+	•	mediaId
+	•	taggedUserId
+	•	unique (mediaId, taggedUserId)
+
+DirectMessageThread / DirectMessage
+	•	If DMs already exist in YsUp, reuse.
+	•	If not, create minimal:
+	•	Thread has participants (2 users)
+	•	Messages with body, timestamps
+	•	Block public spam by requiring the sender be authenticated
+
+Run migration and update seeds only if needed.
+
+API / Server Actions
+
+Use the existing pattern in the codebase (route handlers or server actions). Implement:
+
+Public Profile
+	•	GET /api/profile/[usernameKey] returns:
+	•	user public fields
+	•	resume sections
+	•	gallery (paginated)
+	•	counts (TRUEs total, media count)
+	•	whether viewer is owner
+	•	whether viewer already has DM thread
+
+Resume Editing (owner only)
+	•	CRUD endpoints/actions for ProfileResumeSection
+	•	Validate lengths, sanitize text
+
+Status Note (owner only)
+	•	PATCH /api/profile/status updates statusNote (max 60–80 chars)
+	•	Show “last updated” timestamp lightly
+
+Media Upload (owner only)
+	•	Use existing upload provider in project (e.g., UploadThing / Cloudinary / S3). Do not invent a new provider if one exists.
+	•	Support images + short videos
+	•	After upload, create ProfileMedia record
+
+Gallery Interactions
+	•	POST /api/profile/media/:id/comment with tagging parse
+	•	POST /api/profile/media/:id/true toggle TRUE
+	•	POST /api/profile/media/:id/tag for tagging people (owner can tag; also allow “tag request” if you want simple: allow tagging if viewer is owner only; otherwise mention-only)
+
+Mentions Parsing
+	•	Parse +username patterns in captions/comments
+	•	Convert to usernameKey
+	•	Store in mentions[]
+	•	Render mentions as links to /{usernameKey}
+
+Notifications
+	•	If notification system exists, trigger:
+	•	someone TRUEs your media
+	•	someone comments
+	•	someone mentions you
+	•	someone tags you
+	•	someone sends a DM (optional)
+
+UI Requirements
+
+Profile Page Layout
+	•	Full page: “open yearbook” look
+	•	Left page:
+	•	Profile photo (click opens)
+	•	Handle displayed as +username if that’s their display
+	•	Editable resume sections (owner sees “Edit” buttons)
+	•	Button: “Message” (opens DM panel/modal)
+	•	Status Note row (like IG notes) above resume or near name
+	•	Right page:
+	•	Tabs:
+	•	Posts (their uploads)
+	•	Tagged (media they were tagged in)
+	•	Gallery grid (Instagram feel)
+	•	Clicking a media opens modal:
+	•	media viewer
+	•	TRUE button + count
+	•	comments list
+	•	comment box with mention autocomplete for +username
+	•	show “Tagged: +user1, +user2” if tags exist
+
+Direct Messaging
+	•	“Message” button:
+	•	If authenticated: open existing DM thread or create one
+	•	If not authenticated: route to login with redirect back to profile
+
+Linking Everywhere
+Update these areas to link to profile:
+	•	In Class Network members list: username and avatar → /{usernameKey}
+	•	In Class Network posts/comments: clicking avatar → /{usernameKey}
+	•	In YsUp Search results: show users and link to /{usernameKey}
+
+Search Integration
+
+If YsUp Search already indexes users:
+	•	Ensure user results include usernameKey, usernameDisplay, image, headline
+	•	Clicking result navigates to /{usernameKey}
+
+Permissions / Privacy
+	•	Profile is public by default.
+	•	Resume + status + uploads editable only by owner.
+	•	Media visibility can remain PUBLIC only for now.
+	•	Rate-limit comments/TRUE toggles to prevent spam.
+
+Acceptance Criteria
+	1.	Visiting /nawwg renders profile for user with usernameDisplay="+nawwg" correctly.
+	2.	Yearbook skeuomorphic UI with left resume + right gallery.
+	3.	Upload media, view grid, open modal, comment, TRUE toggle works.
+	4.	Tagging +username creates link and stored mention.
+	5.	Tabs filter posts vs tagged posts.
+	6.	“Message” starts/opens DM thread.
+	7.	Links from search + class networks open the profile.
+
+Deliverables
+	•	Prisma migration + updated schema
+	•	New route page app/[username]/page.tsx
+	•	Components for Yearbook layout, Resume editor, Gallery grid/modal, Comments, TRUE button
+	•	API routes/server actions with validation
+	•	Updated class network UI to link avatars/usernames
+	•	Tests or at least a minimal manual test checklist in README
+
+Important constraints
+	•	Reuse existing design system, auth, upload, notifications whenever possible.
+	•	Keep changes modular. Don’t refactor unrelated parts.
+
+⸻
+
+If you want, I can also generate the skeuomorphic yearbook CSS spec (paper texture, spine shadow, page curl corners, subtle emboss) in a second Replit prompt so the UI lands exactly how you’re imagining.
