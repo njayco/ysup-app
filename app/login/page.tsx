@@ -250,12 +250,19 @@ export default function LoginPage() {
                 ></div>
 
                 <div className="ml-5 md:ml-8 relative z-10">
-                  <div className="text-right mb-3 md:mb-4">
-                    <span className="text-xs md:text-sm text-gray-600">it's free,</span>
-                    <br />
-                    <span className="text-xs md:text-sm text-gray-600">don't worry</span>
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-800 mt-1 md:mt-2">SIGN UP</h3>
-                    <p className="text-xs md:text-sm text-gray-600">Welcome to the Future</p>
+                  <div className="flex items-start justify-between mb-3 md:mb-4">
+                    <img
+                      src="/ysup-crest.png"
+                      alt="YsUp Crest"
+                      className="w-14 h-16 md:w-16 md:h-[72px] object-contain mt-1"
+                    />
+                    <div className="text-right">
+                      <span className="text-xs md:text-sm text-gray-600">it&apos;s free,</span>
+                      <br />
+                      <span className="text-xs md:text-sm text-gray-600">don&apos;t worry</span>
+                      <h3 className="text-xl md:text-2xl font-bold text-gray-800 mt-1 md:mt-2">SIGN UP</h3>
+                      <p className="text-xs md:text-sm text-gray-600">Welcome to the Future</p>
+                    </div>
                   </div>
 
                   <form onSubmit={handleSignup} className="space-y-2 md:space-y-3">
