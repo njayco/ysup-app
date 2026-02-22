@@ -926,6 +926,51 @@ export default function DashboardPage() {
     return str.length > 12 ? num.toExponential(6) : str
   }
 
+  useEffect(() => {
+    if (!showCalculator) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const key = e.key
+      if (/^[0-9]$/.test(key)) {
+        e.preventDefault()
+        calcHandleNumber(key)
+      } else if (key === ".") {
+        e.preventDefault()
+        calcHandleNumber(".")
+      } else if (key === "+" || key === "-") {
+        e.preventDefault()
+        calcHandleOperation(key)
+      } else if (key === "*") {
+        e.preventDefault()
+        calcHandleOperation("×")
+      } else if (key === "/") {
+        e.preventDefault()
+        calcHandleOperation("÷")
+      } else if (key === "Enter" || key === "=") {
+        e.preventDefault()
+        calcHandleEquals()
+      } else if (key === "Escape") {
+        e.preventDefault()
+        setShowCalculator(false)
+      } else if (key === "Backspace") {
+        e.preventDefault()
+        if (calcDisplay.length > 1) {
+          setCalcDisplay(calcDisplay.slice(0, -1))
+        } else {
+          setCalcDisplay("0")
+        }
+      } else if (key === "Delete" || key.toLowerCase() === "c") {
+        e.preventDefault()
+        calcHandleClear()
+      } else if (key === "%") {
+        e.preventDefault()
+        calcHandlePercent()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [showCalculator, calcDisplay, calcNewNumber, calcPrevValue, calcOperation])
+
   const handleFileClick = async (file: PDFFile) => {
     if (file.type === "bluebook") {
       setShowBluebook(true)
