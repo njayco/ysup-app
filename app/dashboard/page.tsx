@@ -1766,117 +1766,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Productivity Dock */}
-        <div className="mb-3 md:mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-bold text-amber-100 flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Productivity Dock
-            </h3>
-            {googleConnected ? (
-              <button onClick={handleDisconnectGoogle} className="text-xs text-red-300 hover:text-red-200 underline">
-                Disconnect Google
-              </button>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-            {/* YsUp Pad Tile */}
-            <div onClick={() => googleConnected ? window.location.href = "/dashboard/pad" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
-              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f5f5f0, #e8e4da)", borderColor: "#2a2a2a" }}>
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #c4bfb4 23px, #c4bfb4 24px)", backgroundSize: "100% 24px" }}></div>
-                <div className="absolute left-3 top-0 bottom-0 w-[1px] opacity-30" style={{ background: "#e88b8b" }}></div>
-                <div className="relative p-2 h-full flex flex-col">
-                  <div className="text-center mb-1">
-                    <div className="text-xl">📓</div>
-                    <div className="text-xs font-bold text-gray-800">YsUp Pad</div>
-                    <div className="text-[9px] text-gray-500">Google Docs</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                    <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
-                  </div>
-                  <div className="flex-1 text-xs space-y-1">
-                    {googleConnected ? (
-                      <>
-                        {recentPadDocs.slice(0, 2).map((doc) => (
-                          <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
-                        ))}
-                        {recentPadDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
-                      </>
-                    ) : (
-                      <div className="bg-blue-100 p-1 rounded text-center text-[9px] text-blue-600 font-medium">Tap to connect</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Pad</p>
-            </div>
-
-            {/* YsUp Calc Tile */}
-            <div onClick={() => googleConnected ? window.location.href = "/dashboard/calc" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
-              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", borderColor: "#2a5a2a" }}>
-                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
-                <div className="relative p-2 h-full flex flex-col">
-                  <div className="text-center mb-1">
-                    <div className="text-xl">📊</div>
-                    <div className="text-xs font-bold text-gray-800">YsUp Calc</div>
-                    <div className="text-[9px] text-gray-500">Google Sheets</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                    <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
-                  </div>
-                  <div className="flex-1 text-xs space-y-1">
-                    {googleConnected ? (
-                      <>
-                        {recentCalcDocs.slice(0, 2).map((doc) => (
-                          <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
-                        ))}
-                        {recentCalcDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
-                      </>
-                    ) : (
-                      <div className="bg-green-100 p-1 rounded text-center text-[9px] text-green-600 font-medium">Tap to connect</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Calc</p>
-            </div>
-
-            {/* YsUp Slideshow Tile */}
-            <div onClick={() => googleConnected ? window.location.href = "/dashboard/slideshow" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
-              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #1a1a2e, #16213e)", borderColor: "#0f3460" }}>
-                <div className="absolute top-1 left-1 right-1 h-0.5 rounded-full opacity-30" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }}></div>
-                <div className="relative p-2 h-full flex flex-col">
-                  <div className="text-center mb-1">
-                    <div className="text-xl">📽️</div>
-                    <div className="text-xs font-bold text-white">YsUp Slideshow</div>
-                    <div className="text-[9px] text-blue-300">Google Slides</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                    <span className="text-[8px] text-blue-200">{googleConnected ? "Connected" : "Not connected"}</span>
-                  </div>
-                  <div className="flex-1 text-xs space-y-1">
-                    {googleConnected ? (
-                      <>
-                        {recentSlideshowDocs.slice(0, 2).map((doc) => (
-                          <div key={doc.id} className="bg-white/10 p-1 rounded border border-blue-800 text-[9px] text-blue-200 truncate">{doc.title}</div>
-                        ))}
-                        {recentSlideshowDocs.length === 0 && <div className="bg-white/10 p-1 rounded border border-blue-800 text-center text-[9px] text-blue-400">Tap to open</div>}
-                      </>
-                    ) : (
-                      <div className="bg-blue-900/50 p-1 rounded text-center text-[9px] text-blue-300 font-medium">Tap to connect</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Slideshow</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Grid Items: files + folders + sticky notes, paginated */}
+        {/* Grid Items: productivity tiles + files + folders + sticky notes, paginated */}
         <div
           onDrop={handleExternalFileDrop}
           onDragOver={handleExternalDragOver}
@@ -1907,6 +1797,103 @@ export default function DashboardPage() {
           return (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                {/* YsUp Pad Tile */}
+                {safePage === 0 && (
+                  <div key="tile-pad" onClick={() => googleConnected ? window.location.href = "/dashboard/pad" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f5f5f0, #e8e4da)", borderColor: "#2a2a2a" }}>
+                      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #c4bfb4 23px, #c4bfb4 24px)", backgroundSize: "100% 24px" }}></div>
+                      <div className="absolute left-3 top-0 bottom-0 w-[1px] opacity-30" style={{ background: "#e88b8b" }}></div>
+                      {googleConnected && (
+                        <button onClick={(e) => { e.stopPropagation(); handleDisconnectGoogle(); }} className="absolute top-1 right-1 z-10 text-[8px] text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded px-1">Disconnect</button>
+                      )}
+                      <div className="relative p-2 h-full flex flex-col">
+                        <div className="text-center mb-1">
+                          <div className="text-xl">📓</div>
+                          <div className="text-xs font-bold text-gray-800">YsUp Pad</div>
+                          <div className="text-[9px] text-gray-500">Google Docs</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                          <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
+                        </div>
+                        <div className="flex-1 text-xs space-y-1">
+                          {googleConnected ? (
+                            <>
+                              {recentPadDocs.slice(0, 2).map((doc) => (
+                                <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
+                              ))}
+                              {recentPadDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
+                            </>
+                          ) : (
+                            <div className="bg-blue-100 p-1 rounded text-center text-[9px] text-blue-600 font-medium">Tap to connect</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* YsUp Calc Tile */}
+                {safePage === 0 && (
+                  <div key="tile-calc" onClick={() => googleConnected ? window.location.href = "/dashboard/calc" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", borderColor: "#2a5a2a" }}>
+                      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
+                      <div className="relative p-2 h-full flex flex-col">
+                        <div className="text-center mb-1">
+                          <div className="text-xl">📊</div>
+                          <div className="text-xs font-bold text-gray-800">YsUp Calc</div>
+                          <div className="text-[9px] text-gray-500">Google Sheets</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                          <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
+                        </div>
+                        <div className="flex-1 text-xs space-y-1">
+                          {googleConnected ? (
+                            <>
+                              {recentCalcDocs.slice(0, 2).map((doc) => (
+                                <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
+                              ))}
+                              {recentCalcDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
+                            </>
+                          ) : (
+                            <div className="bg-green-100 p-1 rounded text-center text-[9px] text-green-600 font-medium">Tap to connect</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* YsUp Slideshow Tile */}
+                {safePage === 0 && (
+                  <div key="tile-slideshow" onClick={() => googleConnected ? window.location.href = "/dashboard/slideshow" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #1a1a2e, #16213e)", borderColor: "#0f3460" }}>
+                      <div className="absolute top-1 left-1 right-1 h-0.5 rounded-full opacity-30" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }}></div>
+                      <div className="relative p-2 h-full flex flex-col">
+                        <div className="text-center mb-1">
+                          <div className="text-xl">📽️</div>
+                          <div className="text-xs font-bold text-white">YsUp Slideshow</div>
+                          <div className="text-[9px] text-blue-300">Google Slides</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                          <span className="text-[8px] text-blue-200">{googleConnected ? "Connected" : "Not connected"}</span>
+                        </div>
+                        <div className="flex-1 text-xs space-y-1">
+                          {googleConnected ? (
+                            <>
+                              {recentSlideshowDocs.slice(0, 2).map((doc) => (
+                                <div key={doc.id} className="bg-white/10 p-1 rounded border border-blue-800 text-[9px] text-blue-200 truncate">{doc.title}</div>
+                              ))}
+                              {recentSlideshowDocs.length === 0 && <div className="bg-white/10 p-1 rounded border border-blue-800 text-center text-[9px] text-blue-400">Tap to open</div>}
+                            </>
+                          ) : (
+                            <div className="bg-blue-900/50 p-1 rounded text-center text-[9px] text-blue-300 font-medium">Tap to connect</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {pageItems.map((item) => {
                   if (item.type === "file") {
                     const file = item.data as PDFFile
