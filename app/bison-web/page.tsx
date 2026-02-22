@@ -465,7 +465,7 @@ export default function BisonWebPage() {
         background: "linear-gradient(145deg, #3e2723 0%, #5d4037 30%, #4e342e 50%, #3e2723 70%, #2c1a12 100%)",
       }}
     >
-      <Header currentPage="Bison Web" />
+      <Header currentPage="Homepage" />
 
       <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none"

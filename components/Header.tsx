@@ -323,7 +323,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game" },
-    { name: "Bison Web", href: "/bison-web" },
+    { name: "Homepage", href: "/bison-web" },
     { name: "The Hilltop", href: "/hilltop" },
     { name: "Bulletin Board", href: "/bulletin-board" },
     { name: "HU Bookstore", href: "/bookstore" },
