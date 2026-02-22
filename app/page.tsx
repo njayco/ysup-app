@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import Link from "next/link"
 import { Search, Sparkles } from "lucide-react"
+import SplashScreen from "@/components/SplashScreen"
 
 const weatherCodeLabels: Record<number, { label: string; icon: string }> = {
   0: { label: "Clear", icon: "☀️" },
@@ -54,6 +55,20 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentTime, setCurrentTime] = useState("")
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null)
+  const [showSplash, setShowSplash] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [lastPage, setLastPage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const user = localStorage.getItem("currentUser")
+    if (user) {
+      setIsLoggedIn(true)
+      const saved = localStorage.getItem("ysup_last_page")
+      if (saved && saved !== "/") {
+        setLastPage(saved)
+      }
+    }
+  }, [])
 
   const fetchWeather = useCallback(async () => {
     try {
@@ -87,6 +102,16 @@ export default function HomePage() {
     e.preventDefault()
     if (!searchQuery.trim()) return
     window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+  }
+
+  if (showSplash) {
+    return (
+      <SplashScreen
+        onComplete={() => setShowSplash(false)}
+        isLoggedIn={isLoggedIn}
+        lastPage={lastPage}
+      />
+    )
   }
 
   return (
