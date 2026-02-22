@@ -77,6 +77,29 @@ interface AmazonBook {
   categories: string[]
 }
 
+interface DictionaryDefinition {
+  definition: string
+  example: string
+  synonyms: string[]
+  antonyms: string[]
+}
+
+interface DictionaryMeaning {
+  partOfSpeech: string
+  definitions: DictionaryDefinition[]
+  synonyms: string[]
+  antonyms: string[]
+}
+
+interface DictionaryResult {
+  word: string
+  phonetic: string
+  audioUrl: string
+  origin: string
+  meanings: DictionaryMeaning[]
+  sourceUrl: string
+}
+
 interface CampusUser {
   id: number
   username: string
@@ -85,7 +108,7 @@ interface CampusUser {
   college: string
 }
 
-type TabType = "all" | "web" | "scholar" | "books" | "amazon" | "wikipedia" | "users"
+type TabType = "all" | "web" | "scholar" | "books" | "amazon" | "wikipedia" | "dictionary" | "users"
 
 function BookPlaceholder({ title, authors, isFocused }: { title: string; authors: string[]; isFocused: boolean }) {
   const authorText = authors.length > 0 ? authors[0] : ""
@@ -247,6 +270,7 @@ function SearchContent() {
   const [amazonBooks, setAmazonBooks] = useState<AmazonBook[]>([])
   const [amazonCarouselIndex, setAmazonCarouselIndex] = useState(0)
   const [selectedAmazon, setSelectedAmazon] = useState<AmazonBook | null>(null)
+  const [dictionaryResults, setDictionaryResults] = useState<DictionaryResult[]>([])
   const [searchTime, setSearchTime] = useState(0)
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
   const [aiOverview, setAiOverview] = useState("")
@@ -271,13 +295,14 @@ function SearchContent() {
     const startTime = Date.now()
 
     try {
-      const [booksRes, scholarRes, wikiRes, usersRes, webRes, amazonRes] = await Promise.allSettled([
+      const [booksRes, scholarRes, wikiRes, usersRes, webRes, amazonRes, dictRes] = await Promise.allSettled([
         fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/web-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/amazon-books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/dictionary?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
       ])
 
       const booksData = booksRes.status === "fulfilled" && Array.isArray(booksRes.value) ? booksRes.value : []
@@ -286,6 +311,7 @@ function SearchContent() {
       const usersData = usersRes.status === "fulfilled" && Array.isArray(usersRes.value) ? usersRes.value : []
       const webData = webRes.status === "fulfilled" && Array.isArray(webRes.value) ? webRes.value : []
       const amazonData = amazonRes.status === "fulfilled" && Array.isArray(amazonRes.value) ? amazonRes.value : []
+      const dictData = dictRes.status === "fulfilled" && Array.isArray(dictRes.value) ? dictRes.value : []
 
       setBooks(booksData)
       setScholarArticles(scholarData)
@@ -293,6 +319,7 @@ function SearchContent() {
       setCampusUsers(usersData)
       setWebResults(webData)
       setAmazonBooks(amazonData)
+      setDictionaryResults(dictData)
 
       if (booksData.length > 0) setSelectedBook(booksData[0])
       if (scholarData.length > 0) setSelectedScholar(scholarData[0])
@@ -383,12 +410,13 @@ function SearchContent() {
     }
   }
 
-  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length + amazonBooks.length
+  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length + amazonBooks.length + dictionaryResults.length
 
   const sidebarCategories = [
     { label: "Everything", icon: <Search className="w-4 h-4" />, tab: "all" as TabType, count: totalResults },
     { label: "Books", icon: <BookOpen className="w-4 h-4" />, tab: "books" as TabType, count: books.length },
     { label: "Amazon Books", icon: <span className="text-sm">📦</span>, tab: "amazon" as TabType, count: amazonBooks.length },
+    { label: "Dictionary", icon: <span className="text-sm">📖</span>, tab: "dictionary" as TabType, count: dictionaryResults.length },
     { label: "Scholarly Articles", icon: <GraduationCap className="w-4 h-4" />, tab: "scholar" as TabType, count: scholarArticles.length },
     { label: "Web", icon: <Monitor className="w-4 h-4" />, tab: "web" as TabType, count: webResults.length },
     { label: "Encyclopedia", icon: <Globe className="w-4 h-4" />, tab: "wikipedia" as TabType, count: wikiArticles.length },
@@ -557,6 +585,7 @@ function SearchContent() {
               (activeTab === "web" && webResults.length === 0) ||
               (activeTab === "books" && books.length === 0) ||
               (activeTab === "amazon" && amazonBooks.length === 0) ||
+              (activeTab === "dictionary" && dictionaryResults.length === 0) ||
               (activeTab === "scholar" && scholarArticles.length === 0) ||
               (activeTab === "wikipedia" && wikiArticles.length === 0) ||
               (activeTab === "users" && campusUsers.length === 0)
@@ -564,7 +593,7 @@ function SearchContent() {
               <div className="text-center py-20">
                 <FolderSearch className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-60" />
                 <p className="text-amber-200 text-lg" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
-                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "amazon" ? "Amazon books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
+                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "amazon" ? "Amazon books" : activeTab === "dictionary" ? "dictionary definitions" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
                 </p>
                 <p className="text-amber-400 text-sm mt-2 opacity-70">Try checking other categories for results</p>
               </div>
@@ -1108,6 +1137,118 @@ function SearchContent() {
                 )}
 
                 {/* Wikipedia Results */}
+                {/* Dictionary Definitions */}
+                {(activeTab === "all" || activeTab === "dictionary") && dictionaryResults.length > 0 && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <span className="text-lg">📖</span>
+                      Dictionary ({dictionaryResults.length})
+                    </h2>
+                    <div className="space-y-4">
+                      {dictionaryResults.map((entry) => (
+                        <div
+                          key={entry.word}
+                          className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-5 hover:bg-opacity-60 transition-all"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-violet-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-lg">📖</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="text-2xl font-bold text-amber-100" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
+                                  {entry.word}
+                                </h3>
+                                {entry.phonetic && (
+                                  <span className="text-violet-300 text-sm italic">{entry.phonetic}</span>
+                                )}
+                                {entry.audioUrl && (
+                                  <button
+                                    onClick={() => {
+                                      const audio = new Audio(entry.audioUrl)
+                                      audio.play().catch(() => {})
+                                    }}
+                                    className="w-7 h-7 bg-violet-700 hover:bg-violet-600 rounded-full flex items-center justify-center transition-colors"
+                                    title="Listen to pronunciation"
+                                  >
+                                    <span className="text-xs">🔊</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              {entry.origin && (
+                                <p className="text-amber-400 text-xs mt-1 italic opacity-70">
+                                  Origin: {entry.origin}
+                                </p>
+                              )}
+
+                              <div className="mt-3 space-y-3">
+                                {entry.meanings.map((meaning, mi) => (
+                                  <div key={mi}>
+                                    <span className="inline-block px-2 py-0.5 bg-violet-800 bg-opacity-60 text-violet-200 text-xs font-semibold rounded-full mb-1.5">
+                                      {meaning.partOfSpeech}
+                                    </span>
+                                    <ol className="space-y-1.5 ml-1">
+                                      {meaning.definitions.map((def, di) => (
+                                        <li key={di} className="flex gap-2">
+                                          <span className="text-amber-500 text-sm font-bold mt-0.5 flex-shrink-0">{di + 1}.</span>
+                                          <div>
+                                            <p className="text-amber-200 text-sm leading-relaxed">{def.definition}</p>
+                                            {def.example && (
+                                              <p className="text-amber-400 text-xs mt-0.5 italic opacity-70">
+                                                &ldquo;{def.example}&rdquo;
+                                              </p>
+                                            )}
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                    {meaning.synonyms.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-2 ml-1">
+                                        <span className="text-amber-500 text-[10px] uppercase tracking-wider font-semibold">Synonyms:</span>
+                                        {meaning.synonyms.map((s, si) => (
+                                          <span key={si} className="px-1.5 py-0.5 bg-emerald-900 bg-opacity-40 text-emerald-300 text-[10px] rounded">
+                                            {s}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {meaning.antonyms.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-1 ml-1">
+                                        <span className="text-amber-500 text-[10px] uppercase tracking-wider font-semibold">Antonyms:</span>
+                                        {meaning.antonyms.map((a, ai) => (
+                                          <span key={ai} className="px-1.5 py-0.5 bg-red-900 bg-opacity-40 text-red-300 text-[10px] rounded">
+                                            {a}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <a
+                                  href={entry.sourceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-violet-800 hover:bg-violet-700 text-violet-100 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  Full Entry
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {(activeTab === "all" || activeTab === "wikipedia") && wikiArticles.length > 0 && (
                   <section className="max-w-3xl mx-auto">
                     <h2

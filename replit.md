@@ -39,7 +39,8 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - **AI Summarize** (`/api/summarize`) - OpenAI-generated summaries with PostgreSQL caching
 - **Book Image Proxy** (`/api/book-image`) - Server-side proxy for Google Books covers
 - **Amazon Books** (`/api/amazon-books`) - Amazon book search with 3D yellow-themed carousel, star ratings, descriptions, and Amazon.com purchase links
-- **Search categories** (sidebar order): Everything, Books, Amazon Books, Scholarly Articles, Web, Encyclopedia, Campus Users
+- **Dictionary** (`/api/dictionary`) - Free Dictionary API (dictionaryapi.dev) for word definitions, phonetics, pronunciation audio, synonyms, antonyms, and etymology
+- **Search categories** (sidebar order): Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users
 - All searches run once via Promise.allSettled; tab switching filters cached results
 
 ## User Preferences

@@ -16,6 +16,7 @@ A multi-source search engine with a warm wood/amber themed interface. All search
 
 - **Books** - Google Books API integration with interactive 3D blue-themed carousel and styled book covers
 - **Amazon Books** - Book search with ISBN-based Amazon.com purchase links, star ratings, descriptions, and a 3D yellow-themed carousel
+- **Dictionary** - Word definitions, phonetics, pronunciation audio, synonyms, antonyms, and etymology via Free Dictionary API
 - **Scholarly Articles** - OpenAlex API (240M+ academic works) with 3D emerald-themed journal carousel
 - **Web Search** - DuckDuckGo web results
 - **Encyclopedia** - Wikipedia article search
@@ -120,6 +121,7 @@ app/
   api/
     books/              # Google Books API
     amazon-books/       # Amazon Books search
+    dictionary/         # Word definitions and phonetics
     scholar/            # OpenAlex scholarly articles
     wiki/               # Wikipedia search
     web-search/         # DuckDuckGo web search
@@ -177,9 +179,9 @@ public/                 # Static assets and images
 
 ---
 
-## API Routes (18 Total)
+## API Routes (19 Total)
 
-**Search (8):** Books, Amazon Books, Scholarly Articles, Web, Encyclopedia, Campus Users, AI Overview, AI Summarize
+**Search (9):** Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users, AI Overview, AI Summarize
 
 **Social (3):** Class Networks, Network Files, Shared Files
 
