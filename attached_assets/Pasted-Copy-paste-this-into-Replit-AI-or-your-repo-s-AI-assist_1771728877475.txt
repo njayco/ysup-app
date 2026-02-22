@@ -1,0 +1,158 @@
+Copy/paste this into Replit AI (or your repo’s AI assistant). It’s written to modify your existing YsUp Campus Network(Mongo/Express + Socket.io + JWT + React) and add Online YsUp Game (AI Tutor Mode) + rename the existing button to In-Person.
+
+Replit Prompt: “YsUp Online Game (AI Tutor Chalkboard) + In-Person Rename + YBUCKS Notifications”
+You are working inside an EXISTING full-stack repo called ysup-campus-platform (MongoDB + Express API + Socket.io + React client).
+GOAL
+Add a new feature to play YsUp Game Online with AI and update the existing in-person flow.
+UI Changes (Dashboard)
+1. Replace any button text that currently says “Start A New Game Session” with:
+* “Start A New In-Person Game Session”
+1. Add a new primary button near it:
+* “Start An Online Game Session (AI)”
+In-Person Game Session (existing)
+* Keep the existing in-person game session flow (manual scoring).
+* Ensure player entry fields include:
+    * First Name
+    * Last Name
+    * YsUp Username (format: +username)
+* When the in-person session awards YBUCKS manually, the system must:
+    * Credit the YBUCKS to the matched user account (by username)
+    * Create a Notification record
+    * Emit a real-time Socket.io event to the user: notification:new
+Notifications Requirement (global)
+Users must receive notifications anytime they receive YBUCKS from:
+* In-Person YsUp game scoring
+* Online AI game scoring
+* Receiving TRUE’s (formerly co-signs)
+NEW FEATURE: Online YsUp Game Session with AI (OpenAI)
+When user clicks Start An Online Game Session (AI):
+* Route them to a new page: /game/online/:sessionId
+* Render a skeuomorphic chalkboard interface
+    * Dark green chalkboard background
+    * Chalk-like font (CSS), subtle chalk dust texture
+    * “Chalk” UI elements: rounded corners, hand-drawn style borders
+    * A top header: “YsUp AI Coach”
+    * A center input box labeled: “Ask your question”
+    * A “Submit Question” button
+    * A chat transcript area that shows AI responses as “Coach”
+    * A small rules panel on the right listing: “No direct answers. Hints only.”
+Online Game Mechanics (important)
+Users “play YsUp” by asking YsUp AI a question. YsUp AI must help them find the answer independently.
+Hard Rule: NO straightforward definitions or direct final answers. Instead, the AI MUST use:
+* Recall questions
+* Process questions
+* Examples
+* Similes / metaphors
+* Hints
+* Creative approaches
+* Step-by-step reasoning prompts (without giving the final conclusion)
+Scoring Logic (Online)
+* If the user arrives at the answer (they type something like “I think the answer is…”), the AI should respond with:
+    * A brief validation WITHOUT stating the answer directly
+    * Then the AI must prompt: “Are there any questions class?”
+* Award the student user:
+    * +10 YBUCKS when they “arrive to the answer”
+* Teacher/Coach (system rule):
+    * +250 YBUCKS if no questions are asked after the prompt “Are There Any Questions Class?”
+    * For now, implement this as: if the AI prompts that line and the user does not ask another question for 30 minutes OR the user clicks “End Session”, award the coach points to a “coach” bucket on the session (do not need a real teacher user yet unless it already exists in the schema).
+DATA MODEL CHANGES
+1) GameSession model update (or create if missing)
+Add fields:
+* mode: "in_person" | "online_ai"
+* status: "active" | "ended"
+* players: array of:
+    * firstName, lastName, username, userId (optional ref)
+* events: array of game events (for audit)
+* ybucksAwarded: array records: { userId, amount, reason, createdAt }
+* onlineChat: array of { role: "user"|"coach", content, createdAt }
+2) Notification model (create if missing)
+Fields:
+* userId (ref User)
+* type: "YBUCKS_EARNED" | "TRUE_RECEIVED" | "SYSTEM"
+* title
+* message
+* meta (object)
+* read boolean default false
+* timestamps
+3) TRUE’s (formerly co-signs)
+Wherever TRUE’s are awarded in the backend, ensure:
+* It credits any YBUCKS if applicable (or just notification if no points)
+* Creates a Notification
+* Emits Socket.io notification:new to that user
+BACKEND API CHANGES (Express)
+Create new routes under /api/game:
+1. POST /api/game/online/start
+* Auth required
+* Creates a GameSession with mode="online_ai", adds current user as player
+* Returns sessionId
+1. POST /api/game/online/:sessionId/message
+* Auth required
+* Body: { question: string }
+* Server calls OpenAI and returns the coach reply
+* Save both user question and coach reply into onlineChat
+1. POST /api/game/online/:sessionId/arrived
+* Auth required
+* Body: { userAnswer: string }
+* Marks an “arrived_to_answer” event
+* Awards +10 YBUCKS to the user
+* Creates Notification + emits Socket.io
+* Returns updated balance + confirmation
+1. (existing) in-person scoring endpoint:
+* Ensure awarding YBUCKS always generates Notification + socket event
+OPENAI INTEGRATION (Server)
+Add environment variable:
+* OPENAI_API_KEY=...
+Implement a server-side helper:
+* utils/ysupCoachPrompt.js
+System Prompt (must be enforced)
+Use a strict system message for the model:
+* The assistant is “YsUp AI Coach”
+* Never provide direct answers, definitions, or the final solution
+* Always guide with hints, questions, and examples
+* If the user asks for the answer, refuse and reframe with a hint
+* Keep responses short, chalkboard-friendly (2–8 lines)
+* End some turns with a question back to the user
+* When user seems to have it, respond with:
+    * encouragement + “Are there any questions class?”
+Also add server-side safety:
+* If the model response contains “The answer is …” or looks like a direct definition, automatically rewrite it into hints (fallback rule).
+Use the OpenAI SDK already supported in Node. If the repo doesn’t have it, install it and implement using the current recommended API pattern.
+SOCKET.IO
+When notifications are created:
+* Emit to the user room: io.to(userId.toString()).emit("notification:new", notificationPayload) Make sure users join their own room upon socket connect.
+FRONTEND (React)
+Dashboard
+* Rename existing button text.
+* Add new button for Online AI.
+* On click Online:
+    * call /api/game/online/start
+    * navigate to /game/online/:sessionId
+Online Chalkboard Page
+Create a new page/component:
+* OnlineGameSession.jsx (or TSX) Layout:
+* Chalkboard background panel
+* Chat transcript
+* Question input + submit
+* “I Arrived At The Answer” button
+    * opens a small modal textarea: “Type your answer in your own words”
+    * submits to /api/game/online/:sessionId/arrived
+Notifications UI
+If you already have notifications UI:
+* ensure real-time updates appear instantly If not:
+* Add a bell icon in header
+* Dropdown list of recent notifications
+* Unread badge count
+* Mark read endpoint optional (nice-to-have)
+ACCEPTANCE CHECKLIST
+* ✅ Dashboard shows:
+    * “Start A New In-Person Game Session”
+    * “Start An Online Game Session (AI)”
+* ✅ Online session shows chalkboard UI and AI coach replies
+* ✅ AI coach never gives direct answers
+* ✅ “Arrived” awards +10 YBUCKS, updates DB, creates notification, real-time socket push
+* ✅ In-person scoring also creates notifications + socket push
+* ✅ TRUE’s also trigger notification + socket push
+* ✅ Code is clean, uses existing auth middleware, validation, error handling
+* ✅ Add minimal tests if repo already has a test setup
+Now implement end-to-end.
+
