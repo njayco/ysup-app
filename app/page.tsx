@@ -68,19 +68,17 @@ export default function HomePage() {
       setIsLoggedIn(true)
       const saved = localStorage.getItem("ysup_last_page")
       if (saved && saved !== "/") {
-        setLastPage(saved)
+        router.push(saved)
+        return
       }
-      if (!hasSeenSplash) {
-        setShowSplash(true)
-        localStorage.setItem("ysup_splash_seen", "1")
-      }
+      setSplashChecked(true)
     } else {
       if (!hasSeenSplash) {
         setShowSplash(true)
         localStorage.setItem("ysup_splash_seen", "1")
       }
+      setSplashChecked(true)
     }
-    setSplashChecked(true)
   }, [])
 
   const fetchWeather = useCallback(async () => {
