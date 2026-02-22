@@ -335,8 +335,8 @@ export default function ChalkboardPage() {
                       {meeting.host_user_id === currentUser?.id && (
                         <button
                           onClick={() => handleDeleteMeeting(meeting.id)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                          style={{ background: "rgba(239,68,68,0.2)", color: "#ef4444" }}
+                          className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 shrink-0"
+                          style={{ background: "rgba(239,68,68,0.25)", color: "#ef4444" }}
                           title="Delete room"
                         >
                           <X className="w-3.5 h-3.5" />
