@@ -287,6 +287,18 @@ export default function DashboardPage() {
   ]
   const [allFiles, setAllFiles] = useState<PDFFile[]>(defaultFiles)
 
+  interface NetworkSharedFile {
+    id: number
+    file_name: string
+    file_type: string
+    file_size: number
+    created_at: string
+    uploader_username: string
+    network_name: string
+    network_slug: string
+  }
+  const [networkSharedFiles, setNetworkSharedFiles] = useState<NetworkSharedFile[]>([])
+
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
@@ -303,6 +315,12 @@ export default function DashboardPage() {
         fetch(`/api/storage?userId=${userData.id}`)
           .then((r) => r.json())
           .then((info) => setStorageInfo(info))
+          .catch(() => {})
+        fetch(`/api/networks/shared-files?userId=${userData.id}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.files) setNetworkSharedFiles(data.files)
+          })
           .catch(() => {})
       }
     }
@@ -1544,11 +1562,12 @@ export default function DashboardPage() {
             </div>
           )}
         {(() => {
-          const gridItems: ({ type: "file"; data: PDFFile } | { type: "folder"; data: typeof folders[0] } | { type: "note"; data: StickyNote })[] = []
+          const gridItems: ({ type: "file"; data: PDFFile } | { type: "folder"; data: typeof folders[0] } | { type: "note"; data: StickyNote } | { type: "shared_file"; data: NetworkSharedFile })[] = []
 
           filteredFiles.forEach((f) => gridItems.push({ type: "file", data: f }))
           folders.forEach((f) => gridItems.push({ type: "folder", data: f }))
           stickyNotes.forEach((n) => gridItems.push({ type: "note", data: n }))
+          networkSharedFiles.forEach((sf) => gridItems.push({ type: "shared_file", data: sf }))
 
           const totalPages = Math.max(1, Math.ceil(gridItems.length / itemsPerPage))
           const safePage = Math.min(dashboardPage, totalPages - 1)
@@ -1696,6 +1715,46 @@ export default function DashboardPage() {
                               {note.content.length > 60 && "..."}
                             </div>
                             <div className="text-xs text-gray-500 mt-2">{note.lastModified}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  if (item.type === "shared_file") {
+                    const sf = item.data as NetworkSharedFile
+                    return (
+                      <div
+                        key={`shared-${sf.id}`}
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
+                        onClick={() => {
+                          const storedUser = localStorage.getItem("currentUser")
+                          if (storedUser) {
+                            const userData = JSON.parse(storedUser)
+                            fetch(`/api/networks/shared-files?userId=${userData.id}&fileId=${sf.id}`)
+                              .then((r) => r.json())
+                              .then((data) => {
+                                if (data.file_data) {
+                                  const link = document.createElement("a")
+                                  link.href = data.file_data
+                                  link.download = sf.file_name
+                                  link.click()
+                                }
+                              })
+                              .catch(() => {})
+                          }
+                        }}
+                      >
+                        <div className="h-44 bg-gradient-to-b from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg shadow-lg relative overflow-hidden">
+                          <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white text-xs px-2 py-0.5 text-center truncate">
+                            {sf.network_name}
+                          </div>
+                          <div className="p-3 pt-7 h-full flex flex-col items-center justify-center">
+                            <FileText className="w-10 h-10 text-blue-500 mb-1" />
+                            <div className="text-xs font-medium text-gray-800 truncate w-full text-center">{sf.file_name}</div>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-blue-200 bg-opacity-80 px-2 py-1">
+                            <div className="text-xs text-blue-800 font-medium truncate text-center">Sent from +{sf.uploader_username}</div>
                           </div>
                         </div>
                       </div>

@@ -50,12 +50,17 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 ## Class Networks Feature
 - PostgreSQL-backed social networking within classes/clubs/organizations
 - API routes: `/api/networks` (CRUD, search, mine, join, posts, cosign, respond, requests, approve, deny)
+- API routes: `/api/networks/[slug]/files` (upload/list shared files per network)
+- API routes: `/api/networks/shared-files` (list all shared files across user's networks for dashboard)
 - Dashboard notebook modal replaced with real API-backed Class Networks UI
-- Network detail page at `/networks/[slug]` with feed, members, moderator panel
+- Network detail page at `/networks/[slug]` with feed, members, moderator panel, file sharing
+- Share button with modal: SMS, Email, WhatsApp, Instagram, X (Twitter), Copy Link
+- File sharing: Upload files to network, automatically appear on all members' dashboards
+- Shared files on dashboard show "Sent from +username" label and network name
 - Invite links at `/invite/network/[slug]` with login redirect for unauthenticated users
 - Public networks: instant join; Private networks: moderator approval required
 - Post creation, co-signing, and threaded responses
-- PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses
+- PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses, network_shared_files
 
 ## YsUp Bluebook Calendar Feature
 - PostgreSQL-backed event/calendar system accessible from the dashboard Bluebook item

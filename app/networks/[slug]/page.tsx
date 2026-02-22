@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import {
@@ -17,6 +17,12 @@ import {
   Check,
   Shield,
   Send,
+  Share2,
+  Mail,
+  MessageSquare,
+  Upload,
+  FileText,
+  Download,
 } from "lucide-react"
 
 interface NetworkMember {
@@ -54,6 +60,17 @@ interface JoinRequest {
   created_at: string
 }
 
+interface SharedFile {
+  id: number
+  file_name: string
+  file_type: string
+  file_size: number
+  created_at: string
+  uploader_username: string
+  uploader_first_name: string
+  uploader_last_name: string
+}
+
 interface NetworkDetail {
   id: number
   name: string
@@ -85,11 +102,16 @@ export default function NetworkPage() {
   const [posting, setPosting] = useState(false)
   const [expandedResponses, setExpandedResponses] = useState<number[]>([])
   const [newResponse, setNewResponse] = useState<{ [key: number]: string }>({})
-  const [inviteCopied, setInviteCopied] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
   const [showRequests, setShowRequests] = useState(false)
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
   const [joiningNetwork, setJoiningNetwork] = useState(false)
+  const [showSharedFiles, setShowSharedFiles] = useState(false)
+  const [sharedFiles, setSharedFiles] = useState<SharedFile[]>([])
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const getUserId = () => {
     const stored = localStorage.getItem("currentUser")
@@ -259,10 +281,112 @@ export default function NetworkPage() {
     }
   }
 
-  const copyInviteLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/invite/network/${slug}`)
-    setInviteCopied(true)
-    setTimeout(() => setInviteCopied(false), 2000)
+  const getInviteLink = () => `${window.location.origin}/invite/network/${slug}`
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(getInviteLink())
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
+
+  const shareViaSMS = () => {
+    const msg = encodeURIComponent(`Join my class network "${network?.name}" on YsUp! ${getInviteLink()}`)
+    window.open(`sms:?body=${msg}`, "_blank")
+  }
+
+  const shareViaEmail = () => {
+    const subject = encodeURIComponent(`Join "${network?.name}" on YsUp Campus`)
+    const body = encodeURIComponent(`Hey! Join my class network "${network?.name}" on YsUp Campus.\n\n${getInviteLink()}`)
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank")
+  }
+
+  const shareViaWhatsApp = () => {
+    const msg = encodeURIComponent(`Join my class network "${network?.name}" on YsUp! ${getInviteLink()}`)
+    window.open(`https://wa.me/?text=${msg}`, "_blank")
+  }
+
+  const shareViaInstagram = () => {
+    navigator.clipboard.writeText(getInviteLink())
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+    alert("Link copied! Paste it in your Instagram DM or story.")
+  }
+
+  const shareViaX = () => {
+    const msg = encodeURIComponent(`Join my class network "${network?.name}" on YsUp Campus! ${getInviteLink()}`)
+    window.open(`https://twitter.com/intent/tweet?text=${msg}`, "_blank")
+  }
+
+  const fetchSharedFiles = async () => {
+    const userId = getUserId()
+    if (!userId) return
+    try {
+      const res = await fetch(`/api/networks/${slug}/files?userId=${userId}`)
+      const data = await res.json()
+      if (data.files) setSharedFiles(data.files)
+    } catch (err) {
+      console.error("Fetch shared files error:", err)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const userId = getUserId()
+    if (!userId) return
+
+    setUploadingFile(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const fileData = reader.result as string
+        const res = await fetch(`/api/networks/${slug}/files`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            fileData,
+          }),
+        })
+        const data = await res.json()
+        if (data.id) {
+          setSharedFiles([data, ...sharedFiles])
+        }
+        setUploadingFile(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      console.error("File upload error:", err)
+      setUploadingFile(false)
+    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const downloadSharedFile = async (fileId: number, fileName: string) => {
+    const userId = getUserId()
+    if (!userId) return
+    try {
+      const res = await fetch(`/api/networks/shared-files?userId=${userId}&fileId=${fileId}`)
+      const data = await res.json()
+      if (data.file_data) {
+        const link = document.createElement("a")
+        link.href = data.file_data
+        link.download = fileName
+        link.click()
+      }
+    } catch (err) {
+      console.error("Download error:", err)
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return ""
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   const toggleResponses = (postId: number) => {
@@ -335,10 +459,20 @@ export default function NetworkPage() {
             <div className="flex items-center space-x-2 flex-shrink-0">
               {isMember && (
                 <button
-                  onClick={copyInviteLink}
+                  onClick={() => setShowShareModal(true)}
                   className="bg-amber-700 hover:bg-amber-600 text-white px-3 py-2 rounded-lg flex items-center space-x-1 text-sm"
                 >
-                  {inviteCopied ? <><Check className="w-4 h-4" /><span>Copied!</span></> : <><Link2 className="w-4 h-4" /><span>Invite</span></>}
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+              )}
+              {isMember && (
+                <button
+                  onClick={() => { setShowSharedFiles(!showSharedFiles); if (!showSharedFiles) fetchSharedFiles(); }}
+                  className="bg-amber-700 hover:bg-amber-600 text-white px-3 py-2 rounded-lg flex items-center space-x-1 text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Share Files</span>
                 </button>
               )}
               {isMember && (
@@ -396,6 +530,89 @@ export default function NetworkPage() {
                   {joiningNetwork ? "Processing..." : network.privacy === "public" ? "Join Network" : "Request to Join"}
                 </button>
               </>
+            )}
+          </div>
+        )}
+
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
+            <div className="bg-amber-950 border border-amber-700 rounded-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-amber-100">Share Network</h3>
+                <button onClick={() => setShowShareModal(false)} className="text-amber-400 hover:text-amber-100"><X className="w-5 h-5" /></button>
+              </div>
+              <p className="text-amber-300 text-sm mb-4">Invite others to join <span className="font-semibold text-amber-100">{network.name}</span></p>
+              <div className="space-y-2">
+                <button onClick={shareViaSMS} className="w-full flex items-center space-x-3 p-3 bg-amber-900 bg-opacity-60 hover:bg-opacity-80 rounded-lg text-amber-100 transition-colors">
+                  <MessageSquare className="w-5 h-5 text-green-400" />
+                  <span>SMS / Text Message</span>
+                </button>
+                <button onClick={shareViaEmail} className="w-full flex items-center space-x-3 p-3 bg-amber-900 bg-opacity-60 hover:bg-opacity-80 rounded-lg text-amber-100 transition-colors">
+                  <Mail className="w-5 h-5 text-blue-400" />
+                  <span>Email</span>
+                </button>
+                <button onClick={shareViaWhatsApp} className="w-full flex items-center space-x-3 p-3 bg-amber-900 bg-opacity-60 hover:bg-opacity-80 rounded-lg text-amber-100 transition-colors">
+                  <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.147-.097-3.064 1.027 1.027-3.064-.097-.147A9.953 9.953 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                  <span>WhatsApp</span>
+                </button>
+                <button onClick={shareViaInstagram} className="w-full flex items-center space-x-3 p-3 bg-amber-900 bg-opacity-60 hover:bg-opacity-80 rounded-lg text-amber-100 transition-colors">
+                  <svg className="w-5 h-5 text-pink-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                  <span>Instagram</span>
+                </button>
+                <button onClick={shareViaX} className="w-full flex items-center space-x-3 p-3 bg-amber-900 bg-opacity-60 hover:bg-opacity-80 rounded-lg text-amber-100 transition-colors">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  <span>X (Twitter)</span>
+                </button>
+                <div className="border-t border-amber-800 my-2"></div>
+                <button onClick={copyLink} className="w-full flex items-center space-x-3 p-3 bg-amber-800 hover:bg-amber-700 rounded-lg text-amber-100 transition-colors">
+                  {linkCopied ? <><Check className="w-5 h-5 text-green-400" /><span>Link Copied!</span></> : <><Copy className="w-5 h-5 text-amber-300" /><span>Copy Link</span></>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showSharedFiles && (
+          <div className="bg-amber-900 bg-opacity-60 rounded-xl p-4 border border-amber-700 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-amber-100">Shared Files</h3>
+              <div>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.csv" />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFile}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1 text-sm disabled:opacity-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{uploadingFile ? "Uploading..." : "Share a File"}</span>
+                </button>
+              </div>
+            </div>
+            {sharedFiles.length === 0 ? (
+              <p className="text-amber-300 text-sm">No files shared yet. Be the first to share a file!</p>
+            ) : (
+              <div className="space-y-2">
+                {sharedFiles.map((f) => (
+                  <div key={f.id} className="flex items-center justify-between bg-amber-800 bg-opacity-40 rounded p-3">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <FileText className="w-8 h-8 text-amber-300 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-amber-100 font-medium truncate">{f.file_name}</div>
+                        <div className="text-xs text-amber-400">
+                          Sent from +{f.uploader_username} {f.file_size ? `• ${formatFileSize(f.file_size)}` : ""} • {formatDate(f.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadSharedFile(f.id, f.file_name)}
+                      className="text-amber-300 hover:text-amber-100 flex-shrink-0 ml-2"
+                      title="Download"
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
