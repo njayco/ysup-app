@@ -55,19 +55,32 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentTime, setCurrentTime] = useState("")
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null)
-  const [showSplash, setShowSplash] = useState(true)
+  const [showSplash, setShowSplash] = useState(false)
+  const [splashChecked, setSplashChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [lastPage, setLastPage] = useState<string | null>(null)
 
   useEffect(() => {
     const user = localStorage.getItem("currentUser")
+    const hasSeenSplash = localStorage.getItem("ysup_splash_seen")
+
     if (user) {
       setIsLoggedIn(true)
       const saved = localStorage.getItem("ysup_last_page")
       if (saved && saved !== "/") {
         setLastPage(saved)
       }
+      if (!hasSeenSplash) {
+        setShowSplash(true)
+        localStorage.setItem("ysup_splash_seen", "1")
+      }
+    } else {
+      if (!hasSeenSplash) {
+        setShowSplash(true)
+        localStorage.setItem("ysup_splash_seen", "1")
+      }
     }
+    setSplashChecked(true)
   }, [])
 
   const fetchWeather = useCallback(async () => {
@@ -102,6 +115,10 @@ export default function HomePage() {
     e.preventDefault()
     if (!searchQuery.trim()) return
     window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+  }
+
+  if (!splashChecked) {
+    return null
   }
 
   if (showSplash) {
