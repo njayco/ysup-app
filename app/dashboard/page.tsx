@@ -1317,7 +1317,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen wood-background">
+    <div className="min-h-screen wood-background flex flex-col">
       <Header currentPage="Home" />
 
       {/* Welcome Modal for New Users */}
@@ -1372,7 +1372,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="p-4 md:p-6 lg:p-8">
+      <div className="p-4 md:p-6 lg:p-8 flex flex-col flex-1 min-h-0">
         <input
           ref={fileInputRef}
           type="file"
@@ -1448,7 +1448,7 @@ export default function DashboardPage() {
           onDrop={handleExternalFileDrop}
           onDragOver={handleExternalDragOver}
           onDragLeave={handleExternalDragLeave}
-          className={`relative rounded-xl transition-all duration-200 ${isDraggingExternalFile ? "ring-2 ring-dashed ring-amber-500 bg-amber-50/50" : ""}`}
+          className={`relative rounded-xl transition-all duration-200 flex-1 ${isDraggingExternalFile ? "ring-2 ring-dashed ring-amber-500 bg-amber-50/50" : ""}`}
         >
           {isDraggingExternalFile && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-amber-50/80 rounded-xl pointer-events-none">
@@ -1658,7 +1658,7 @@ export default function DashboardPage() {
           )
         })()}
 
-        <div className="flex items-center justify-center py-6 mt-4 border-2 border-dashed border-amber-600/40 rounded-xl bg-amber-900/10 cursor-pointer hover:border-amber-500/60 hover:bg-amber-900/20 transition-all"
+        <div className="flex items-center justify-center py-6 mt-auto pt-8 border-2 border-dashed border-amber-600/40 rounded-xl bg-amber-900/10 cursor-pointer hover:border-amber-500/60 hover:bg-amber-900/20 transition-all"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="text-center">
