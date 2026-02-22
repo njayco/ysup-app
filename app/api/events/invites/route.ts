@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
         ce.description,
         ce.event_date,
         ce.event_time,
+        ce.end_date,
+        ce.end_time,
         ce.location,
+        ce.color,
         u.first_name AS creator_first_name,
         u.last_name AS creator_last_name,
         u.username AS creator_username

@@ -39,10 +39,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { title, description, eventDate, eventTime, location, creatorId, inviteNetworkIds, inviteUserIds } = body
+    const { title, description, eventDate, eventTime, endDate, endTime, location, color, creatorId, inviteNetworkIds, inviteUserIds } = body
 
-    if (!title || !eventDate || !eventTime || !creatorId) {
-      return NextResponse.json({ success: false, message: "Title, date, time, and creator required" }, { status: 400 })
+    if (!title || !eventDate || !creatorId) {
+      return NextResponse.json({ success: false, message: "Title, start date, and creator required" }, { status: 400 })
     }
 
     const client = await pool.connect()
@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
       await client.query("BEGIN")
 
       const eventResult = await client.query(
-        `INSERT INTO calendar_events (title, description, event_date, event_time, location, creator_id)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [title, description || null, eventDate, eventTime, location || null, creatorId]
+        `INSERT INTO calendar_events (title, description, event_date, event_time, end_date, end_time, location, color, creator_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        [title, description || null, eventDate, eventTime || null, endDate || null, endTime || null, location || null, color || 'blue', creatorId]
       )
       const eventId = eventResult.rows[0].id
 

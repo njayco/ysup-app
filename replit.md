@@ -61,7 +61,9 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - PostgreSQL-backed event/calendar system accessible from the dashboard Bluebook item
 - API routes: `/api/events` (create/list events), `/api/events/rsvp` (RSVP responses), `/api/events/invites` (pending invitations), `/api/events/network-members` (fetch members for inviting)
 - API routes: `/api/events/seed-howard` (POST to seed Howard University 2025-2026 academic calendar), `/api/events/notify-cron` (POST for notification cron)
-- Event creation: Title, description, date, time (nullable for all-day events), location fields
+- Event creation: Title, description, start date, start time (optional), end date (optional), end time (optional), location, and color selection
+- Event colors: 14 rainbow colors (red, orange, amber, yellow, lime, green, teal, cyan, blue, indigo, violet, purple, pink, rose) with color-coded display
+- Multi-day events: Events with end dates show on all days in the calendar grid and display date ranges
 - Network-based invitations: Invite entire Class Networks or pick individual members from joined networks
 - RSVP system: Three states (going/maybe/not_going) with real-time tallies displayed on each event
 - Pending invites section: Shows unresponded invitations with quick RSVP buttons

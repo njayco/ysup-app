@@ -10,6 +10,23 @@ import { useAuth } from "@/lib/useAuth"
 const PdfViewer = dynamic(() => import("@/components/PdfViewer"), { ssr: false, loading: () => <div className="text-white p-12">Loading PDF viewer...</div> })
 const PdfThumbnail = dynamic(() => import("@/components/PdfThumbnail"), { ssr: false, loading: () => <div className="w-full h-full bg-gray-100 animate-pulse" /> })
 
+const EVENT_COLOR_MAP: any = {
+  red: { border: "border-red-300", bg: "bg-red-50", text: "text-red-600", dot: "bg-red-500", dateBg: "bg-red-100" },
+  orange: { border: "border-orange-300", bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-500", dateBg: "bg-orange-100" },
+  amber: { border: "border-amber-300", bg: "bg-amber-50", text: "text-amber-600", dot: "bg-amber-500", dateBg: "bg-amber-100" },
+  yellow: { border: "border-yellow-300", bg: "bg-yellow-50", text: "text-yellow-600", dot: "bg-yellow-400", dateBg: "bg-yellow-100" },
+  lime: { border: "border-lime-300", bg: "bg-lime-50", text: "text-lime-600", dot: "bg-lime-500", dateBg: "bg-lime-100" },
+  green: { border: "border-green-300", bg: "bg-green-50", text: "text-green-600", dot: "bg-green-500", dateBg: "bg-green-100" },
+  teal: { border: "border-teal-300", bg: "bg-teal-50", text: "text-teal-600", dot: "bg-teal-500", dateBg: "bg-teal-100" },
+  cyan: { border: "border-cyan-300", bg: "bg-cyan-50", text: "text-cyan-600", dot: "bg-cyan-500", dateBg: "bg-cyan-100" },
+  blue: { border: "border-blue-300", bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-500", dateBg: "bg-blue-100" },
+  indigo: { border: "border-indigo-300", bg: "bg-indigo-50", text: "text-indigo-600", dot: "bg-indigo-500", dateBg: "bg-indigo-100" },
+  violet: { border: "border-violet-300", bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-500", dateBg: "bg-violet-100" },
+  purple: { border: "border-purple-300", bg: "bg-purple-50", text: "text-purple-600", dot: "bg-purple-500", dateBg: "bg-purple-100" },
+  pink: { border: "border-pink-300", bg: "bg-pink-50", text: "text-pink-600", dot: "bg-pink-500", dateBg: "bg-pink-100" },
+  rose: { border: "border-rose-300", bg: "bg-rose-50", text: "text-rose-600", dot: "bg-rose-500", dateBg: "bg-rose-100" },
+}
+
 import {
   Upload,
   Download,
@@ -450,6 +467,9 @@ export default function DashboardPage() {
     maybe_count: string
     not_going_count: string
     my_rsvp: string | null
+    end_date: string | null
+    end_time: string | null
+    color: string | null
   }
 
   interface NetworkForInvite {
@@ -477,7 +497,10 @@ export default function DashboardPage() {
     description: "",
     date: "",
     time: "",
+    endDate: "",
+    endTime: "",
     location: "",
+    color: "blue",
     selectedNetworkIds: [] as number[],
     selectedUserIds: [] as number[],
   })
@@ -837,7 +860,7 @@ export default function DashboardPage() {
   }
 
   const handleCreateEvent = async () => {
-    if (!newEvent.title || !newEvent.time || !newEvent.date) return
+    if (!newEvent.title || !newEvent.date) return
     const storedUser = localStorage.getItem("currentUser")
     if (!storedUser) return
     const userData = JSON.parse(storedUser)
@@ -852,8 +875,11 @@ export default function DashboardPage() {
           title: newEvent.title,
           description: newEvent.description,
           eventDate: newEvent.date,
-          eventTime: newEvent.time,
+          eventTime: newEvent.time || null,
+          endDate: newEvent.endDate || null,
+          endTime: newEvent.endTime || null,
           location: newEvent.location,
+          color: newEvent.color,
           creatorId: userData.id,
           inviteNetworkIds: newEvent.selectedNetworkIds,
           inviteUserIds: newEvent.selectedUserIds,
@@ -861,7 +887,7 @@ export default function DashboardPage() {
       })
       const data = await res.json()
       if (data.success) {
-        setNewEvent({ title: "", description: "", date: "", time: "", location: "", selectedNetworkIds: [], selectedUserIds: [] })
+        setNewEvent({ title: "", description: "", date: "", time: "", endDate: "", endTime: "", location: "", color: "blue", selectedNetworkIds: [], selectedUserIds: [] })
         setShowCreateEvent(false)
         setExpandedNetwork(null)
         fetchCalendarEvents()
@@ -943,8 +969,9 @@ export default function DashboardPage() {
 
   const calEventsForDate = (dateStr: string) =>
     calendarEvents.filter((e) => {
-      const cleaned = e.event_date.includes("T") ? e.event_date.split("T")[0] : e.event_date
-      return cleaned === dateStr
+      const startStr = e.event_date.includes("T") ? e.event_date.split("T")[0] : e.event_date
+      const endStr = e.end_date ? (e.end_date.includes("T") ? e.end_date.split("T")[0] : e.end_date) : startStr
+      return dateStr >= startStr && dateStr <= endStr
     })
 
   const calDaysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
@@ -971,6 +998,11 @@ export default function DashboardPage() {
     const ampm = hour >= 12 ? "PM" : "AM"
     const h12 = hour % 12 || 12
     return `${h12}:${m} ${ampm}`
+  }
+
+  const getEventColors = (color: string | null) => {
+    const map = EVENT_COLOR_MAP
+    return map[color || "blue"] || map.blue
   }
 
   const handleCosign = (_postId: string) => {}
@@ -1802,7 +1834,7 @@ export default function DashboardPage() {
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Date *</label>
+                        <label className="block text-xs text-gray-600 mb-1">Start Date *</label>
                         <input
                           type="date"
                           value={newEvent.date}
@@ -1811,11 +1843,31 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Time *</label>
+                        <label className="block text-xs text-gray-600 mb-1">Start Time (optional)</label>
                         <input
                           type="time"
                           value={newEvent.time}
                           onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                          className="w-full px-3 py-2 border rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">End Date (optional)</label>
+                        <input
+                          type="date"
+                          value={newEvent.endDate}
+                          onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+                          className="w-full px-3 py-2 border rounded text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">End Time (optional)</label>
+                        <input
+                          type="time"
+                          value={newEvent.endTime}
+                          onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
                           className="w-full px-3 py-2 border rounded text-sm"
                         />
                       </div>
@@ -1827,6 +1879,35 @@ export default function DashboardPage() {
                       onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
                       className="w-full px-3 py-2 border rounded text-sm"
                     />
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Event Color</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { name: "red", bg: "bg-red-500" },
+                          { name: "orange", bg: "bg-orange-500" },
+                          { name: "amber", bg: "bg-amber-500" },
+                          { name: "yellow", bg: "bg-yellow-400" },
+                          { name: "lime", bg: "bg-lime-500" },
+                          { name: "green", bg: "bg-green-500" },
+                          { name: "teal", bg: "bg-teal-500" },
+                          { name: "cyan", bg: "bg-cyan-500" },
+                          { name: "blue", bg: "bg-blue-500" },
+                          { name: "indigo", bg: "bg-indigo-500" },
+                          { name: "violet", bg: "bg-violet-500" },
+                          { name: "purple", bg: "bg-purple-500" },
+                          { name: "pink", bg: "bg-pink-500" },
+                          { name: "rose", bg: "bg-rose-500" },
+                        ].map((c) => (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => setNewEvent({ ...newEvent, color: c.name })}
+                            className={`w-7 h-7 rounded-full ${c.bg} transition-all ${newEvent.color === c.name ? "ring-2 ring-offset-2 ring-gray-800 scale-110" : "hover:scale-110"}`}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
 
                     {/* Invite from Networks */}
                     <div>
@@ -1894,9 +1975,9 @@ export default function DashboardPage() {
                     <div className="flex space-x-2 pt-2">
                       <button
                         onClick={handleCreateEvent}
-                        disabled={creatingEvent || !newEvent.title || !newEvent.date || !newEvent.time}
+                        disabled={creatingEvent || !newEvent.title || !newEvent.date}
                         className={`px-4 py-2 rounded text-sm font-medium ${
-                          creatingEvent || !newEvent.title || !newEvent.date || !newEvent.time
+                          creatingEvent || !newEvent.title || !newEvent.date
                             ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                             : "bg-green-600 hover:bg-green-700 text-white"
                         }`}
@@ -1973,17 +2054,18 @@ export default function DashboardPage() {
                                 {day}
                               </div>
                               <div className="space-y-0.5 overflow-hidden">
-                                {dayEvents.slice(0, 3).map((ev) => (
-                                  <div
-                                    key={ev.id}
-                                    className={`text-[10px] md:text-xs px-1 py-0.5 rounded truncate cursor-default ${
-                                      ev.event_time ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
-                                    }`}
-                                    title={`${ev.title}${ev.event_time ? ` at ${formatEventTime(ev.event_time)}` : " (All Day)"}`}
-                                  >
-                                    {ev.title}
-                                  </div>
-                                ))}
+                                {dayEvents.slice(0, 3).map((ev) => {
+                                  const evc = getEventColors(ev.color)
+                                  return (
+                                    <div
+                                      key={ev.id}
+                                      className={`text-[10px] md:text-xs px-1 py-0.5 rounded truncate cursor-default ${evc.dateBg} ${evc.text}`}
+                                      title={`${ev.title}${ev.event_time ? ` at ${formatEventTime(ev.event_time)}` : " (All Day)"}`}
+                                    >
+                                      {ev.title}
+                                    </div>
+                                  )
+                                })}
                                 {dayEvents.length > 3 && (
                                   <div className="text-[10px] text-gray-500 px-1">+{dayEvents.length - 3} more</div>
                                 )}
@@ -2014,9 +2096,12 @@ export default function DashboardPage() {
                                 <div className="text-xs text-gray-400 italic py-2">No events</div>
                               ) : (
                                 <div className="space-y-1">
-                                  {dayEvents.map((ev) => (
+                                  {dayEvents.map((ev) => {
+                                    const evc = getEventColors(ev.color)
+                                    return (
                                     <div key={ev.id} className="flex items-start gap-2 text-sm">
-                                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${ev.event_time ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${evc.dot}`} />
+                                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${evc.dateBg} ${evc.text}`}>
                                         {ev.event_time ? formatEventTime(ev.event_time) : "All Day"}
                                       </span>
                                       <div className="min-w-0">
@@ -2024,7 +2109,8 @@ export default function DashboardPage() {
                                         {ev.location && <span className="text-xs text-gray-500 ml-1">- {ev.location}</span>}
                                       </div>
                                     </div>
-                                  ))}
+                                    )
+                                   })}
                                 </div>
                               )}
                             </div>
@@ -2052,14 +2138,32 @@ export default function DashboardPage() {
                               } catch { return false }
                             })()
                             const eventDateObj = parseEventDate(event.event_date)
-                            const isPast = eventDateObj < new Date(calToday.getFullYear(), calToday.getMonth(), calToday.getDate())
+                            const endDateObj = event.end_date ? parseEventDate(event.end_date) : null
+                            const isPast = (endDateObj || eventDateObj) < new Date(calToday.getFullYear(), calToday.getMonth(), calToday.getDate())
+                            const ec = getEventColors(event.color)
+
+                            const timeDisplay = (() => {
+                              if (!event.event_time && !event.end_time) return "All Day"
+                              let s = event.event_time ? formatEventTime(event.event_time) : ""
+                              if (event.end_time) s += (s ? " - " : "Until ") + formatEventTime(event.end_time)
+                              return s
+                            })()
+
+                            const dateDisplay = (() => {
+                              const startStr = eventDateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                              if (endDateObj && endDateObj.getTime() !== eventDateObj.getTime()) {
+                                const endStr = endDateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                                return `${startStr} - ${endStr}`
+                              }
+                              return null
+                            })()
 
                             return (
-                              <div key={event.id} className={`rounded-lg p-3 border ${isPast ? "bg-gray-50 border-gray-200 opacity-70" : "bg-white border-blue-200"}`}>
+                              <div key={event.id} className={`rounded-lg p-3 border-l-4 border ${isPast ? "bg-gray-50 border-gray-200 opacity-70" : `${ec.bg} ${ec.border}`}`} style={{ borderLeftColor: isPast ? undefined : undefined }}>
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex gap-3 flex-1 min-w-0">
-                                    <div className="shrink-0 w-12 text-center">
-                                      <div className="text-xs font-bold text-blue-600 uppercase">{eventDateObj.toLocaleDateString("en-US", { month: "short" })}</div>
+                                    <div className={`shrink-0 w-12 text-center rounded-lg p-1 ${isPast ? "bg-gray-100" : ec.dateBg}`}>
+                                      <div className={`text-xs font-bold uppercase ${isPast ? "text-gray-400" : ec.text}`}>{eventDateObj.toLocaleDateString("en-US", { month: "short" })}</div>
                                       <div className="text-xl font-bold text-gray-900">{eventDateObj.getDate()}</div>
                                       <div className="text-[10px] text-gray-500">{eventDateObj.toLocaleDateString("en-US", { weekday: "short" })}</div>
                                     </div>
@@ -2067,9 +2171,14 @@ export default function DashboardPage() {
                                       <h4 className="font-bold text-gray-900 text-sm">{event.title}</h4>
                                       {event.description && <p className="text-xs text-gray-600 mt-0.5 line-clamp-1">{event.description}</p>}
                                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${event.event_time ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
-                                          {event.event_time ? formatEventTime(event.event_time) : "All Day"}
+                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isPast ? "bg-gray-200 text-gray-500" : `${ec.dateBg} ${ec.text}`}`}>
+                                          {timeDisplay}
                                         </span>
+                                        {dateDisplay && (
+                                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isPast ? "bg-gray-200 text-gray-500" : `${ec.dateBg} ${ec.text}`}`}>
+                                            {dateDisplay}
+                                          </span>
+                                        )}
                                         {event.location && <span className="text-xs text-gray-500">{event.location}</span>}
                                       </div>
                                       <div className="flex flex-wrap gap-1.5 mt-2 text-[10px]">
