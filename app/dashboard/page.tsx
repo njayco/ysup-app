@@ -1767,7 +1767,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Productivity Dock */}
-        <div className="mb-6">
+        <div className="mb-3 md:mb-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-bold text-amber-100 flex items-center gap-2">
               <Globe className="w-5 h-5" />
@@ -1779,100 +1779,99 @@ export default function DashboardPage() {
               </button>
             ) : null}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
             {/* YsUp Pad Tile */}
-            <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:translate-y-0" style={{ background: "linear-gradient(145deg, #f5f5f0, #e8e4da)", border: "3px solid #2a2a2a", boxShadow: "0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)", minHeight: "220px" }}>
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #c4bfb4 23px, #c4bfb4 24px)", backgroundSize: "100% 24px" }}></div>
-              <div className="absolute left-12 top-0 bottom-0 w-[1px] opacity-30" style={{ background: "#e88b8b" }}></div>
-              <div className="absolute left-[52px] top-0 bottom-0 w-[1px] opacity-30" style={{ background: "#e88b8b" }}></div>
-              <div className="relative p-4">
-                <div className="text-center mb-3">
-                  <div className="text-2xl mb-1">📓</div>
-                  <h4 className="font-bold text-gray-800 text-lg">YsUp Pad</h4>
-                  <p className="text-xs text-gray-500">Google Docs</p>
-                </div>
-                <div className="flex items-center justify-center gap-1 mb-3">
-                  <div className={`w-2 h-2 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                  <span className="text-[10px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
-                </div>
-                {googleConnected ? (
-                  <div>
-                    <button onClick={() => handleCreateWorkspaceDoc("pad", "YsUp Pad - " + new Date().toLocaleDateString())} className="w-full py-1.5 bg-gray-800 text-white text-xs rounded-lg mb-2 hover:bg-gray-700 transition-colors">+ New Document</button>
-                    <div className="space-y-1 max-h-[80px] overflow-y-auto">
-                      {recentPadDocs.slice(0, 3).map((doc) => (
-                        <a key={doc.id} href={doc.google_url} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-blue-600 hover:underline truncate">{doc.title}</a>
-                      ))}
-                      {recentPadDocs.length === 0 && <p className="text-[10px] text-gray-400 text-center">No recent documents</p>}
-                    </div>
+            <div onClick={() => googleConnected ? window.location.href = "/dashboard/pad" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f5f5f0, #e8e4da)", borderColor: "#2a2a2a" }}>
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #c4bfb4 23px, #c4bfb4 24px)", backgroundSize: "100% 24px" }}></div>
+                <div className="absolute left-3 top-0 bottom-0 w-[1px] opacity-30" style={{ background: "#e88b8b" }}></div>
+                <div className="relative p-2 h-full flex flex-col">
+                  <div className="text-center mb-1">
+                    <div className="text-xl">📓</div>
+                    <div className="text-xs font-bold text-gray-800">YsUp Pad</div>
+                    <div className="text-[9px] text-gray-500">Google Docs</div>
                   </div>
-                ) : (
-                  <button onClick={handleConnectGoogle} disabled={connectingGoogle} className="w-full py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-                    {connectingGoogle ? "Connecting..." : "Connect Google Workspace"}
-                  </button>
-                )}
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                    <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
+                  </div>
+                  <div className="flex-1 text-xs space-y-1">
+                    {googleConnected ? (
+                      <>
+                        {recentPadDocs.slice(0, 2).map((doc) => (
+                          <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
+                        ))}
+                        {recentPadDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
+                      </>
+                    ) : (
+                      <div className="bg-blue-100 p-1 rounded text-center text-[9px] text-blue-600 font-medium">Tap to connect</div>
+                    )}
+                  </div>
+                </div>
               </div>
+              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Pad</p>
             </div>
 
             {/* YsUp Calc Tile */}
-            <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:translate-y-0" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", border: "3px solid #2a5a2a", boxShadow: "0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)", minHeight: "220px" }}>
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
-              <div className="relative p-4">
-                <div className="text-center mb-3">
-                  <div className="text-2xl mb-1">📊</div>
-                  <h4 className="font-bold text-gray-800 text-lg">YsUp Calc</h4>
-                  <p className="text-xs text-gray-500">Google Sheets</p>
-                </div>
-                <div className="flex items-center justify-center gap-1 mb-3">
-                  <div className={`w-2 h-2 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                  <span className="text-[10px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
-                </div>
-                {googleConnected ? (
-                  <div>
-                    <button onClick={() => handleCreateWorkspaceDoc("calc", "YsUp Calc - " + new Date().toLocaleDateString())} className="w-full py-1.5 bg-green-700 text-white text-xs rounded-lg mb-2 hover:bg-green-600 transition-colors">+ New Spreadsheet</button>
-                    <div className="space-y-1 max-h-[80px] overflow-y-auto">
-                      {recentCalcDocs.slice(0, 3).map((doc) => (
-                        <a key={doc.id} href={doc.google_url} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-green-600 hover:underline truncate">{doc.title}</a>
-                      ))}
-                      {recentCalcDocs.length === 0 && <p className="text-[10px] text-gray-400 text-center">No recent sheets</p>}
-                    </div>
+            <div onClick={() => googleConnected ? window.location.href = "/dashboard/calc" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", borderColor: "#2a5a2a" }}>
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
+                <div className="relative p-2 h-full flex flex-col">
+                  <div className="text-center mb-1">
+                    <div className="text-xl">📊</div>
+                    <div className="text-xs font-bold text-gray-800">YsUp Calc</div>
+                    <div className="text-[9px] text-gray-500">Google Sheets</div>
                   </div>
-                ) : (
-                  <button onClick={handleConnectGoogle} disabled={connectingGoogle} className="w-full py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-                    {connectingGoogle ? "Connecting..." : "Connect Google Workspace"}
-                  </button>
-                )}
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                    <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
+                  </div>
+                  <div className="flex-1 text-xs space-y-1">
+                    {googleConnected ? (
+                      <>
+                        {recentCalcDocs.slice(0, 2).map((doc) => (
+                          <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
+                        ))}
+                        {recentCalcDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
+                      </>
+                    ) : (
+                      <div className="bg-green-100 p-1 rounded text-center text-[9px] text-green-600 font-medium">Tap to connect</div>
+                    )}
+                  </div>
+                </div>
               </div>
+              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Calc</p>
             </div>
 
             {/* YsUp Slideshow Tile */}
-            <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:translate-y-0" style={{ background: "linear-gradient(145deg, #1a1a2e, #16213e)", border: "3px solid #0f3460", boxShadow: "0 4px 15px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)", minHeight: "220px" }}>
-              <div className="absolute top-2 left-2 right-2 h-1 rounded-full opacity-30" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }}></div>
-              <div className="relative p-4">
-                <div className="text-center mb-3">
-                  <div className="text-2xl mb-1">📽️</div>
-                  <h4 className="font-bold text-white text-lg">YsUp Slideshow</h4>
-                  <p className="text-xs text-blue-300">Google Slides</p>
-                </div>
-                <div className="flex items-center justify-center gap-1 mb-3">
-                  <div className={`w-2 h-2 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                  <span className="text-[10px] text-blue-200">{googleConnected ? "Connected" : "Not connected"}</span>
-                </div>
-                {googleConnected ? (
-                  <div>
-                    <button onClick={() => handleCreateWorkspaceDoc("slideshow", "YsUp Slides - " + new Date().toLocaleDateString())} className="w-full py-1.5 bg-orange-500 text-white text-xs rounded-lg mb-2 hover:bg-orange-400 transition-colors">+ New Presentation</button>
-                    <div className="space-y-1 max-h-[80px] overflow-y-auto">
-                      {recentSlideshowDocs.slice(0, 3).map((doc) => (
-                        <a key={doc.id} href={doc.google_url} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-blue-300 hover:underline truncate">{doc.title}</a>
-                      ))}
-                      {recentSlideshowDocs.length === 0 && <p className="text-[10px] text-blue-400 text-center">No recent presentations</p>}
-                    </div>
+            <div onClick={() => googleConnected ? window.location.href = "/dashboard/slideshow" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+              <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #1a1a2e, #16213e)", borderColor: "#0f3460" }}>
+                <div className="absolute top-1 left-1 right-1 h-0.5 rounded-full opacity-30" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }}></div>
+                <div className="relative p-2 h-full flex flex-col">
+                  <div className="text-center mb-1">
+                    <div className="text-xl">📽️</div>
+                    <div className="text-xs font-bold text-white">YsUp Slideshow</div>
+                    <div className="text-[9px] text-blue-300">Google Slides</div>
                   </div>
-                ) : (
-                  <button onClick={handleConnectGoogle} disabled={connectingGoogle} className="w-full py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-                    {connectingGoogle ? "Connecting..." : "Connect Google Workspace"}
-                  </button>
-                )}
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                    <span className="text-[8px] text-blue-200">{googleConnected ? "Connected" : "Not connected"}</span>
+                  </div>
+                  <div className="flex-1 text-xs space-y-1">
+                    {googleConnected ? (
+                      <>
+                        {recentSlideshowDocs.slice(0, 2).map((doc) => (
+                          <div key={doc.id} className="bg-white/10 p-1 rounded border border-blue-800 text-[9px] text-blue-200 truncate">{doc.title}</div>
+                        ))}
+                        {recentSlideshowDocs.length === 0 && <div className="bg-white/10 p-1 rounded border border-blue-800 text-center text-[9px] text-blue-400">Tap to open</div>}
+                      </>
+                    ) : (
+                      <div className="bg-blue-900/50 p-1 rounded text-center text-[9px] text-blue-300 font-medium">Tap to connect</div>
+                    )}
+                  </div>
+                </div>
               </div>
+              <p className="text-xs text-center text-amber-200 mt-1 truncate">YsUp Slideshow</p>
             </div>
           </div>
         </div>
