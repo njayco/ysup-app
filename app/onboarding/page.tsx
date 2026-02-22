@@ -226,6 +226,12 @@ export default function OnboardingPage() {
   const [honorCodeScrolled, setHonorCodeScrolled] = useState(false)
   const [honorCodeAgreed, setHonorCodeAgreed] = useState(false)
   const honorCodeRef = useRef<HTMLDivElement>(null)
+  const [termsScrolled, setTermsScrolled] = useState(false)
+  const [termsAgreed, setTermsAgreed] = useState(false)
+  const termsRef = useRef<HTMLDivElement>(null)
+  const [privacyScrolled, setPrivacyScrolled] = useState(false)
+  const [privacyAgreed, setPrivacyAgreed] = useState(false)
+  const privacyRef = useRef<HTMLDivElement>(null)
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
     lastName: "",
@@ -275,9 +281,11 @@ export default function OnboardingPage() {
     setAuthChecked(true)
   }, [])
 
-  const totalSteps = 3 + featureWalkthroughs.length
+  const totalSteps = 5 + featureWalkthroughs.length
   const isProfileStep = currentStep === 0
   const isHonorCodeStep = currentStep === 1 + featureWalkthroughs.length
+  const isTermsStep = currentStep === 2 + featureWalkthroughs.length
+  const isPrivacyStep = currentStep === 3 + featureWalkthroughs.length
   const isCompletionStep = currentStep === totalSteps - 1
   const walkthroughIndex = currentStep - 1
 
@@ -286,6 +294,20 @@ export default function OnboardingPage() {
     if (!el) return
     const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
     if (atBottom) setHonorCodeScrolled(true)
+  }
+
+  const handleTermsScroll = () => {
+    const el = termsRef.current
+    if (!el) return
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+    if (atBottom) setTermsScrolled(true)
+  }
+
+  const handlePrivacyScroll = () => {
+    const el = privacyRef.current
+    if (!el) return
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+    if (atBottom) setPrivacyScrolled(true)
   }
 
   const saveProfileToStorage = () => {
@@ -338,6 +360,8 @@ export default function OnboardingPage() {
       saveProfileToStorage()
     }
     if (isHonorCodeStep && !honorCodeAgreed) return
+    if (isTermsStep && !termsAgreed) return
+    if (isPrivacyStep && !privacyAgreed) return
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1)
     }
@@ -555,7 +579,7 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {!isProfileStep && !isHonorCodeStep && !isCompletionStep && walkthroughIndex >= 0 && walkthroughIndex < featureWalkthroughs.length && (
+              {!isProfileStep && !isHonorCodeStep && !isTermsStep && !isPrivacyStep && !isCompletionStep && walkthroughIndex >= 0 && walkthroughIndex < featureWalkthroughs.length && (
                 <div>
                   <div className="text-center mb-2">
                     <span className="text-xs font-medium text-amber-400/50 uppercase tracking-wider">
@@ -760,6 +784,250 @@ export default function OnboardingPage() {
                       }`}
                     >
                       I Agree — Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isTermsStep && (
+                <div>
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-3 shadow-lg">
+                      <span className="text-3xl">📋</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Terms & Conditions</h2>
+                    <p className="text-amber-200/60 text-sm">Please read and accept the Terms & Conditions to continue</p>
+                  </div>
+
+                  <div
+                    ref={termsRef}
+                    onScroll={handleTermsScroll}
+                    className="h-64 overflow-y-auto bg-amber-950/60 border border-amber-700/40 rounded-lg p-4 mb-4 text-sm text-amber-100/80 leading-relaxed scrollbar-thin"
+                  >
+                    <h3 className="text-lg font-bold text-yellow-400 mb-3 text-center">YsUp Campus Terms & Conditions</h3>
+                    <p className="text-amber-200/50 text-xs mb-4 text-center">Effective Date: February 22, 2026</p>
+
+                    <p className="mb-3">Welcome to YsUp Campus Network. These Terms and Conditions govern your access to and use of the YsUp Campus platform at YsUpCampus.com. By creating an account or using the Platform, you agree to be bound by these Terms.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">1. Eligibility</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>You must be at least 13 years of age to use the Platform.</li>
+                      <li>You must be a current or prospective student, faculty member, or staff member of an HBCU.</li>
+                      <li>All registration information you provide must be truthful and accurate.</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">2. Account Registration</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>You must provide a valid phone number, a unique username, and a password.</li>
+                      <li>You are responsible for maintaining the confidentiality of your login credentials.</li>
+                      <li>You are responsible for all activity that occurs under your account.</li>
+                      <li>You must verify your phone number via SMS to complete registration.</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">3. Acceptable Use</h4>
+                    <p className="mb-2">You agree to use the Platform for lawful, educational, and community-building purposes. You agree NOT to:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Harass, bully, threaten, or intimidate others.</li>
+                      <li>Post defamatory, obscene, hateful, or discriminatory content.</li>
+                      <li>Upload copyrighted material without authorization.</li>
+                      <li>Attempt to hack or compromise the Platform&apos;s security.</li>
+                      <li>Impersonate another person or misrepresent your identity.</li>
+                      <li>Use AI features for academic dishonesty.</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">4. User Content</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>You retain ownership of content you create and post.</li>
+                      <li>You grant YsUp a non-exclusive, royalty-free license to display and store your content to operate the Platform.</li>
+                      <li>We reserve the right to remove content that violates these Terms.</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">5. YBucks Virtual Currency</h4>
+                    <p className="mb-4">YBucks are virtual, non-transferable, and have no monetary value. They cannot be exchanged for real currency or goods outside the Platform.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">6. AI-Powered Features</h4>
+                    <p className="mb-4">AI content is provided for educational purposes only and may not always be accurate. YsUp is not liable for decisions made based on AI-generated content.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">7. Disclaimers</h4>
+                    <p className="mb-4">The Platform is provided &quot;AS IS&quot; without warranties of any kind. We do not guarantee uninterrupted service or accuracy of content.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">8. Limitation of Liability</h4>
+                    <p className="mb-4">YsUp shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Platform.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">9. Termination</h4>
+                    <p className="mb-4">We may suspend or terminate your account at any time for violation of these Terms. You may request account deletion by contacting us.</p>
+
+                    <p className="mb-2">For the full Terms & Conditions, visit: <a href="/terms-and-conditions" target="_blank" className="text-yellow-400 underline hover:text-yellow-300">/terms-and-conditions</a></p>
+
+                    <div className="text-center mt-4 pt-4 border-t border-amber-700/30">
+                      <p className="text-yellow-400 font-bold italic">By using YsUp, you agree to these Terms.</p>
+                    </div>
+                  </div>
+
+                  {!termsScrolled && (
+                    <p className="text-amber-400/60 text-xs text-center mb-3">Scroll down to read the full Terms to enable the checkbox</p>
+                  )}
+
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-all mb-4 ${
+                    termsScrolled
+                      ? "border-amber-500/40 bg-amber-900/20 cursor-pointer"
+                      : "border-amber-800/20 bg-amber-950/20 cursor-not-allowed opacity-50"
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={termsAgreed}
+                      onChange={(e) => termsScrolled && setTermsAgreed(e.target.checked)}
+                      disabled={!termsScrolled}
+                      className="w-5 h-5 rounded accent-yellow-500"
+                    />
+                    <span className="text-sm text-amber-100/80">
+                      I have read and agree to the YsUp Campus Terms & Conditions.
+                    </span>
+                  </label>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePrev}
+                      className="text-amber-300/60 hover:text-amber-200 transition-colors px-4 py-2"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      disabled={!termsAgreed}
+                      className={`px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-lg ${
+                        termsAgreed
+                          ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white"
+                          : "bg-amber-800/40 text-amber-400/40 cursor-not-allowed"
+                      }`}
+                    >
+                      I Accept — Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isPrivacyStep && (
+                <div>
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 mb-3 shadow-lg">
+                      <span className="text-3xl">🔒</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Privacy Policy</h2>
+                    <p className="text-amber-200/60 text-sm">Please read and accept the Privacy Policy to continue</p>
+                  </div>
+
+                  <div
+                    ref={privacyRef}
+                    onScroll={handlePrivacyScroll}
+                    className="h-64 overflow-y-auto bg-amber-950/60 border border-amber-700/40 rounded-lg p-4 mb-4 text-sm text-amber-100/80 leading-relaxed scrollbar-thin"
+                  >
+                    <h3 className="text-lg font-bold text-yellow-400 mb-3 text-center">YsUp Campus Privacy Policy</h3>
+                    <p className="text-amber-200/50 text-xs mb-4 text-center">Effective Date: February 22, 2026</p>
+
+                    <p className="mb-3">YsUp Campus Network is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use the Platform at YsUpCampus.com.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">1. Information We Collect</h4>
+                    <p className="font-semibold text-amber-200 mb-1">a. Information You Provide:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Account details: name, username, phone number, college, password (hashed)</li>
+                      <li>Profile information: major, year, bio, profile photo</li>
+                      <li>Content you create: posts, files, notes, calendar events</li>
+                      <li>Phone verification data for SMS verification</li>
+                    </ul>
+                    <p className="font-semibold text-amber-200 mb-1">b. Information Collected Automatically:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Usage data, device/browser info, IP address</li>
+                      <li>Cookies and similar tracking technologies</li>
+                    </ul>
+                    <p className="font-semibold text-amber-200 mb-1">c. Third-Party Information:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Google Workspace data when you connect via OAuth</li>
+                      <li>Search results from third-party APIs</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">2. How We Use Your Information</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>To create, manage, and verify your account</li>
+                      <li>To provide and improve Platform features</li>
+                      <li>To power AI-assisted features via OpenAI</li>
+                      <li>To send notifications and process search queries</li>
+                      <li>To enforce our Terms and detect fraud or abuse</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">3. How We Share Your Information</h4>
+                    <p className="mb-2">We do not sell your personal information. We may share with:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Other users (your public profile and network activity)</li>
+                      <li>Service providers (Twilio, OpenAI, Google, hosting)</li>
+                      <li>Legal authorities if required by law</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">4. Data Storage & Security</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Data stored in secure PostgreSQL databases</li>
+                      <li>Passwords hashed with bcrypt, never stored in plaintext</li>
+                      <li>SMS codes hashed with 10-minute expiry</li>
+                      <li>OAuth tokens encrypted with AES-256-GCM</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">5. Your Rights</h4>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Access and view your profile information anytime</li>
+                      <li>Update your profile, bio, and settings</li>
+                      <li>Request account deletion by contacting us</li>
+                      <li>Disconnect third-party integrations</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">6. Children&apos;s Privacy</h4>
+                    <p className="mb-4">We do not knowingly collect information from individuals under age 13.</p>
+
+                    <p className="mb-2">For the full Privacy Policy, visit: <a href="/privacy-policy" target="_blank" className="text-yellow-400 underline hover:text-yellow-300">/privacy-policy</a></p>
+
+                    <div className="text-center mt-4 pt-4 border-t border-amber-700/30">
+                      <p className="text-yellow-400 font-bold italic">Your privacy matters to us.</p>
+                      <p className="text-amber-200/60 text-xs mt-1">We are committed to protecting your personal information.</p>
+                    </div>
+                  </div>
+
+                  {!privacyScrolled && (
+                    <p className="text-amber-400/60 text-xs text-center mb-3">Scroll down to read the full Privacy Policy to enable the checkbox</p>
+                  )}
+
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-all mb-4 ${
+                    privacyScrolled
+                      ? "border-amber-500/40 bg-amber-900/20 cursor-pointer"
+                      : "border-amber-800/20 bg-amber-950/20 cursor-not-allowed opacity-50"
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={privacyAgreed}
+                      onChange={(e) => privacyScrolled && setPrivacyAgreed(e.target.checked)}
+                      disabled={!privacyScrolled}
+                      className="w-5 h-5 rounded accent-yellow-500"
+                    />
+                    <span className="text-sm text-amber-100/80">
+                      I have read and agree to the YsUp Campus Privacy Policy.
+                    </span>
+                  </label>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePrev}
+                      className="text-amber-300/60 hover:text-amber-200 transition-colors px-4 py-2"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      disabled={!privacyAgreed}
+                      className={`px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-lg ${
+                        privacyAgreed
+                          ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white"
+                          : "bg-amber-800/40 text-amber-400/40 cursor-not-allowed"
+                      }`}
+                    >
+                      I Accept — Continue
                     </button>
                   </div>
                 </div>
