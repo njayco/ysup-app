@@ -1897,8 +1897,8 @@ export default function DashboardPage() {
 
           filteredFiles.forEach((f) => gridItems.push({ type: "file", data: f }))
           folders.forEach((f) => gridItems.push({ type: "folder", data: f }))
-          stickyNotes.forEach((n) => gridItems.push({ type: "note", data: n }))
           networkSharedFiles.forEach((sf) => gridItems.push({ type: "shared_file", data: sf }))
+          stickyNotes.forEach((n) => gridItems.push({ type: "note", data: n }))
 
           const totalPages = Math.max(1, Math.ceil(gridItems.length / itemsPerPage))
           const safePage = Math.min(dashboardPage, totalPages - 1)
@@ -2043,7 +2043,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`note-${note.id}`}
-                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative z-0 overflow-hidden rounded-lg"
                         onClick={() => handleStickyNoteClick(note)}
                       >
                         <button
@@ -2053,7 +2053,7 @@ export default function DashboardPage() {
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
-                        <div className="h-44 bg-yellow-300 border border-yellow-400 rounded-lg shadow-lg relative">
+                        <div className="h-44 bg-yellow-300 border border-yellow-400 rounded-lg shadow-lg relative overflow-hidden">
                           <div className="absolute top-0 right-0 w-5 h-5 bg-yellow-400 transform rotate-45 translate-x-1 -translate-y-1 rounded-sm"></div>
                           <div className="p-3 h-full overflow-hidden">
                             <StickyNoteIcon className="w-6 h-6 text-yellow-700 mb-2" />
@@ -2073,7 +2073,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={`shared-${sf.id}`}
-                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative"
+                        className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative z-[1]"
                         onClick={() => {
                           const storedUser = localStorage.getItem("currentUser")
                           if (storedUser) {
