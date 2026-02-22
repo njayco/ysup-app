@@ -5,14 +5,12 @@ import type React from "react"
 import { useState, useRef } from "react"
 import Header from "@/components/Header"
 import { useAuth } from "@/lib/useAuth"
-import { ChevronLeft, ChevronRight, Upload, Download, Eye, EyeOff, User, Lock } from "lucide-react"
+import { Upload, Download, Eye, EyeOff, User, Lock } from "lucide-react"
 
 export default function HilltopPage() {
   const { isAuthenticated, isLoading } = useAuth()
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(13)
   const [adminCredentials, setAdminCredentials] = useState({
     username: "",
     password: "",
@@ -44,26 +42,7 @@ export default function HilltopPage() {
     if (uploadedFile) {
       setCurrentPDF(`New Edition - ${uploadedFile.name}`)
       setUploadedFile(null)
-      setCurrentPage(1)
       alert("PDF published successfully!")
-    }
-  }
-
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
-
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
     }
   }
 
@@ -72,13 +51,13 @@ export default function HilltopPage() {
   }
 
   return (
-    <div className="min-h-screen wood-background">
+    <div className="min-h-screen wood-background flex flex-col">
       <Header currentPage="The Hilltop" />
 
       <div className="bg-amber-700 px-3 md:px-4 py-2 md:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-6">
           <h2 className="text-base md:text-xl font-bold text-amber-100">The Hilltop - Howard University</h2>
-          <span className="text-xs md:text-sm text-amber-200 hidden sm:inline">Thursday, November 9, 2006</span>
+          <span className="text-xs md:text-sm text-amber-200 hidden sm:inline">Friday, April 2, 2010</span>
           <span className="text-xs md:text-sm text-amber-200 hidden md:inline">WWW.THEHILLTOPONLINE.COM</span>
         </div>
 
@@ -106,7 +85,7 @@ export default function HilltopPage() {
         </div>
       </div>
 
-      <div className="p-4 md:p-8">
+      <div className="flex-1 p-4 md:p-8 flex flex-col">
         {isAdminMode && !isAdminLoggedIn ? (
           <div className="flex justify-center">
             <div className="bg-white rounded-lg shadow-2xl p-6 md:p-8 max-w-md w-full">
@@ -220,150 +199,43 @@ export default function HilltopPage() {
             </div>
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto">
-            <div className="relative">
-              <div className="absolute inset-0 bg-black opacity-20 transform translate-x-2 translate-y-2 rounded-lg"></div>
+          <div className="max-w-6xl mx-auto flex-1 flex flex-col">
+            <div className="relative flex-1 flex flex-col">
+              <div className="absolute inset-0 bg-black opacity-20 transform translate-x-2 translate-y-2 rounded-lg pointer-events-none"></div>
 
-              <div className="relative bg-white rounded-lg shadow-2xl overflow-hidden transform sm:-rotate-1">
+              <div className="relative bg-white rounded-lg shadow-2xl overflow-hidden flex-1 flex flex-col">
                 <div className="bg-gray-100 border-b-4 border-gray-800 p-3 md:p-4">
                   <div className="text-center">
                     <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">THE HILLTOP</h1>
                     <p className="text-sm md:text-lg text-gray-600">The Daily Student Voice of Howard University</p>
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-2 text-xs md:text-sm text-gray-500 gap-1">
-                      <span>VOLUME 90, NO. 52</span>
-                      <span>THURSDAY, NOVEMBER 9, 2006</span>
+                      <span>VOLUME 93, NO. 101</span>
+                      <span>FRIDAY, APRIL 2, 2010</span>
                       <span className="hidden sm:inline">WWW.THEHILLTOPONLINE.COM</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-8">
-                  <div className="aspect-[8.5/11] bg-gray-50 border border-gray-300 rounded shadow-inner flex items-center justify-center">
-                    <div className="w-full h-full p-3 md:p-6 overflow-hidden">
-                      {currentPage === 1 && (
-                        <div className="space-y-3 md:space-y-4">
-                          <div className="text-center border-b-2 border-black pb-3 md:pb-4">
-                            <h2 className="text-lg md:text-3xl font-bold">
-                              Campus Organizations Initiate Protest Against Supreme Court
-                            </h2>
-                            <p className="text-sm md:text-lg text-gray-600 mt-1 md:mt-2">BY BRITTANY HUTSON</p>
-                            <p className="text-xs md:text-sm text-gray-500">Campus Editor</p>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-xs md:text-sm">
-                            <div className="space-y-2">
-                              <p>
-                                At 1 p.m. Wednesday afternoon, students who were casually walking past the Blackburn
-                                Center were stopped by students dressed in all black with their faces painted in black
-                                and white.
-                              </p>
-                              <p>
-                                Holding signs that read "WHITE ONLY" and "COLORED ONLY" in black letters, those dressed
-                                in black asked "Do you know what's going on?"
-                              </p>
-                            </div>
-
-                            <div className="space-y-2">
-                              <p>
-                                On Dec. 4, 2006, two lawsuits, Meredith v. Jefferson County Public Schools and Parents
-                                Involved in Community Schools v. Seattle School District No. 1, will go before the
-                                Supreme Court to determine whether desegregation in public schools for grades K-12 and
-                                affirmative action will remain legal.
-                              </p>
-                            </div>
-
-                            <div className="space-y-2 hidden md:block">
-                              <p>
-                                In order to increase awareness around the campus, UGSA participants and volunteers
-                                willingly dressed in their respective wardrobes and took on the Yard to inform students
-                                about the implications of the Supreme Court's ruling.
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 md:mt-6 text-right">
-                            <span className="text-xs md:text-sm text-gray-500">1 of 13</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {currentPage !== 1 && (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <h3 className="text-xl md:text-2xl font-bold text-gray-600 mb-4">Page {currentPage}</h3>
-                            <p className="text-sm md:text-base text-gray-500">PDF content would be displayed here</p>
-                            <p className="text-xs md:text-sm text-gray-400 mt-2">
-                              In a real implementation, this would show the actual PDF page content
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex-1 bg-white" style={{ minHeight: "70vh" }}>
+                  <iframe
+                    src="/hilltop-current.pdf"
+                    className="w-full h-full border-0"
+                    style={{ minHeight: "70vh" }}
+                    title="The Hilltop - Friday, April 2, 2010"
+                  />
                 </div>
 
                 <div className="bg-gray-100 border-t border-gray-300 p-3 md:p-4">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className="flex items-center space-x-1 px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded transition-colors text-sm md:text-base"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span className="hidden sm:inline">Previous</span>
-                      </button>
-
-                      <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center space-x-1 px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded transition-colors text-sm md:text-base"
-                      >
-                        <span className="hidden sm:inline">Next</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center space-x-2 md:space-x-4">
-                      <span className="text-xs md:text-sm text-gray-600">
-                        Page {currentPage} of {totalPages}
-                      </span>
-
-                      <div className="flex items-center space-x-1 md:space-x-2">
-                        <span className="text-xs md:text-sm text-gray-600 hidden sm:inline">Go to page:</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max={totalPages}
-                          value={currentPage}
-                          onChange={(e) => goToPage(Number.parseInt(e.target.value) || 1)}
-                          className="w-14 md:w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <button className="flex items-center space-x-1 px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm md:text-base">
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">Download PDF</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 md:mt-4 flex space-x-1 md:space-x-2 overflow-x-auto pb-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => goToPage(page)}
-                        className={`flex-shrink-0 w-8 h-10 md:w-12 md:h-16 border-2 rounded text-xs font-medium transition-colors ${
-                          currentPage === page
-                            ? "border-blue-500 bg-blue-100 text-blue-700"
-                            : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs md:text-sm text-gray-600">The Hilltop - Friday, April 2, 2010</span>
+                    <a
+                      href="/hilltop-current.pdf"
+                      download="The_Hilltop_4-2-2010.pdf"
+                      className="flex items-center space-x-1 px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm md:text-base"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Download PDF</span>
+                    </a>
                   </div>
                 </div>
               </div>

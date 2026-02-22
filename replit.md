@@ -122,6 +122,13 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Custom scrollbars on each page matching the parchment aesthetic
 - External links to howard.edu, thedig.howard.edu, events.howard.edu, admission.howard.edu
 
+## The Hilltop - Campus Newspaper
+- Embedded PDF viewer at `/hilltop` showing the current edition of The Hilltop newspaper
+- Current edition: Friday, April 2, 2010 (Volume 93, No. 101), served from `public/hilltop-current.pdf`
+- Scrollable iframe-based PDF viewer with 70vh minimum height
+- Admin mode: Editor-in-Chief login (editor/hilltop2024) with PDF upload interface
+- Download button for the current PDF edition
+
 ## Recent Changes
 - Replaced Bison Web (old student information system) with skeuomorphic Howard.edu magazine browser
 - Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
