@@ -80,6 +80,8 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Notification cron: All-day events trigger notifications daily; timed events trigger alerts 2 hours prior
 - PostgreSQL tables: calendar_events (with source column), event_invites with proper foreign keys and indexes
 - Bluebook preview card shows current date dynamically (no hardcoded dates)
+- Calendar views: Month, Week, Day, and List; Day view shows hourly timeline (6 AM - 11 PM) with events and current-time indicator
+- Day squares in Month view are selectable (click to highlight, double-click or Enter to open Day view)
 
 ## Sticky Notes Feature
 - PostgreSQL-backed sticky notes on dashboard with full persistence

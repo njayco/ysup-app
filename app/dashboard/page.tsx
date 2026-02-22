@@ -104,9 +104,10 @@ export default function DashboardPage() {
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [showNotebook, setShowNotebook] = useState(false)
   const [showBluebook, setShowBluebook] = useState(false)
-  const [calendarView, setCalendarView] = useState<"month" | "week" | "list">("month")
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "list" | "day">("month")
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [noteText, setNoteText] = useState("Do we have class tomorrow?....")
   const [selectedClassmate, setSelectedClassmate] = useState("Select classmate(s)")
   const [selectedCourse, setSelectedCourse] = useState("Calculus 2")
@@ -1853,6 +1854,7 @@ export default function DashboardPage() {
                 <div className="flex bg-blue-800 rounded-lg overflow-hidden text-xs">
                   <button onClick={() => setCalendarView("month")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "month" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>Month</button>
                   <button onClick={() => setCalendarView("week")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "week" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>Week</button>
+                  <button onClick={() => { if (!selectedDay) { const t = new Date(); setSelectedDay(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`) }; setCalendarView("day") }} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "day" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>Day</button>
                   <button onClick={() => setCalendarView("list")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "list" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>List</button>
                 </div>
                 <button onClick={() => setShowBluebook(false)} className="text-blue-100 hover:text-white ml-2">
@@ -1879,6 +1881,19 @@ export default function DashboardPage() {
                       <button onClick={() => { if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1) } else setCalendarMonth(calendarMonth + 1) }} className="p-1 hover:bg-gray-100 rounded"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
                     </div>
                   )}
+                  {calendarView === "day" && selectedDay && (() => {
+                    const sd = new Date(selectedDay + "T12:00:00")
+                    const dayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][sd.getDay()]
+                    const monthName = calMonthNames[sd.getMonth()]
+                    return (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => { const d = new Date(selectedDay + "T12:00:00"); d.setDate(d.getDate() - 1); setSelectedDay(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`) }} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+                        <button onClick={() => { const t = new Date(); setSelectedDay(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`) }} className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2">Today</button>
+                        <span className="text-sm font-bold text-gray-800 min-w-[180px] text-center">{dayName}, {monthName} {sd.getDate()}, {sd.getFullYear()}</span>
+                        <button onClick={() => { const d = new Date(selectedDay + "T12:00:00"); d.setDate(d.getDate() + 1); setSelectedDay(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`) }} className="p-1 hover:bg-gray-100 rounded"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
+                      </div>
+                    )
+                  })()}
                   {calendarView === "week" && (() => {
                     const d = new Date(); d.setDate(d.getDate() - d.getDay())
                     return <span className="text-sm font-bold text-gray-800">Week of {d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
@@ -2122,9 +2137,17 @@ export default function DashboardPage() {
                           const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
                           const dayEvents = calEventsForDate(dateStr)
                           const isToday = dateStr === calTodayStr
+                          const isSelected = dateStr === selectedDay
 
                           return (
-                            <div key={day} className={`bg-white min-h-[80px] md:min-h-[100px] p-1 ${isToday ? "ring-2 ring-blue-500 ring-inset" : ""}`}>
+                            <div
+                              key={day}
+                              tabIndex={0}
+                              className={`bg-white min-h-[80px] md:min-h-[100px] p-1 cursor-pointer transition-colors outline-none ${isToday ? "ring-2 ring-blue-500 ring-inset" : ""} ${isSelected ? "ring-2 ring-amber-500 ring-inset bg-amber-50" : ""} hover:bg-blue-50 focus:ring-2 focus:ring-blue-400`}
+                              onClick={() => setSelectedDay(dateStr)}
+                              onDoubleClick={() => { setSelectedDay(dateStr); setCalendarView("day") }}
+                              onKeyDown={(e) => { if (e.key === "Enter" && selectedDay === dateStr) { setCalendarView("day") } }}
+                            >
                               <div className={`text-xs font-medium mb-0.5 ${isToday ? "bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center" : "text-gray-700 px-1"}`}>
                                 {day}
                               </div>
@@ -2194,6 +2217,94 @@ export default function DashboardPage() {
                       })}
                     </div>
                   )}
+
+                  {/* Day View */}
+                  {calendarView === "day" && selectedDay && (() => {
+                    const dayEvents = calEventsForDate(selectedDay)
+                    const allDayEvents = dayEvents.filter(e => !e.event_time)
+                    const timedEvents = dayEvents.filter(e => e.event_time)
+                    const hours = Array.from({ length: 18 }, (_, i) => i + 6)
+
+                    const getEventsForHour = (hour: number) => {
+                      return timedEvents.filter(e => {
+                        if (!e.event_time) return false
+                        const parts = e.event_time.split(":")
+                        const eventHour = parseInt(parts[0], 10)
+                        return eventHour === hour
+                      })
+                    }
+
+                    const formatHourLabel = (hour: number) => {
+                      if (hour === 0) return "12 AM"
+                      if (hour < 12) return `${hour} AM`
+                      if (hour === 12) return "12 PM"
+                      return `${hour - 12} PM`
+                    }
+
+                    const sd = new Date(selectedDay + "T12:00:00")
+                    const isToday = selectedDay === calTodayStr
+
+                    return (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {allDayEvents.length > 0 && (
+                          <div className="bg-blue-50 border-b border-gray-200 p-2 md:p-3">
+                            <div className="text-xs font-bold text-blue-700 mb-1.5">ALL DAY</div>
+                            <div className="space-y-1">
+                              {allDayEvents.map(ev => {
+                                const evc = getEventColors(ev.color)
+                                return (
+                                  <div key={ev.id} className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm ${evc.dateBg} ${evc.text}`}>
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${evc.dot}`} />
+                                    <span className="font-medium">{ev.title}</span>
+                                    {ev.location && <span className="text-xs opacity-70 ml-1">- {ev.location}</span>}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        <div className="divide-y divide-gray-100">
+                          {hours.map(hour => {
+                            const hourEvents = getEventsForHour(hour)
+                            const now = new Date()
+                            const isCurrentHour = isToday && now.getHours() === hour
+                            return (
+                              <div key={hour} className={`flex min-h-[52px] ${isCurrentHour ? "bg-blue-50/50" : ""}`}>
+                                <div className={`w-16 md:w-20 shrink-0 p-1.5 md:p-2 text-right border-r ${isCurrentHour ? "bg-blue-100 text-blue-700 font-bold" : "bg-gray-50 text-gray-500"}`}>
+                                  <span className="text-xs">{formatHourLabel(hour)}</span>
+                                </div>
+                                <div className="flex-1 p-1.5 md:p-2 relative">
+                                  {isCurrentHour && (
+                                    <div className="absolute left-0 right-0 border-t-2 border-red-500 z-10" style={{ top: `${(now.getMinutes() / 60) * 100}%` }}>
+                                      <div className="w-2 h-2 bg-red-500 rounded-full -mt-1 -ml-1" />
+                                    </div>
+                                  )}
+                                  {hourEvents.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {hourEvents.map(ev => {
+                                        const evc = getEventColors(ev.color)
+                                        return (
+                                          <div key={ev.id} className={`flex items-start gap-2 px-2 py-1.5 rounded text-sm ${evc.dateBg} ${evc.text}`}>
+                                            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${evc.dot}`} />
+                                            <div className="min-w-0">
+                                              <span className="font-medium text-xs md:text-sm">{formatEventTime(ev.event_time)}{ev.end_time ? ` - ${formatEventTime(ev.end_time)}` : ""}</span>
+                                              <span className="font-medium text-sm ml-2">{ev.title}</span>
+                                              {ev.location && <span className="text-xs opacity-70 ml-1">- {ev.location}</span>}
+                                              {ev.description && <div className="text-xs opacity-60 mt-0.5">{ev.description}</div>}
+                                            </div>
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {/* List View */}
                   {calendarView === "list" && (
