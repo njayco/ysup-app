@@ -185,22 +185,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser")
-    if (storedUser) {
-      const userData = JSON.parse(storedUser)
-      if (userData.id) {
-        fetch(`/api/workspace/status?userId=${userData.id}`)
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.connected) {
-              setGoogleConnected(true)
-              fetch(`/api/workspace/recent?userId=${userData.id}&type=pad`).then(r => r.json()).then(d => Array.isArray(d) && setRecentPadDocs(d)).catch(() => {})
-              fetch(`/api/workspace/recent?userId=${userData.id}&type=calc`).then(r => r.json()).then(d => Array.isArray(d) && setRecentCalcDocs(d)).catch(() => {})
-              fetch(`/api/workspace/recent?userId=${userData.id}&type=slideshow`).then(r => r.json()).then(d => Array.isArray(d) && setRecentSlideshowDocs(d)).catch(() => {})
-            }
-          })
-          .catch(() => {})
-      }
-    }
+    const userData = storedUser ? JSON.parse(storedUser) : null
+    fetch("/api/workspace/status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.connected) {
+          setGoogleConnected(true)
+          if (userData?.id) {
+            fetch(`/api/workspace/recent?userId=${userData.id}&type=pad`).then(r => r.json()).then(d => Array.isArray(d) && setRecentPadDocs(d)).catch(() => {})
+            fetch(`/api/workspace/recent?userId=${userData.id}&type=calc`).then(r => r.json()).then(d => Array.isArray(d) && setRecentCalcDocs(d)).catch(() => {})
+            fetch(`/api/workspace/recent?userId=${userData.id}&type=slideshow`).then(r => r.json()).then(d => Array.isArray(d) && setRecentSlideshowDocs(d)).catch(() => {})
+          }
+        }
+      })
+      .catch(() => {})
     const params = new URLSearchParams(window.location.search)
     if (params.get("google_connected") === "1") {
       setGoogleConnected(true)
@@ -209,15 +207,21 @@ export default function DashboardPage() {
   }, [])
 
   const handleConnectGoogle = async () => {
-    const storedUser = localStorage.getItem("currentUser")
-    if (!storedUser) return
-    const userData = JSON.parse(storedUser)
     setConnectingGoogle(true)
     try {
-      const res = await fetch(`/api/google/auth-url?userId=${userData.id}`)
+      const res = await fetch("/api/workspace/status")
       const data = await res.json()
-      if (data.url) window.location.href = data.url
-    } catch { setConnectingGoogle(false) }
+      if (data.connected) {
+        setGoogleConnected(true)
+        setConnectingGoogle(false)
+      } else {
+        alert("Google Workspace is not connected yet. Please contact the site administrator to set up the Google connection.")
+        setConnectingGoogle(false)
+      }
+    } catch {
+      alert("Could not check Google connection status. Please try again.")
+      setConnectingGoogle(false)
+    }
   }
 
   const handleDisconnectGoogle = async () => {
