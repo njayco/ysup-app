@@ -1118,21 +1118,24 @@ export default function DashboardPage() {
 
   // Update the handleSaveProfile function:
   const handleSaveProfile = () => {
+    const existingUser = localStorage.getItem("currentUser")
+    const existingData = existingUser ? JSON.parse(existingUser) : {}
+    const existingId = existingData.id || Date.now().toString()
+    const originalUsername = existingData.username || profileData.username
+
     setCurrentUser({
       firstName: profileData.firstName,
       lastName: profileData.lastName,
-      username: profileData.username,
+      username: originalUsername,
       phone: profileData.phone,
       college: profileData.college,
     })
-
-    const existingUser = localStorage.getItem("currentUser")
-    const existingId = existingUser ? JSON.parse(existingUser).id : Date.now().toString()
 
     localStorage.setItem(
       "currentUser",
       JSON.stringify({
         ...profileData,
+        username: originalUsername,
         id: existingId,
       }),
     )
@@ -2816,10 +2819,11 @@ export default function DashboardPage() {
                     <input
                       type="text"
                       value={profileData.username}
-                      onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled
+                      className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
                     />
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">Username cannot be changed once created</p>
                 </div>
 
                 <div>
