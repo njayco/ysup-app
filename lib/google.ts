@@ -173,3 +173,55 @@ export async function slidesBatchUpdate(presentationId: string, requests: any[])
 export async function getAccessToken(): Promise<string> {
   return getDriveAccessToken()
 }
+
+export async function createMeetSpace(): Promise<{ spaceName: string; meetingUri: string; meetingCode: string }> {
+  const token = await getDriveAccessToken()
+  const res = await fetch("https://meet.googleapis.com/v2/spaces", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Meet space creation failed: ${err}`)
+  }
+
+  const data = await res.json()
+  return {
+    spaceName: data.name || "",
+    meetingUri: data.meetingUri || "",
+    meetingCode: data.meetingCode || "",
+  }
+}
+
+export async function getMeetSpace(spaceName: string): Promise<any> {
+  const token = await getDriveAccessToken()
+  const res = await fetch(`https://meet.googleapis.com/v2/${spaceName}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Meet space fetch failed: ${err}`)
+  }
+
+  return res.json()
+}
+
+export async function endMeetSpace(spaceName: string): Promise<void> {
+  const token = await getDriveAccessToken()
+  await fetch(`https://meet.googleapis.com/v2/${spaceName}:endActiveConference`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  })
+}

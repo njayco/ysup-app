@@ -324,6 +324,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     { name: "Homepage", href: "/bison-homepage", public: true },
     { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game", badge: "NEW", badgeColor: "green" },
+    { name: "Chalkboard", href: "/chalkboard", badge: "NEW", badgeColor: "green" },
     { name: "The Hilltop", href: "/hilltop", badge: "🔜", badgeColor: "emoji" },
     { name: "Bulletin Board", href: "/bulletin-board", badge: "🔜", badgeColor: "emoji" },
     { name: "HU Bookstore", href: "/bookstore", badge: "🔜", badgeColor: "emoji" },
