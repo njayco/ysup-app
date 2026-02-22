@@ -326,6 +326,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
 
   const allNavItems = [
     { name: "Homepage", href: "/bison-homepage", public: true },
+    ...(isLoggedIn && currentUser.username ? [{ name: "My Profile", href: `/${currentUser.username}` }] : []),
     { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game", badge: "NEW", badgeColor: "green" },
     { name: "Chalkboard", href: "/chalkboard", badge: "NEW", badgeColor: "green" },
