@@ -1368,8 +1368,7 @@ export default function DashboardPage() {
     }
   }, [filteredFiles.length, folders.length, stickyNotes.length, itemsPerPage, dashboardPage])
 
-  // Update the handleSaveProfile function:
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const existingUser = localStorage.getItem("currentUser")
     const existingData = existingUser ? JSON.parse(existingUser) : {}
     const existingId = existingData.id || Date.now().toString()
@@ -1383,14 +1382,32 @@ export default function DashboardPage() {
       college: profileData.college,
     })
 
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify({
-        ...profileData,
-        username: originalUsername,
-        id: existingId,
-      }),
-    )
+    const updatedUser = {
+      ...existingData,
+      ...profileData,
+      username: originalUsername,
+      id: existingId,
+    }
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+
+    try {
+      await fetch("/api/profile/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: existingId,
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phone: profileData.phone,
+          college: profileData.college,
+          major: profileData.major,
+          graduationYear: profileData.year,
+          bio: profileData.bio,
+          headline: existingData.headline || "",
+          statusNote: existingData.statusNote || "",
+        }),
+      })
+    } catch {}
 
     setShowProfile(false)
     alert("Profile updated successfully!")

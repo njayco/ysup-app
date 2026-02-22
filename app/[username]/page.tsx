@@ -22,6 +22,13 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  Lock,
+  Globe,
+  UserPlus,
+  UserCheck,
+  Clock,
+  UserX,
+  Users,
 } from "lucide-react"
 
 interface ProfileUser {
@@ -38,6 +45,7 @@ interface ProfileUser {
   graduationYear: string
   createdAt: string
   ybucks: number
+  profileVisibility: string
 }
 
 interface NetworkItem {
@@ -153,9 +161,12 @@ export default function ProfilePage() {
 
   const [activeGalleryTab, setActiveGalleryTab] = useState<"posts" | "tagged">("posts")
 
-  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false })
+  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false, followStatus: null as string | null })
   const [followLoading, setFollowLoading] = useState(false)
   const [publicNetworks, setPublicNetworks] = useState<NetworkItem[]>([])
+  const [canViewFullProfile, setCanViewFullProfile] = useState(true)
+  const [pendingRequests, setPendingRequests] = useState<any[]>([])
+  const [showFollowRequests, setShowFollowRequests] = useState(false)
 
   useEffect(() => {
     if (RESERVED_ROUTES.includes(usernameParam.toLowerCase())) {
@@ -183,7 +194,9 @@ export default function ProfilePage() {
   const loadProfile = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/profile?username=${encodeURIComponent(usernameParam)}`)
+      const stored = localStorage.getItem("currentUser")
+      const viewerId = stored ? JSON.parse(stored).id : null
+      const res = await fetch(`/api/profile?username=${encodeURIComponent(usernameParam)}&viewerId=${viewerId || ""}`)
       if (!res.ok) {
         setNotFound(true)
         return
@@ -194,13 +207,14 @@ export default function ProfilePage() {
         return
       }
       setProfileUser(data.user)
-      setResume(data.resume)
-      setMedia(data.media)
-      setEditBioValue(data.user.bio)
-      setEditHeadline(data.user.headline)
-      setEditMajor(data.user.major)
-      setEditGradYear(data.user.graduationYear)
-      setStatusValue(data.user.statusNote)
+      setResume(data.resume || [])
+      setMedia(data.media || [])
+      setCanViewFullProfile(data.canViewFullProfile !== false)
+      setEditBioValue(data.user.bio || "")
+      setEditHeadline(data.user.headline || "")
+      setEditMajor(data.user.major || "")
+      setEditGradYear(data.user.graduationYear || "")
+      setStatusValue(data.user.statusNote || "")
 
       loadFollowStats(data.user.id)
       loadPublicNetworks(data.user.id)
@@ -217,7 +231,12 @@ export default function ProfilePage() {
       const viewerId = stored ? JSON.parse(stored).id : null
       const res = await fetch(`/api/follow?userId=${userId}&viewerId=${viewerId || ""}`)
       const data = await res.json()
-      setFollowStats(data)
+      setFollowStats({
+        followersCount: data.followersCount || 0,
+        followingCount: data.followingCount || 0,
+        isFollowing: data.isFollowing || false,
+        followStatus: data.followStatus || null,
+      })
     } catch {}
   }
 
@@ -233,10 +252,22 @@ export default function ProfilePage() {
     if (!currentUser || !profileUser || followLoading) return
     setFollowLoading(true)
     try {
-      if (followStats.isFollowing) {
+      if (followStats.isFollowing || followStats.followStatus === "pending") {
         const res = await fetch(`/api/follow?followerId=${currentUser.id}&followingId=${profileUser.id}`, { method: "DELETE" })
         const data = await res.json()
-        if (data.success) setFollowStats(data)
+        if (data.success) {
+          setFollowStats({
+            followersCount: data.followersCount || 0,
+            followingCount: data.followingCount || 0,
+            isFollowing: false,
+            followStatus: null,
+          })
+          if (profileUser.profileVisibility === "private") {
+            setCanViewFullProfile(false)
+            setResume([])
+            setMedia([])
+          }
+        }
       } else {
         const res = await fetch("/api/follow", {
           method: "POST",
@@ -244,11 +275,80 @@ export default function ProfilePage() {
           body: JSON.stringify({ followerId: currentUser.id, followingId: profileUser.id }),
         })
         const data = await res.json()
-        if (data.success) setFollowStats(data)
+        if (data.success) {
+          setFollowStats({
+            followersCount: data.followersCount || 0,
+            followingCount: data.followingCount || 0,
+            isFollowing: data.followStatus === "accepted",
+            followStatus: data.followStatus,
+          })
+          if (data.followStatus === "accepted") {
+            loadProfile()
+          }
+        }
       }
     } catch {}
     setFollowLoading(false)
   }
+
+  const toggleVisibility = async () => {
+    if (!profileUser || !isOwner) return
+    const newVis = profileUser.profileVisibility === "private" ? "public" : "private"
+    try {
+      const res = await fetch("/api/profile/visibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: profileUser.id, visibility: newVis }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setProfileUser({ ...profileUser, profileVisibility: newVis })
+      }
+    } catch {}
+  }
+
+  const loadPendingRequests = async () => {
+    if (!currentUser) return
+    try {
+      const res = await fetch(`/api/follow/request?userId=${currentUser.id}`)
+      const data = await res.json()
+      if (data.success) setPendingRequests(data.requests)
+    } catch {}
+  }
+
+  const handleFollowRequest = async (followId: number, action: "accept" | "deny") => {
+    if (!currentUser) return
+    try {
+      const res = await fetch("/api/follow/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ followId, action, userId: currentUser.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPendingRequests((prev) => prev.filter((r) => r.id !== followId))
+        if (profileUser) loadFollowStats(profileUser.id)
+      }
+    } catch {}
+  }
+
+  const handleFollowBack = async (targetUserId: number) => {
+    if (!currentUser) return
+    try {
+      await fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ followerId: currentUser.id, followingId: targetUserId }),
+      })
+      if (profileUser) loadFollowStats(profileUser.id)
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (isOwner && currentUser) {
+      loadPendingRequests()
+    }
+  }, [isOwner, currentUser])
 
   const saveProfile = async () => {
     if (!profileUser) return
@@ -549,16 +649,103 @@ export default function ProfilePage() {
                   <button
                     onClick={handleFollow}
                     disabled={followLoading}
-                    className={`mt-3 px-6 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`mt-3 px-6 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                       followStats.isFollowing
-                        ? "bg-amber-200 text-amber-800 border border-amber-400 hover:bg-amber-300"
+                        ? "bg-amber-200 text-amber-800 border border-amber-400 hover:bg-red-100 hover:text-red-700 hover:border-red-300"
+                        : followStats.followStatus === "pending"
+                        ? "bg-amber-100 text-amber-700 border border-amber-300 hover:bg-red-100 hover:text-red-700 hover:border-red-300"
                         : "bg-amber-800 text-amber-100 hover:bg-amber-700"
                     } disabled:opacity-50`}
                   >
-                    {followLoading ? "..." : followStats.isFollowing ? "Following" : "Follow"}
+                    {followLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : followStats.isFollowing ? (
+                      <><UserCheck className="w-3.5 h-3.5" /> Following</>
+                    ) : followStats.followStatus === "pending" ? (
+                      <><Clock className="w-3.5 h-3.5" /> Requested</>
+                    ) : (
+                      <><UserPlus className="w-3.5 h-3.5" /> Follow</>
+                    )}
+                  </button>
+                )}
+
+                {/* Visibility Toggle */}
+                {isOwner && (
+                  <button
+                    onClick={toggleVisibility}
+                    className="mt-3 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors"
+                  >
+                    {profileUser.profileVisibility === "private" ? (
+                      <><Lock className="w-3.5 h-3.5" /> Private Profile</>
+                    ) : (
+                      <><Globe className="w-3.5 h-3.5" /> Public Profile</>
+                    )}
+                  </button>
+                )}
+
+                {/* Follow Requests Badge */}
+                {isOwner && pendingRequests.length > 0 && (
+                  <button
+                    onClick={() => setShowFollowRequests(!showFollowRequests)}
+                    className="mt-2 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 transition-colors"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    {pendingRequests.length} Follow Request{pendingRequests.length !== 1 ? "s" : ""}
                   </button>
                 )}
               </div>
+
+              {/* Follow Requests Panel */}
+              {isOwner && showFollowRequests && pendingRequests.length > 0 && (
+                <div className="max-w-md mx-auto mb-4 bg-amber-50 rounded-lg border border-amber-300 p-4">
+                  <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Follow Requests
+                  </h3>
+                  <div className="space-y-3">
+                    {pendingRequests.map((req) => (
+                      <div key={req.id} className="flex items-center gap-3">
+                        <a href={`/${req.username}`} className="flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-600 bg-amber-700 flex items-center justify-center text-amber-100 text-sm font-bold">
+                            {req.profile_image ? (
+                              <img src={req.profile_image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              (req.first_name?.[0] || "?").toUpperCase()
+                            )}
+                          </div>
+                        </a>
+                        <div className="flex-1 min-w-0">
+                          <a href={`/${req.username}`} className="text-amber-900 text-sm font-medium hover:underline">
+                            {req.first_name} {req.last_name}
+                          </a>
+                          <p className="text-amber-600 text-xs">+{req.username}</p>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleFollowRequest(req.id, "accept")}
+                            className="px-3 py-1 bg-amber-800 text-amber-100 rounded text-xs font-medium hover:bg-amber-700"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleFollowRequest(req.id, "deny")}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 border border-red-300"
+                          >
+                            Deny
+                          </button>
+                          <button
+                            onClick={() => { handleFollowRequest(req.id, "accept"); handleFollowBack(req.follower_id) }}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 border border-blue-300"
+                            title="Accept and follow back"
+                          >
+                            Follow Back
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Edit Profile Button */}
               {isOwner && (
@@ -610,8 +797,21 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              {/* Private Profile Message */}
+              {!canViewFullProfile && !isOwner && (
+                <div className="max-w-md mx-auto mb-6 text-center py-8">
+                  <Lock className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+                  <h3 className="text-amber-900 font-bold text-lg mb-1" style={{ fontFamily: "'Georgia', serif" }}>
+                    This Account is Private
+                  </h3>
+                  <p className="text-amber-600 text-sm">
+                    Follow this user to see their full profile, resume, and gallery.
+                  </p>
+                </div>
+              )}
+
               {/* Bio */}
-              {profileUser.bio && !editingBio && (
+              {canViewFullProfile && profileUser.bio && !editingBio && (
                 <div className="mb-6 max-w-md mx-auto">
                   <p className="text-amber-800 text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "'Georgia', serif" }}>
                     {profileUser.bio}
@@ -620,6 +820,7 @@ export default function ProfilePage() {
               )}
 
               {/* Resume Sections */}
+              {canViewFullProfile && (
               <div className="max-w-md mx-auto space-y-4">
                 {SECTION_TYPES.map((sType) => {
                   const sections = resume.filter((s) => s.type === sType.value)
@@ -749,8 +950,10 @@ export default function ProfilePage() {
                     )}
                   </div>
                 )}
+              </div>
+              )}
               {/* Public Networks */}
-              {publicNetworks.length > 0 && (
+              {canViewFullProfile && publicNetworks.length > 0 && (
                 <div className="max-w-md mx-auto mt-6">
                   <div className="flex items-center gap-2 mb-3 border-b border-amber-300 pb-1">
                     <GraduationCap className="w-4 h-4 text-amber-700" />
@@ -777,11 +980,22 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
-              </div>
             </div>
 
             {/* RIGHT PAGE - Gallery */}
             <div className="flex-1 p-6 md:p-10 lg:pl-6">
+              {!canViewFullProfile && !isOwner && (
+                <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+                  <Lock className="w-16 h-16 text-amber-300 mb-4" />
+                  <h3 className="text-amber-900 font-bold text-xl mb-2" style={{ fontFamily: "'Georgia', serif" }}>
+                    This Account is Private
+                  </h3>
+                  <p className="text-amber-600 text-sm max-w-xs">
+                    Follow this user to see their photos and posts.
+                  </p>
+                </div>
+              )}
+              {(canViewFullProfile || isOwner) && (<>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex gap-4">
                   <button
@@ -838,6 +1052,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
               )}
+              </>)}
             </div>
           </div>
 
