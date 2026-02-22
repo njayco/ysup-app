@@ -113,15 +113,20 @@ export default function HomePage() {
           {/* YsUp Logo */}
           <div className="text-center mb-8 md:mb-12">
             <div className="inline-block">
+              <img
+                src="/ysup-logo.png"
+                alt="YsUp"
+                className="h-32 md:h-48 w-auto mx-auto mb-2 md:mb-4 drop-shadow-lg"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }}
+              />
               <div
-                className="text-5xl md:text-8xl font-bold text-yellow-400 mb-2 md:mb-4 relative"
+                className="hidden text-5xl md:text-8xl font-bold text-yellow-400 mb-2 md:mb-4 relative"
                 style={{
                   textShadow: "4px 4px 8px rgba(0,0,0,0.3), 2px 2px 4px rgba(0,0,0,0.2)",
                   filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.3))",
                 }}
               >
-                YsUp
-                <div className="absolute -top-1 -left-3 md:-top-2 md:-left-4 text-yellow-300 text-2xl md:text-4xl">⭐</div>
+                YsUp⭐
               </div>
             </div>
             <p className="text-base md:text-xl text-amber-100 font-serif">AI-Powered Academic Search Engine</p>

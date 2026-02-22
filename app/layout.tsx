@@ -14,7 +14,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <a
+          href="https://ysup.replit.app/about"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-3 right-3 z-50 text-amber-200/60 hover:text-amber-100 text-xs transition-colors"
+          style={{ textDecoration: "none" }}
+        >
+          Created by Najee &ldquo;Naww G&rdquo; Jeremiah
+        </a>
+      </body>
     </html>
   )
 }

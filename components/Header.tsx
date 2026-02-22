@@ -349,7 +349,8 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
       <div className="hidden md:flex items-center justify-between px-4 py-2">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-yellow-400 bg-amber-900 px-3 py-1 rounded">YsUp</div>
+            <img src="/ysup-logo.png" alt="YsUp" className="h-9 w-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }} />
+            <div className="hidden text-2xl font-bold text-yellow-400 bg-amber-900 px-3 py-1 rounded">YsUp</div>
           </Link>
           <div className="flex items-center space-x-2">
             <div className="relative flex items-center">
@@ -529,7 +530,8 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         {/* Left side - YsUp logo, mail, and notifications */}
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="text-xl font-bold text-yellow-400 bg-amber-900 px-2 py-1 rounded">YsUp</div>
+            <img src="/ysup-logo.png" alt="YsUp" className="h-7 w-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }} />
+            <div className="hidden text-xl font-bold text-yellow-400 bg-amber-900 px-2 py-1 rounded">YsUp</div>
           </Link>
           <div className="flex items-center space-x-2">
             <div className="relative flex items-center">
