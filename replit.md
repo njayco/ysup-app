@@ -1,168 +1,41 @@
 # YsUp Campus Platform
 
 ## Overview
-YsUp Campus Network is an HBCU-focused educational platform built with Next.js 14 (App Router). It features an AI-powered academic search engine, campus social network with dashboard, bookstore, academy, bulletin board, game features, and messaging.
-
-## Project Architecture
-- **Frontend**: Next.js 14 with TypeScript, Tailwind CSS, shadcn/ui components
-- **Backend**: Next.js API routes (App Router) for search, AI, and auth
-- **Auth**: Next.js server actions with PostgreSQL + bcryptjs password hashing, localStorage session on client
-- **AI**: OpenAI (gpt-4o-mini) via Replit AI Integrations for summaries and overviews
-
-### Directory Structure
-- `/app` - Next.js App Router pages, API routes, and server actions
-- `/app/api` - API routes: books, scholar, wiki, web-search, ai-overview, summarize, search-users, book-image, networks
-- `/app/api/networks` - Class Networks API: CRUD, search, join, posts, cosign, respond, moderator requests
-- `/app/networks/[slug]` - Network detail page with feed, members, moderator panel
-- `/app/invite/network/[slug]` - Invite link handler with auth redirect
-- `/app/search` - AI-powered academic search engine page
-- `/components` - Shared React components (Header, theme-provider)
-- `/lib` - Utility functions (db.ts for PostgreSQL pool)
-- `/public` - Static assets and images
-
-## Configuration
-- **Dev server**: `pnpm next dev --turbo -H 0.0.0.0 -p 5000` (Turbopack for fast compilation, no recompilation loop)
-- **Package manager**: pnpm
-- **Deployment**: Autoscale with `pnpm build` and `pnpm next-start`
-- **Database**: PostgreSQL (Replit built-in) for user auth and AI summary caching
-- **React**: v18.3.1 (required for Next.js 14 compatibility)
-- **All API routes**: Use `export const dynamic = 'force-dynamic'` for production builds
-- **Pre-warm**: Dev workflow pre-requests / and /search pages after startup for faster first load
-
-## Search Engine Features
-- **Google Books API** (`/api/books`) - Book search with 3D blue-themed carousel
-- **OpenAlex API** (`/api/scholar`) - Scholarly articles with 3D emerald-themed journal carousel
-- **Wikipedia API** (`/api/wiki`) - Encyclopedia article search
-- **DuckDuckGo** (`/api/web-search`) - Free web search via HTML parsing
-- **Campus Users** (`/api/search-users`) - PostgreSQL user search by name/username
-- **AI Overview** (`/api/ai-overview`) - OpenAI-generated topic overviews with PostgreSQL caching
-- **AI Summarize** (`/api/summarize`) - OpenAI-generated summaries with PostgreSQL caching
-- **Book Image Proxy** (`/api/book-image`) - Server-side proxy for Google Books covers
-- **Amazon Books** (`/api/amazon-books`) - Amazon book search with 3D yellow-themed carousel, star ratings, descriptions, and Amazon.com purchase links
-- **Dictionary** (`/api/dictionary`) - Free Dictionary API (dictionaryapi.dev) for word definitions, phonetics, pronunciation audio, synonyms, antonyms, and etymology
-- **Search categories** (sidebar order): Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users
-- All searches run once via Promise.allSettled; tab switching filters cached results
-- **Search Result Caching**: All search API routes cache results in PostgreSQL `search_cache` table for 24 hours; repeat searches return cached results instantly without external API calls
-- Cache helper functions in `lib/search-cache.ts` (getCachedResults, setCachedResults)
-- PostgreSQL table: search_cache (query, source, results JSONB, created_at) with UNIQUE(query, source)
+YsUp Campus Network is an HBCU-focused educational platform built with Next.js 14 (App Router). Its core purpose is to provide a comprehensive digital ecosystem for students, featuring an AI-powered academic search engine, a campus social network, a digital bookstore, an academy, a bulletin board, interactive game features with AI coaching, and a messaging system. The platform aims to enhance the academic and social experience for HBCU students.
 
 ## User Preferences
 - HBCU-focused platform with all 100+ HBCUs in signup dropdown
 - Wood/amber themed UI design
 - Blue book carousel, emerald journal carousel
-- Search categories ordered: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
+- Search categories ordered: Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users
 
-## Class Networks Feature
-- PostgreSQL-backed social networking within classes/clubs/organizations
-- API routes: `/api/networks` (CRUD, search, mine, join, posts, cosign, respond, requests, approve, deny)
-- API routes: `/api/networks/[slug]/files` (upload/list shared files per network)
-- API routes: `/api/networks/shared-files` (list all shared files across user's networks for dashboard)
-- Dashboard notebook modal replaced with real API-backed Class Networks UI
-- Network detail page at `/networks/[slug]` with feed, members, moderator panel, file sharing
-- Share button with modal: SMS, Email, WhatsApp, Instagram, X (Twitter), Copy Link
-- File sharing: Upload files to network, automatically appear on all members' dashboards
-- Shared files on dashboard show "Sent from +username" label and network name
-- Invite links at `/invite/network/[slug]` with login redirect for unauthenticated users
-- Public networks: instant join; Private networks: moderator approval required
-- Post creation, co-signing, and threaded responses
-- PostgreSQL tables: class_networks, network_members, network_join_requests, network_posts, network_post_responses, network_shared_files
+## System Architecture
+The platform is built on Next.js 14 with TypeScript, utilizing the App Router for both frontend and backend API routes. Tailwind CSS and shadcn/ui components are used for styling and UI. Authentication is handled via Next.js server actions, PostgreSQL for user storage, and bcryptjs for password hashing, with localStorage for client-side sessions. OpenAI (gpt-4o-mini) is integrated via Replit AI for various AI functionalities like summaries, topic overviews, and AI coaching.
 
-## YsUp Bluebook Calendar Feature
-- PostgreSQL-backed event/calendar system accessible from the dashboard Bluebook item
-- API routes: `/api/events` (create/list events), `/api/events/rsvp` (RSVP responses), `/api/events/invites` (pending invitations), `/api/events/network-members` (fetch members for inviting)
-- API routes: `/api/events/seed-howard` (POST to seed Howard University 2025-2026 academic calendar), `/api/events/notify-cron` (POST for notification cron)
-- Event creation: Title, description, start date, start time (optional), end date (optional), end time (optional), location, and color selection
-- Event colors: 14 rainbow colors (red, orange, amber, yellow, lime, green, teal, cyan, blue, indigo, violet, purple, pink, rose) with color-coded display
-- Multi-day events: Events with end dates show on all days in the calendar grid and display date ranges
-- Network-based invitations: Invite entire Class Networks or pick individual members from joined networks
-- RSVP system: Three states (going/maybe/not_going) with real-time tallies displayed on each event
-- Pending invites section: Shows unresponded invitations with quick RSVP buttons
-- Event deletion: Only event creators can delete their events (cascades to invites)
-- Header notifications: Fetches real pending event invites as notification badges
-- Howard University Academic Calendar: 79 events from 2025-2026 official calendar seeded for all Howard University users
-- University events scoped by `source = 'howard_university'` column on calendar_events table; only shown to users with `college = 'Howard University'`
-- New Howard University users auto-enrolled in all university calendar events on signup
-- Notification cron: All-day events trigger notifications daily; timed events trigger alerts 2 hours prior
-- PostgreSQL tables: calendar_events (with source column), event_invites with proper foreign keys and indexes
-- Bluebook preview card shows current date dynamically (no hardcoded dates)
-- Calendar views: Month, Week, Day, and List; Day view shows hourly timeline (6 AM - 11 PM) with events and current-time indicator
-- Day squares in Month view are selectable (click to highlight, double-click or Enter to open Day view)
+### Core Features:
+- **AI-Powered Academic Search Engine**: Integrates Google Books, OpenAlex for scholarly articles, Wikipedia, DuckDuckGo for web search, and campus user search. It includes AI-generated topic overviews and summaries, with all search results cached in PostgreSQL for 24 hours.
+- **Campus Social Network (Class Networks)**: PostgreSQL-backed system for creating, joining, and managing class/club/organization networks. Features include post feeds, co-signing, threaded responses, member management, moderator tools, invite links, and shared file uploads.
+- **YsUp Bluebook Calendar**: A PostgreSQL-backed event and calendar system. It supports event creation with color coding, multi-day events, network-based invitations with RSVP tracking, and notifications. Specific university academic calendars (e.g., Howard University) can be seeded and automatically applied to relevant users.
+- **Skeuomorphic Calculator**: A client-side interactive desktop calculator with full arithmetic, memory functions, and a distinct visual design.
+- **Sticky Notes**: Dashboard sticky notes with full persistence, allowing users to create, position, and rotate notes, with content and position saved to PostgreSQL.
+- **File Upload**: Dashboard file storage with CRUD operations, saving file metadata and base64 data to PostgreSQL, with lazy loading of file data for performance.
+- **The Game (Online AI Coaching)**: Offers an online AI coaching mode where GPT-4o-mini acts as a Socratic coach. It includes a reward system (YBucks) for user engagement in sessions.
+- **Notifications System**: Real-time notifications for various events (e.g., YBucks earned, event invites) fetched via polling and displayed in a header dropdown.
+- **Bison Web - Howard.edu Magazine Browser**: A skeuomorphic, two-page magazine interface that mirrors content from the real howard.edu website, featuring responsive design and animated page transitions.
+- **The Hilltop - Campus Newspaper**: A PDF.js-powered viewer for campus newspapers with a skeuomorphic aesthetic. It includes page navigation and an admin mode for PDF uploads.
 
-## Sticky Notes Feature
-- PostgreSQL-backed sticky notes on dashboard with full persistence
-- API routes: `/api/notes` (CRUD - create, read, update, delete)
-- Notes saved to `user_sticky_notes` table with content, position, and rotation
-- Position updates persisted on drag/move
-- Content updates persisted on save
-- Notes load from database on dashboard mount, persist across logout/login
+### UI/UX and Design:
+- **Responsive Design**: All pages are fully mobile-responsive using Tailwind breakpoints, adapting layouts, font sizes, and navigation (e.g., hamburger menu, horizontal scrollable tabs for mobile search categories).
+- **Skeuomorphic Elements**: Incorporates skeuomorphic designs for the calculator, Bison Web magazine browser, and The Hilltop newspaper viewer, enhancing visual engagement.
+- **Themed Carousels**: 3D book and journal carousels with distinct blue and emerald themes.
 
-## File Upload Feature
-- PostgreSQL-backed file storage on dashboard
-- API routes: `/api/files` (CRUD - upload, list, delete with lazy file data loading)
-- Files saved to `user_files` table with metadata and base64 file data
-- File data loaded on demand (not in list response) for performance
-- PostgreSQL table: user_files
-
-## The Game - Online AI Coaching Feature
-- Two game modes: In-Person (classroom) and Online AI (AI coaching sessions)
-- API routes: `/api/game/online/start` (create session), `/api/game/online/[sessionId]/message` (chat with AI coach), `/api/game/online/[sessionId]/arrived` (answer arrived, awards 10 YBucks), `/api/game/online/[sessionId]/end` (end session, awards 250 coach bonus)
-- API route: `/api/game/inperson/award` (award YBucks to users by username in in-person games)
-- AI Coach uses GPT-4o-mini via Replit AI Integrations with strict Socratic teaching method (never gives direct answers)
-- Online AI Chalkboard page at `/game/online/[sessionId]` with dark green chalkboard UI
-- YBucks amounts: 10 for arriving at answer, 250 coach bonus at session end
-- Authorization checks: users must be session players to interact, only creators can end sessions
-- PostgreSQL tables: game_sessions, game_session_players, game_chat_messages, game_ybucks_awards
-- Users table has `ybucks` column for tracking currency balance
-
-## Notifications System
-- API routes: `/api/notifications` (list with unread count), `/api/notifications/read` (mark individual or all as read)
-- Header bell icon with dropdown showing real notifications from DB + event invites
-- 30-second polling for real-time notification updates
-- Notification types: YBUCKS_EARNED, event_invite, general
-- PostgreSQL table: notifications with user_id, type, title, message, meta (JSONB), read flag
-
-## Bison Web - Howard.edu Magazine Browser
-- Skeuomorphic open two-page magazine design on a wooden desk background
-- 8 content sections: Home, News, Academics, Admissions, Campus Life, Events, Research, Legacy
-- All content mirrors real howard.edu website data (news articles, events, alumni, programs)
-- Page navigation: clicking a nav link loads content on right page, shifts previous right content to left page
-- Slide transitions: content slides in/out with translateX and opacity animations (500ms duration)
-- Spine divider between pages with wood grain texture and shadow effects
-- Page textures with parchment-style gradients and subtle edge shadows
-- Mobile responsive: pages stack vertically (current page on top, previous below) with horizontal spine divider
-- Nav bar with icons and aria-current/aria-label for accessibility
-- Custom scrollbars on each page matching the parchment aesthetic
-- External links to howard.edu, thedig.howard.edu, events.howard.edu, admission.howard.edu
-
-## The Hilltop - Campus Newspaper
-- PDF.js-powered newspaper viewer at `/hilltop` rendering PDF pages on canvas with newspaper aesthetic
-- Current edition: Friday, April 2, 2010 (Volume 93, No. 101), served from `public/hilltop-current.pdf`
-- PDF.js v3.11.174 loaded from CDN (cdnjs.cloudflare.com) to avoid Turbopack bundler conflicts
-- Canvas-based page rendering with amber/parchment newspaper theme on wooden desk background
-- Previous/Next page navigation buttons and clickable page number panel on right side
-- Responsive canvas scaling based on container width, with window resize handling
-- Admin mode: Editor-in-Chief login (editor/hilltop2024) with PDF upload interface
-- Download button for the current PDF edition
-
-## Recent Changes
-- Replaced Bison Web (old student information system) with skeuomorphic Howard.edu magazine browser
-- Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
-- Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens
-- Mobile carousels: 3D book/journal carousels scale to 75% with fewer visible items on mobile
-- Mobile layouts: Vertical stacking, responsive font sizes, reduced padding, single-column grids on small screens
-- Mobile navigation: Header hamburger menu with slide-out drawer for all nav items
-- Added Class Networks feature: create/join/search networks, post feed, invite links, moderator tools
-- Replaced hardcoded dashboard class network data with real PostgreSQL-backed API
-- Reordered search category sidebar: Everything, Books, Scholarly Articles, Web, Encyclopedia, Campus Users
-- Redesigned book carousel: Blue-themed styled covers matching journal carousel design (removed Google Books image loading)
-- Fixed dev server stability: Switched to Turbopack (--turbo) to eliminate constant webpack recompilation loop
-- Fixed React version: Downgraded from React 19 to 18.3.1 for Next.js 14 compatibility
-- Fixed AI overview/summarize duplicate key errors: Added ON CONFLICT DO UPDATE to PostgreSQL inserts
-- Added force-dynamic exports to all API routes for production build compatibility
-- Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)
-- Single search: Search runs once on submit, results cached, tab switching just filters
-- AI-powered academic search engine with wood/amber themed UI
-- Onboarding wizard with 12-step guided setup for new students (includes Honor Code with scroll-to-unlock)
-- Honor Code step: Users must scroll through full Honor Code text to unlock agreement checkbox; cannot proceed without agreeing
-- Bison Homepage (`/bison-homepage`) is publicly accessible without login for all visitors
-- PostgreSQL auth with bcryptjs password hashing
+## External Dependencies
+- **PostgreSQL**: Primary database for user authentication, AI summary/overview caching, search result caching, class networks data, calendar events, sticky notes, file storage, game sessions, and notifications.
+- **OpenAI (gpt-4o-mini)**: Integrated via Replit AI for academic topic overviews, summaries, and the AI coaching feature in "The Game."
+- **Google Books API**: Used for book search functionality.
+- **OpenAlex API**: Used for scholarly article search, replacing previous unreliable scraping methods.
+- **Wikipedia API**: Used for encyclopedia article search.
+- **DuckDuckGo**: Utilized for free web search functionality via HTML parsing.
+- **Free Dictionary API (dictionaryapi.dev)**: Provides word definitions, phonetics, and related linguistic information.
+- **Amazon Books**: Integrated for Amazon book search, including ratings and purchase links.
+- **PDF.js**: Used for rendering PDF documents within "The Hilltop" newspaper viewer.

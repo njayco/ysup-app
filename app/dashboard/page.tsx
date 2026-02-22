@@ -56,7 +56,7 @@ interface PDFFile {
   id: string
   name: string
   thumbnail: string
-  type: "pdf" | "doc" | "ppt" | "bluebook" | "notebook" | "note"
+  type: "pdf" | "doc" | "ppt" | "bluebook" | "notebook" | "note" | "calculator"
   position: { x: number; y: number; rotation: number }
   sharedBy?: string
   course?: string
@@ -104,6 +104,12 @@ export default function DashboardPage() {
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [showNotebook, setShowNotebook] = useState(false)
   const [showBluebook, setShowBluebook] = useState(false)
+  const [showCalculator, setShowCalculator] = useState(false)
+  const [calcDisplay, setCalcDisplay] = useState("0")
+  const [calcPrevValue, setCalcPrevValue] = useState<number | null>(null)
+  const [calcOperation, setCalcOperation] = useState<string | null>(null)
+  const [calcNewNumber, setCalcNewNumber] = useState(true)
+  const [calcMemory, setCalcMemory] = useState(0)
   const [calendarView, setCalendarView] = useState<"month" | "week" | "list" | "day">("month")
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
@@ -290,6 +296,13 @@ export default function DashboardPage() {
       thumbnail: "/placeholder.svg?height=200&width=150",
       type: "notebook",
       position: { x: 50, y: 15, rotation: 1 },
+    },
+    {
+      id: "calculator",
+      name: "Calculator",
+      thumbnail: "/placeholder.svg?height=200&width=150",
+      type: "calculator",
+      position: { x: 70, y: 15, rotation: 0 },
     },
   ]
   const [allFiles, setAllFiles] = useState<PDFFile[]>(defaultFiles)
@@ -731,11 +744,116 @@ export default function DashboardPage() {
     }
   }
 
+  const calcPerformOperation = () => {
+    if (calcPrevValue === null || !calcOperation) return parseFloat(calcDisplay)
+    const current = parseFloat(calcDisplay)
+    let result = 0
+    switch (calcOperation) {
+      case "+": result = calcPrevValue + current; break
+      case "-": result = calcPrevValue - current; break
+      case "×": result = calcPrevValue * current; break
+      case "÷": result = current !== 0 ? calcPrevValue / current : NaN; break
+      default: result = current
+    }
+    return result
+  }
+
+  const calcHandleNumber = (num: string) => {
+    if (calcNewNumber) {
+      setCalcDisplay(num === "." ? "0." : num)
+      setCalcNewNumber(false)
+    } else {
+      if (num === "." && calcDisplay.includes(".")) return
+      if (calcDisplay === "0" && num !== ".") {
+        setCalcDisplay(num)
+      } else {
+        setCalcDisplay(calcDisplay + num)
+      }
+    }
+  }
+
+  const calcHandleOperation = (op: string) => {
+    if (calcPrevValue !== null && !calcNewNumber) {
+      const result = calcPerformOperation()
+      setCalcDisplay(String(result))
+      setCalcPrevValue(result)
+    } else {
+      setCalcPrevValue(parseFloat(calcDisplay))
+    }
+    setCalcOperation(op)
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleEquals = () => {
+    if (calcPrevValue === null || !calcOperation) return
+    const result = calcPerformOperation()
+    setCalcDisplay(String(result))
+    setCalcPrevValue(null)
+    setCalcOperation(null)
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleClear = () => {
+    setCalcDisplay("0")
+    setCalcPrevValue(null)
+    setCalcOperation(null)
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleAllClear = () => {
+    calcHandleClear()
+    setCalcMemory(0)
+  }
+
+  const calcHandlePercent = () => {
+    const val = parseFloat(calcDisplay)
+    if (calcPrevValue !== null) {
+      setCalcDisplay(String(calcPrevValue * val / 100))
+    } else {
+      setCalcDisplay(String(val / 100))
+    }
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleSqrt = () => {
+    const val = parseFloat(calcDisplay)
+    if (val >= 0) {
+      setCalcDisplay(String(Math.sqrt(val)))
+      setCalcNewNumber(true)
+    }
+  }
+
+  const calcHandleMemoryRecall = () => {
+    setCalcDisplay(String(calcMemory))
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleMemoryAdd = () => {
+    setCalcMemory(calcMemory + parseFloat(calcDisplay))
+    setCalcNewNumber(true)
+  }
+
+  const calcHandleMemorySubtract = () => {
+    setCalcMemory(calcMemory - parseFloat(calcDisplay))
+    setCalcNewNumber(true)
+  }
+
+  const calcFormatDisplay = (val: string) => {
+    const num = parseFloat(val)
+    if (isNaN(num)) return "Error"
+    if (!isFinite(num)) return "Error"
+    if (val.includes(".") && !calcNewNumber) return val.length > 12 ? val.slice(0, 12) : val
+    const str = String(num)
+    return str.length > 12 ? num.toExponential(6) : str
+  }
+
   const handleFileClick = async (file: PDFFile) => {
     if (file.type === "bluebook") {
       setShowBluebook(true)
     } else if (file.type === "notebook") {
       setShowNotebook(true)
+    } else if (file.type === "calculator") {
+      setShowCalculator(true)
     } else {
       if ((file as any).fromDb && !file.fileData) {
         const storedUser = localStorage.getItem("currentUser")
@@ -1057,6 +1175,8 @@ export default function DashboardPage() {
         return <Calendar className="w-8 h-8 text-blue-600" />
       case "notebook":
         return <BookOpen className="w-8 h-8 text-yellow-600" />
+      case "calculator":
+        return <div className="w-8 h-8 flex items-center justify-center text-gray-600 font-bold text-lg">=</div>
       case "pdf":
         return <div className="bg-red-600 text-white text-xs px-1 rounded">PDF</div>
       case "ppt":
@@ -1072,6 +1192,8 @@ export default function DashboardPage() {
         return "bg-blue-200 border-blue-400"
       case "notebook":
         return "bg-yellow-200 border-yellow-400"
+      case "calculator":
+        return "bg-gray-200 border-gray-400"
       default:
         return "bg-white border-gray-200"
     }
@@ -1356,7 +1478,7 @@ export default function DashboardPage() {
   const handleMoveToTrash = (itemId: string, itemType: string) => {
     if (itemType === "file") {
       const file = allFiles.find((f) => f.id === itemId)
-      if (file && !["bluebook", "notebook"].includes(file.type)) {
+      if (file && !["bluebook", "notebook", "calculator"].includes(file.type)) {
         setRecycleBin([...recycleBin, file])
         setAllFiles(allFiles.filter((f) => f.id !== itemId))
         const storedUser = localStorage.getItem("currentUser")
@@ -1599,7 +1721,7 @@ export default function DashboardPage() {
                 {pageItems.map((item) => {
                   if (item.type === "file") {
                     const file = item.data as PDFFile
-                    const canTrash = !["bluebook", "notebook"].includes(file.type)
+                    const canTrash = !["bluebook", "notebook", "calculator"].includes(file.type)
                     return (
                       <div
                         key={`file-${file.id}`}
@@ -1654,6 +1776,22 @@ export default function DashboardPage() {
                                     </div>
                                   )}
                                 </div>
+                              </div>
+                            </div>
+                          ) : file.type === "calculator" ? (
+                            <div className="h-full flex flex-col" style={{ background: "linear-gradient(145deg, #d4d4d4, #e8e8e8)", borderRadius: "6px" }}>
+                              <div className="mx-2 mt-2 rounded" style={{ background: "linear-gradient(180deg, #2a3a2a, #1a2a1a)", border: "2px solid #555", padding: "4px 6px" }}>
+                                <div className="text-right font-mono text-green-400 text-sm" style={{ textShadow: "0 0 4px rgba(74,222,128,0.5)" }}>0</div>
+                              </div>
+                              <div className="text-center mt-1">
+                                <div className="text-[8px] font-bold text-gray-500 tracking-wider">CALCULATOR</div>
+                              </div>
+                              <div className="grid grid-cols-4 gap-[2px] px-2 pb-2 mt-1">
+                                {["7","8","9","+","4","5","6","-","1","2","3","=","0",".","%","C"].map((k) => (
+                                  <div key={k} className="text-[9px] font-bold text-center rounded py-[2px]" style={{ background: k === "C" ? "#8b7bb8" : k === "=" || k === "+" || k === "-" || k === "%" ? "#555" : "#bbb", color: k === "C" ? "white" : k === "=" || k === "+" || k === "-" || k === "%" ? "white" : "#333", boxShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
+                                    {k}
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           ) : (
@@ -2408,6 +2546,80 @@ export default function DashboardPage() {
       )}
 
       {/* Class Networks Modal */}
+      {showCalculator && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setShowCalculator(false)}>
+          <div className="relative" onClick={(e) => e.stopPropagation()} style={{ width: "320px", maxWidth: "95vw" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(160deg, #dcdcdc 0%, #c8c8c8 30%, #b8b8b8 100%)", boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)", padding: "16px" }}>
+              <div className="rounded-lg mb-3 overflow-hidden" style={{ background: "linear-gradient(180deg, #3a4a3a, #1e2e1e)", border: "3px solid #666", padding: "8px 12px", boxShadow: "inset 0 2px 8px rgba(0,0,0,0.5)" }}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-[10px] text-green-700" style={{ opacity: calcMemory !== 0 ? 1 : 0.3 }}>M</div>
+                  <div className="text-[10px] text-green-700" style={{ opacity: calcOperation ? 1 : 0 }}>{calcOperation || ""}</div>
+                </div>
+                <div className="text-right font-mono text-3xl tracking-wider" style={{ color: "#4ade80", textShadow: "0 0 10px rgba(74,222,128,0.6), 0 0 20px rgba(74,222,128,0.3)", fontFamily: "'Courier New', monospace", letterSpacing: "2px" }}>
+                  {calcFormatDisplay(calcDisplay)}
+                </div>
+              </div>
+              <div className="text-center mb-2">
+                <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "#666" }}>SOLAR AND BATTERY</div>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  { label: "%", action: calcHandlePercent, style: "dark" },
+                  { label: "7", action: () => calcHandleNumber("7"), style: "light" },
+                  { label: "8", action: () => calcHandleNumber("8"), style: "light" },
+                  { label: "9", action: () => calcHandleNumber("9"), style: "light" },
+                  { label: "×", action: () => calcHandleOperation("×"), style: "dark" },
+                  { label: "√", action: calcHandleSqrt, style: "dark" },
+                  { label: "4", action: () => calcHandleNumber("4"), style: "light" },
+                  { label: "5", action: () => calcHandleNumber("5"), style: "light" },
+                  { label: "6", action: () => calcHandleNumber("6"), style: "light" },
+                  { label: "÷", action: () => calcHandleOperation("÷"), style: "dark" },
+                  { label: "ON/C", action: calcHandleClear, style: "purple" },
+                  { label: "1", action: () => calcHandleNumber("1"), style: "light" },
+                  { label: "2", action: () => calcHandleNumber("2"), style: "light" },
+                  { label: "3", action: () => calcHandleNumber("3"), style: "light" },
+                  { label: "−", action: () => calcHandleOperation("-"), style: "dark" },
+                  { label: "CI", action: calcHandleAllClear, style: "purple" },
+                  { label: "0", action: () => calcHandleNumber("0"), style: "light" },
+                  { label: ".", action: () => calcHandleNumber("."), style: "light" },
+                  { label: "=", action: calcHandleEquals, style: "light" },
+                  { label: "+", action: () => calcHandleOperation("+"), style: "dark-tall" },
+                ].map((btn, i) => (
+                  <button
+                    key={i}
+                    onClick={btn.action}
+                    className="relative rounded-lg text-sm font-bold transition-all duration-100 active:translate-y-[1px] active:shadow-sm select-none"
+                    style={{
+                      height: btn.style === "dark-tall" ? "44px" : "44px",
+                      background: btn.style === "purple" ? "linear-gradient(180deg, #9b8ec4, #7b6ea4)" : btn.style === "dark" || btn.style === "dark-tall" ? "linear-gradient(180deg, #6b6b6b, #4a4a4a)" : "linear-gradient(180deg, #d0d0d0, #b0b0b0)",
+                      color: btn.style === "purple" || btn.style === "dark" || btn.style === "dark-tall" ? "white" : "#333",
+                      boxShadow: "0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      textShadow: btn.style === "purple" || btn.style === "dark" || btn.style === "dark-tall" ? "0 1px 2px rgba(0,0,0,0.3)" : "none",
+                      fontSize: btn.label === "ON/C" ? "10px" : btn.label === "CI" ? "12px" : "16px",
+                    }}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                <button onClick={calcHandleMemoryRecall} className="rounded-lg text-xs font-bold transition-all active:translate-y-[1px] select-none" style={{ height: "36px", background: "linear-gradient(180deg, #6b6b6b, #4a4a4a)", color: "white", boxShadow: "0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                  RM/CM
+                </button>
+                <button onClick={calcHandleMemoryAdd} className="rounded-lg text-xs font-bold transition-all active:translate-y-[1px] select-none" style={{ height: "36px", background: "linear-gradient(180deg, #6b6b6b, #4a4a4a)", color: "white", boxShadow: "0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                  M=
+                </button>
+                <button onClick={calcHandleMemorySubtract} className="rounded-lg text-xs font-bold transition-all active:translate-y-[1px] select-none" style={{ height: "36px", background: "linear-gradient(180deg, #6b6b6b, #4a4a4a)", color: "white", boxShadow: "0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                  M±
+                </button>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNotebook && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="wood-background rounded-lg w-full max-w-4xl h-full max-h-[90vh] overflow-hidden flex flex-col">
