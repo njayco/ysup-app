@@ -87,6 +87,9 @@ export default function DashboardPage() {
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [showNotebook, setShowNotebook] = useState(false)
   const [showBluebook, setShowBluebook] = useState(false)
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "list">("month")
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
   const [noteText, setNoteText] = useState("Do we have class tomorrow?....")
   const [selectedClassmate, setSelectedClassmate] = useState("Select classmate(s)")
   const [selectedCourse, setSelectedCourse] = useState("Calculus 2")
@@ -921,9 +924,45 @@ export default function DashboardPage() {
   }
 
   const formatEventDate = (dateStr: string) => {
-    const d = new Date(dateStr + "T00:00:00")
-    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+    const cleaned = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr
+    const [y, m, d2] = cleaned.split("-").map(Number)
+    const date = new Date(y, m - 1, d2)
+    return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
   }
+
+  const parseEventDate = (dateStr: string): Date => {
+    const cleaned = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr
+    const [y, m, d2] = cleaned.split("-").map(Number)
+    return new Date(y, m - 1, d2)
+  }
+
+  const calMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  const calDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const calToday = new Date()
+  const calTodayStr = `${calToday.getFullYear()}-${String(calToday.getMonth() + 1).padStart(2, "0")}-${String(calToday.getDate()).padStart(2, "0")}`
+
+  const calEventsForDate = (dateStr: string) =>
+    calendarEvents.filter((e) => {
+      const cleaned = e.event_date.includes("T") ? e.event_date.split("T")[0] : e.event_date
+      return cleaned === dateStr
+    })
+
+  const calDaysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
+  const calFirstDayOfWeek = new Date(calendarYear, calendarMonth, 1).getDay()
+
+  const calWeekDates = (() => {
+    const d = new Date()
+    const dayOfWeek = d.getDay()
+    const start = new Date(d)
+    start.setDate(d.getDate() - dayOfWeek)
+    return Array.from({ length: 7 }, (_, i) => {
+      const wd = new Date(start)
+      wd.setDate(start.getDate() + i)
+      return wd
+    })
+  })()
+
+  const calSortedEvents = [...calendarEvents].sort((a, b) => parseEventDate(a.event_date).getTime() - parseEventDate(b.event_date).getTime())
 
   const formatEventTime = (timeStr: string | null) => {
     if (!timeStr) return "All Day"
@@ -1700,29 +1739,47 @@ export default function DashboardPage() {
       {/* Expanded Bluebook Modal */}
       {showBluebook && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="wood-background rounded-lg w-full max-w-4xl h-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="bg-blue-700 p-3 md:p-4 flex items-center justify-between shrink-0">
-              <h2 className="text-lg md:text-xl font-bold text-blue-100">YsUp Bluebook - Calendar</h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-blue-200 text-sm hidden sm:inline">
-                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-                </span>
-                <button onClick={() => setShowBluebook(false)} className="text-blue-100 hover:text-white">
+          <div className="bg-white rounded-lg w-full max-w-5xl h-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="bg-blue-700 p-3 md:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shrink-0">
+              <h2 className="text-lg md:text-xl font-bold text-blue-100">YsUp Bluebook</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex bg-blue-800 rounded-lg overflow-hidden text-xs">
+                  <button onClick={() => setCalendarView("month")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "month" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>Month</button>
+                  <button onClick={() => setCalendarView("week")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "week" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>Week</button>
+                  <button onClick={() => setCalendarView("list")} className={`px-3 py-1.5 font-medium transition-colors ${calendarView === "list" ? "bg-white text-blue-700" : "text-blue-200 hover:text-white"}`}>List</button>
+                </div>
+                <button onClick={() => setShowBluebook(false)} className="text-blue-100 hover:text-white ml-2">
                   <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            <div className="p-4 md:p-6 overflow-y-auto flex-1">
-              <div className="mb-4 text-center">
-                <button
-                  onClick={() => setShowCreateEvent(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg flex items-center space-x-2 mx-auto text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create New Event</span>
-                </button>
-              </div>
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-3 md:p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={() => setShowCreateEvent(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>New Event</span>
+                  </button>
+                  {calendarView === "month" && (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1) } else setCalendarMonth(calendarMonth - 1) }} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+                      <button onClick={() => { setCalendarMonth(new Date().getMonth()); setCalendarYear(new Date().getFullYear()) }} className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2">Today</button>
+                      <span className="text-sm font-bold text-gray-800 min-w-[140px] text-center">{["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][calendarMonth]} {calendarYear}</span>
+                      <button onClick={() => { if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1) } else setCalendarMonth(calendarMonth + 1) }} className="p-1 hover:bg-gray-100 rounded"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
+                    </div>
+                  )}
+                  {calendarView === "week" && (() => {
+                    const d = new Date(); d.setDate(d.getDate() - d.getDay())
+                    return <span className="text-sm font-bold text-gray-800">Week of {d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                  })()}
+                  {calendarView === "list" && (
+                    <span className="text-sm text-gray-500">{calendarEvents.length} events</span>
+                  )}
+                </div>
 
               {/* Create Event Form */}
               {showCreateEvent && (
@@ -1859,44 +1916,26 @@ export default function DashboardPage() {
 
               {/* Pending Invites */}
               {pendingInvites.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-bold text-blue-200 uppercase tracking-wider mb-3">Pending Invitations</h3>
-                  <div className="space-y-3">
+                <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Pending Invitations ({pendingInvites.length})</h3>
+                  <div className="space-y-2">
                     {pendingInvites.map((invite: any) => (
-                      <div key={invite.invite_id} className="bg-blue-900/40 border border-blue-500/40 rounded-lg p-4">
+                      <div key={invite.invite_id} className="bg-white border border-amber-200 rounded p-3">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div>
-                            <h4 className="font-bold text-blue-100">{invite.title}</h4>
-                            <p className="text-xs text-blue-300">
+                            <h4 className="font-bold text-gray-900 text-sm">{invite.title}</h4>
+                            <p className="text-xs text-gray-600">
                               {formatEventDate(invite.event_date)}{invite.event_time ? ` at ${formatEventTime(invite.event_time)}` : " — All Day"}
                               {invite.location && ` - ${invite.location}`}
                             </p>
-                            <p className="text-xs text-blue-400 mt-1">
-                              Invited by {invite.creator_first_name} {invite.creator_last_name}
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              From {invite.creator_first_name} {invite.creator_last_name}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleRsvp(invite.event_id, "going")}
-                              disabled={rsvpingEvent === invite.event_id}
-                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium"
-                            >
-                              I'm Going
-                            </button>
-                            <button
-                              onClick={() => handleRsvp(invite.event_id, "maybe")}
-                              disabled={rsvpingEvent === invite.event_id}
-                              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded text-xs font-medium"
-                            >
-                              Maybe
-                            </button>
-                            <button
-                              onClick={() => handleRsvp(invite.event_id, "not_going")}
-                              disabled={rsvpingEvent === invite.event_id}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium"
-                            >
-                              Not Going
-                            </button>
+                          <div className="flex items-center space-x-1.5">
+                            <button onClick={() => handleRsvp(invite.event_id, "going")} disabled={rsvpingEvent === invite.event_id} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded text-xs font-medium">Going</button>
+                            <button onClick={() => handleRsvp(invite.event_id, "maybe")} disabled={rsvpingEvent === invite.event_id} className="bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1 rounded text-xs font-medium">Maybe</button>
+                            <button onClick={() => handleRsvp(invite.event_id, "not_going")} disabled={rsvpingEvent === invite.event_id} className="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1 rounded text-xs font-medium">No</button>
                           </div>
                         </div>
                       </div>
@@ -1905,110 +1944,165 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Calendar Events */}
-              <div>
-                <h3 className="text-sm font-bold text-blue-200 uppercase tracking-wider mb-3">Your Events</h3>
-                {eventsLoading ? (
-                  <div className="text-center py-12 text-blue-200">Loading events...</div>
-                ) : calendarEvents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="w-12 h-12 mx-auto text-blue-400 mb-3" />
-                    <p className="text-blue-200">No events yet. Create your first event above!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {calendarEvents.map((event) => {
-                      const isCreator = (() => {
-                        try {
-                          const u = JSON.parse(localStorage.getItem("currentUser") || "{}")
-                          return u.id === event.creator_id
-                        } catch { return false }
-                      })()
+              {/* Calendar Views */}
+              {eventsLoading ? (
+                <div className="text-center py-12 text-gray-400">Loading events...</div>
+              ) : (
+                <>
+                  {/* Monthly View */}
+                  {calendarView === "month" && (
+                    <div>
+                      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-t-lg overflow-hidden">
+                        {calDayNames.map((dn) => (
+                          <div key={dn} className="bg-blue-50 text-center py-2 text-xs font-bold text-blue-700">{dn}</div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-b-lg overflow-hidden">
+                        {Array.from({ length: calFirstDayOfWeek }).map((_, i) => (
+                          <div key={`empty-${i}`} className="bg-gray-50 min-h-[80px] md:min-h-[100px]" />
+                        ))}
+                        {Array.from({ length: calDaysInMonth }).map((_, i) => {
+                          const day = i + 1
+                          const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                          const dayEvents = calEventsForDate(dateStr)
+                          const isToday = dateStr === calTodayStr
 
-                      return (
-                        <div key={event.id} className="bg-blue-100 rounded-lg p-4 border border-blue-300">
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                            <div className="flex-1">
-                              <h4 className="font-bold text-blue-800 text-base">{event.title}</h4>
-                              {event.description && <p className="text-sm text-blue-700 mt-0.5">{event.description}</p>}
-                              <p className="text-sm text-blue-600 mt-1">
-                                {formatEventDate(event.event_date)}{event.event_time ? ` at ${formatEventTime(event.event_time)}` : " — All Day"}
-                              </p>
-                              {event.location && <p className="text-xs text-blue-500 mt-0.5">{event.location}</p>}
-                              <p className="text-xs text-blue-500 mt-1">
-                                Created by {event.creator_first_name} {event.creator_last_name}
-                              </p>
-                            </div>
-
-                            {isCreator && (
-                              <button
-                                onClick={() => handleDeleteEvent(event.id)}
-                                className="text-red-500 hover:text-red-700 text-xs self-start"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-
-                          {/* RSVP Tallies */}
-                          <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                            <span className="bg-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-medium">
-                              Invited: {event.total_invited}
-                            </span>
-                            <span className="bg-green-200 text-green-800 px-2.5 py-1 rounded-full font-medium">
-                              Going: {event.going_count}
-                            </span>
-                            <span className="bg-yellow-200 text-yellow-800 px-2.5 py-1 rounded-full font-medium">
-                              Maybe: {event.maybe_count}
-                            </span>
-                            <span className="bg-red-200 text-red-800 px-2.5 py-1 rounded-full font-medium">
-                              Not Going: {event.not_going_count}
-                            </span>
-                          </div>
-
-                          {/* My RSVP status (for invited events) */}
-                          {event.my_rsvp && !isCreator && (
-                            <div className="mt-3 flex items-center gap-2">
-                              <span className="text-xs text-blue-600 font-medium">Your response:</span>
-                              <div className="flex gap-1.5">
-                                <button
-                                  onClick={() => handleRsvp(event.id, "going")}
-                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                                    event.my_rsvp === "going"
-                                      ? "bg-green-600 text-white"
-                                      : "bg-green-100 text-green-700 hover:bg-green-200"
-                                  }`}
-                                >
-                                  Going
-                                </button>
-                                <button
-                                  onClick={() => handleRsvp(event.id, "maybe")}
-                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                                    event.my_rsvp === "maybe"
-                                      ? "bg-yellow-600 text-white"
-                                      : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                                  }`}
-                                >
-                                  Maybe
-                                </button>
-                                <button
-                                  onClick={() => handleRsvp(event.id, "not_going")}
-                                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                                    event.my_rsvp === "not_going"
-                                      ? "bg-red-600 text-white"
-                                      : "bg-red-100 text-red-700 hover:bg-red-200"
-                                  }`}
-                                >
-                                  Not Going
-                                </button>
+                          return (
+                            <div key={day} className={`bg-white min-h-[80px] md:min-h-[100px] p-1 ${isToday ? "ring-2 ring-blue-500 ring-inset" : ""}`}>
+                              <div className={`text-xs font-medium mb-0.5 ${isToday ? "bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center" : "text-gray-700 px-1"}`}>
+                                {day}
+                              </div>
+                              <div className="space-y-0.5 overflow-hidden">
+                                {dayEvents.slice(0, 3).map((ev) => (
+                                  <div
+                                    key={ev.id}
+                                    className={`text-[10px] md:text-xs px-1 py-0.5 rounded truncate cursor-default ${
+                                      ev.event_time ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+                                    }`}
+                                    title={`${ev.title}${ev.event_time ? ` at ${formatEventTime(ev.event_time)}` : " (All Day)"}`}
+                                  >
+                                    {ev.title}
+                                  </div>
+                                ))}
+                                {dayEvents.length > 3 && (
+                                  <div className="text-[10px] text-gray-500 px-1">+{dayEvents.length - 3} more</div>
+                                )}
                               </div>
                             </div>
-                          )}
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Weekly View */}
+                  {calendarView === "week" && (
+                    <div className="space-y-0 border border-gray-200 rounded-lg overflow-hidden">
+                      {calWeekDates.map((wd) => {
+                        const dateStr = `${wd.getFullYear()}-${String(wd.getMonth() + 1).padStart(2, "0")}-${String(wd.getDate()).padStart(2, "0")}`
+                        const dayEvents = calEventsForDate(dateStr)
+                        const isToday = dateStr === calTodayStr
+                        return (
+                          <div key={dateStr} className={`flex border-b last:border-b-0 ${isToday ? "bg-blue-50" : "bg-white"}`}>
+                            <div className={`w-20 md:w-28 shrink-0 p-2 md:p-3 border-r ${isToday ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700"}`}>
+                              <div className="text-xs font-bold">{calDayNames[wd.getDay()]}</div>
+                              <div className="text-lg md:text-2xl font-bold">{wd.getDate()}</div>
+                              <div className="text-[10px]">{calMonthNames[wd.getMonth()].slice(0, 3)}</div>
+                            </div>
+                            <div className="flex-1 p-2 min-h-[60px]">
+                              {dayEvents.length === 0 ? (
+                                <div className="text-xs text-gray-400 italic py-2">No events</div>
+                              ) : (
+                                <div className="space-y-1">
+                                  {dayEvents.map((ev) => (
+                                    <div key={ev.id} className="flex items-start gap-2 text-sm">
+                                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${ev.event_time ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                                        {ev.event_time ? formatEventTime(ev.event_time) : "All Day"}
+                                      </span>
+                                      <div className="min-w-0">
+                                        <span className="font-medium text-gray-900 text-sm">{ev.title}</span>
+                                        {ev.location && <span className="text-xs text-gray-500 ml-1">- {ev.location}</span>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* List View */}
+                  {calendarView === "list" && (
+                    <div>
+                      {calendarEvents.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Calendar className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                          <p className="text-gray-500">No events yet. Create your first event!</p>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
+                      ) : (
+                        <div className="space-y-2">
+                          {calSortedEvents.map((event) => {
+                            const isCreator = (() => {
+                              try {
+                                const u = JSON.parse(localStorage.getItem("currentUser") || "{}")
+                                return u.id === event.creator_id
+                              } catch { return false }
+                            })()
+                            const eventDateObj = parseEventDate(event.event_date)
+                            const isPast = eventDateObj < new Date(calToday.getFullYear(), calToday.getMonth(), calToday.getDate())
+
+                            return (
+                              <div key={event.id} className={`rounded-lg p-3 border ${isPast ? "bg-gray-50 border-gray-200 opacity-70" : "bg-white border-blue-200"}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex gap-3 flex-1 min-w-0">
+                                    <div className="shrink-0 w-12 text-center">
+                                      <div className="text-xs font-bold text-blue-600 uppercase">{eventDateObj.toLocaleDateString("en-US", { month: "short" })}</div>
+                                      <div className="text-xl font-bold text-gray-900">{eventDateObj.getDate()}</div>
+                                      <div className="text-[10px] text-gray-500">{eventDateObj.toLocaleDateString("en-US", { weekday: "short" })}</div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-bold text-gray-900 text-sm">{event.title}</h4>
+                                      {event.description && <p className="text-xs text-gray-600 mt-0.5 line-clamp-1">{event.description}</p>}
+                                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${event.event_time ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                                          {event.event_time ? formatEventTime(event.event_time) : "All Day"}
+                                        </span>
+                                        {event.location && <span className="text-xs text-gray-500">{event.location}</span>}
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5 mt-2 text-[10px]">
+                                        <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">{event.going_count} going</span>
+                                        <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">{event.maybe_count} maybe</span>
+                                      </div>
+                                      {event.my_rsvp && !isCreator && (
+                                        <div className="mt-2 flex items-center gap-1">
+                                          <span className="text-[10px] text-gray-500">RSVP:</span>
+                                          <div className="flex gap-1">
+                                            <button onClick={() => handleRsvp(event.id, "going")} className={`px-2 py-0.5 rounded text-[10px] font-medium ${event.my_rsvp === "going" ? "bg-green-600 text-white" : "bg-green-50 text-green-700 hover:bg-green-100"}`}>Going</button>
+                                            <button onClick={() => handleRsvp(event.id, "maybe")} className={`px-2 py-0.5 rounded text-[10px] font-medium ${event.my_rsvp === "maybe" ? "bg-yellow-500 text-white" : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"}`}>Maybe</button>
+                                            <button onClick={() => handleRsvp(event.id, "not_going")} className={`px-2 py-0.5 rounded text-[10px] font-medium ${event.my_rsvp === "not_going" ? "bg-red-600 text-white" : "bg-red-50 text-red-700 hover:bg-red-100"}`}>No</button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {isCreator && (
+                                    <button onClick={() => handleDeleteEvent(event.id)} className="text-red-400 hover:text-red-600 shrink-0">
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
               </div>
             </div>
           </div>
