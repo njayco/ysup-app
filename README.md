@@ -23,6 +23,7 @@ A multi-source search engine with a warm wood/amber themed interface. All search
 - **Campus Users** - Find classmates by name or username
 - **AI Overview** - OpenAI-generated topic overviews with database caching
 - **AI Summarize** - One-click AI summaries for any search result with database caching
+- **24-Hour Search Caching** - All search results are cached in PostgreSQL for 24 hours. When any user searches a term, results from all 6 external sources are saved to the database. If a second user searches the same term within 24 hours, results are returned instantly from the cache with zero external API calls. This protects against rate limits and makes repeat searches across the entire platform lightning fast.
 
 ### Dashboard
 
@@ -150,6 +151,7 @@ app/
 components/             # Shared React components
 lib/
   db.ts                 # PostgreSQL connection pool
+  search-cache.ts       # 24-hour search result caching helpers
 public/                 # Static assets and images
 ```
 
@@ -176,6 +178,7 @@ public/                 # Static assets and images
 | `game_ybucks_awards` | YBucks award records |
 | `notifications` | User notifications |
 | `ai_cache` | Cached AI-generated summaries and overviews |
+| `search_cache` | 24-hour cached search results across all sources |
 
 ---
 
