@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid type" }, { status: 400 })
     }
 
-    const file = await driveCreateFile(userId, type, title)
+    const file = await driveCreateFile(type, title)
 
     const result = await pool.query(
       `INSERT INTO workspace_docs (user_id, type, title, google_file_id, google_url)

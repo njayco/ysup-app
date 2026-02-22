@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "fileId or googleUrl required" }, { status: 400 })
     }
 
-    const res = await googleFetch(userId, `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,webViewLink`)
+    const res = await googleFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,webViewLink`, undefined, "google-drive")
     if (!res.ok) {
       return NextResponse.json({ error: "Cannot access this file. Make sure it was created by this app or shared with you." }, { status: 403 })
     }

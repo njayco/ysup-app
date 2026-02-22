@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sheet not found or unauthorized" }, { status: 403 })
     }
 
-    await sheetsUpdateValues(userId, sheetId, range, values)
+    await sheetsUpdateValues(sheetId, range, values)
 
     await pool.query(
       "UPDATE workspace_docs SET updated_at = NOW() WHERE google_file_id = $1 AND user_id = $2",

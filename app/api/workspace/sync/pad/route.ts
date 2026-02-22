@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Document not found or unauthorized" }, { status: 403 })
     }
 
-    const docRes = await googleFetch(userId, `https://docs.googleapis.com/v1/documents/${docId}`)
+    const docRes = await googleFetch(`https://docs.googleapis.com/v1/documents/${docId}`, undefined, "google-docs")
     if (!docRes.ok) throw new Error("Failed to fetch document")
     const doc = await docRes.json()
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     if (requests.length > 0) {
-      await docsBatchUpdate(userId, docId, requests)
+      await docsBatchUpdate(docId, requests)
     }
 
     await pool.query(

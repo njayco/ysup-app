@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Presentation not found or unauthorized" }, { status: 403 })
     }
 
-    const accessToken = await getAccessToken(userId)
+    const accessToken = await getAccessToken()
 
     for (const slide of slides) {
       const slideId = crypto.randomBytes(8).toString("hex")
