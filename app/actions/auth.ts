@@ -43,14 +43,6 @@ export async function signupUser(formData: FormData) {
       return { success: false, error: "You must agree to the Terms & Conditions" }
     }
 
-    const existingByPhone = await pool.query(
-      "SELECT id FROM users WHERE phone = $1",
-      [phone]
-    )
-    if (existingByPhone.rows.length > 0) {
-      return { success: false, error: "User with this phone number already exists" }
-    }
-
     const existingByUsername = await pool.query(
       "SELECT id FROM users WHERE username = $1",
       [username]
@@ -145,6 +137,10 @@ export async function loginUser(formData: FormData) {
 
     if (result.rows.length === 0) {
       return { success: false, error: "Invalid credentials" }
+    }
+
+    if (isPhone && result.rows.length > 1) {
+      return { success: false, error: "Multiple accounts use this phone number. Please log in with your username instead." }
     }
 
     const user = result.rows[0]
