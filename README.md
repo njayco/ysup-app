@@ -1,535 +1,255 @@
-# YsUp Campus Network Backend
+# YsUp Campus Network
 
-Revolutionary educational platform backend that gamifies learning and creates engaging campus communities.
+**YsUpCampus.com | The HBCU Network**
 
-## 🚀 Features
+YsUp Campus Network is an AI-powered educational platform built for HBCU students. It combines an academic search engine, campus social networking, a gamified learning system, and university tools into one unified experience.
 
-### Core Platform
-- **User Authentication & Authorization** - JWT-based secure authentication
-- **Real-time Communication** - Socket.io powered messaging and notifications
-- **YsUp Game System** - Gamified learning with points and leaderboards
-- **Course Management** - Enrollment, announcements, and class networks
-- **File Sharing** - Secure document sharing with permission controls
-- **Event Management** - Campus calendar with RSVP functionality
-- **YBucks Economy** - Point-based reward system
-- **YsUp Academy** - Educational content library
-- **Bulletin Board** - Campus-wide announcements and events
-- **YsUp Bookstore** - Virtual marketplace using YBucks
-
-### Technical Features
-- **MongoDB Database** - Scalable NoSQL data storage
-- **Express.js API** - RESTful API endpoints
-- **Socket.io Integration** - Real-time features
-- **Email Notifications** - Automated email system
-- **File Upload System** - Multer-based file handling
-- **Rate Limiting** - API protection and security
-- **Input Validation** - Comprehensive data validation
-- **Error Handling** - Centralized error management
-- **Logging System** - Detailed application logging
-
-## 📋 Prerequisites
-
-- Node.js (v16 or higher)
-- MongoDB (v5 or higher)
-- npm or yarn package manager
-
-## 🛠️ Installation
-
-1. **Clone the repository**
-   \`\`\`bash
-   git clone <repository-url>
-   cd ysup-campus-platform
-   \`\`\`
-
-2. **Install dependencies**
-   \`\`\`bash
-   npm install
-   \`\`\`
-
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   \`\`\`env
-   # Database
-   MONGODB_URI=mongodb://localhost:27017/ysup
-   
-   # Server
-   PORT=5000
-   CLIENT_URL=http://localhost:3000
-   
-   # Authentication
-   JWT_SECRET=your-super-secret-jwt-key
-   
-   # Email Configuration
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your-email@gmail.com
-   EMAIL_PASS=your-app-password
-   \`\`\`
-
-4. **Set up database indexes**
-   \`\`\`bash
-   npm run setup-indexes
-   \`\`\`
-
-5. **Seed the database with sample data**
-   \`\`\`bash
-   npm run seed
-   \`\`\`
-
-6. **Start the development server**
-   \`\`\`bash
-   npm run dev
-   \`\`\`
-
-The server will start on `http://localhost:5000`
-
-## 📚 API Documentation
-
-### Authentication Endpoints
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
-
-### User Endpoints
-- `GET /api/users/search` - Search users
-- `GET /api/users/:id` - Get user profile
-- `POST /api/users/:id/friend` - Add friend
-- `DELETE /api/users/:id/friend` - Remove friend
-- `GET /api/users/leaderboard` - Get YBucks leaderboard
-
-### Course Endpoints
-- `GET /api/courses` - Get courses with filters
-- `GET /api/courses/:id` - Get course details
-- `POST /api/courses/:id/enroll` - Enroll in course
-- `DELETE /api/courses/:id/enroll` - Unenroll from course
-
-### Game Endpoints
-- `POST /api/game/action` - Record game action
-- `GET /api/game/leaderboard` - Get game leaderboard
-- `GET /api/game/stats/:userId` - Get user game stats
-- `POST /api/game/captain` - Select team captain
-
-### Message Endpoints
-- `GET /api/messages/conversations` - Get conversations
-- `GET /api/messages/:userId` - Get conversation with user
-- `POST /api/messages` - Send message
-- `PUT /api/messages/:id/read` - Mark message as read
-
-### Event Endpoints
-- `GET /api/events` - Get events (calendar view)
-- `POST /api/events` - Create event
-- `GET /api/events/:id` - Get event details
-- `POST /api/events/:id/attend` - RSVP to event
-
-### File Endpoints
-- `GET /api/files` - Get accessible files
-- `POST /api/files/upload` - Upload file
-- `GET /api/files/:id` - Get file details
-- `POST /api/files/:id/download` - Download file
-
-### Bookstore Endpoints
-- `GET /api/bookstore/items` - Get store items
-- `POST /api/bookstore/purchase` - Purchase with YBucks
-- `GET /api/bookstore/balance` - Get YBucks balance
-
-### Academy Endpoints
-- `GET /api/academy/featured` - Get featured content
-- `GET /api/academy/content` - Get academy content
-- `GET /api/academy/movies` - Get YsUp movies
-
-## 🎮 YsUp Game System
-
-The YsUp Game transforms traditional classroom learning into an engaging team sport:
-
-### Point System
-- **Ask Question**: 10 YBucks
-- **Provide Assistance**: 100 YBucks
-- **Correct Answer**: 10 YBucks
-- **Perfect Attendance**: 250 YBucks
-- **Good Behavior**: 10-250 YBucks
-- **Homework Completion**: 10 YBucks
-- **Graded Assignments**: 50-100 YBucks
-
-### Game Rules
-1. Students ask questions without fear
-2. Team members assist with hints, not direct answers
-3. Team captains are selected daily
-4. Teachers earn bonus points when no questions are asked
-5. All actions are tracked and rewarded
-
-## 🔧 Scripts
-
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run seed` - Seed database with sample data
-- `npm run setup-indexes` - Create database indexes
-- `npm test` - Run test suite
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-
-## 🏗️ Project Structure
-
-\`\`\`
-ysup-campus-platform/
-├── models/              # Database models
-├── routes/              # API route handlers
-├── middleware/          # Custom middleware
-├── socket/              # Socket.io handlers
-├── utils/               # Utility functions
-├── scripts/             # Database and setup scripts
-├── tests/               # Test files
-├── logs/                # Application logs
-├── server.js            # Main server file
-└── package.json         # Dependencies and scripts
-\`\`\`
-
-## 🔒 Security Features
-
-- **JWT Authentication** - Secure token-based authentication
-- **Password Hashing** - bcrypt password encryption
-- **Rate Limiting** - API request throttling
-- **Input Validation** - Comprehensive data validation
-- **CORS Protection** - Cross-origin request security
-- **Helmet Security** - HTTP header security
-- **File Upload Validation** - Secure file handling
-
-## 📊 Database Models
-
-### User Model
-- Personal information and authentication
-- YBucks balance and level tracking
-- Course enrollments and friendships
-- Game statistics and achievements
-
-### Course Model
-- Course information and schedules
-- Student enrollment management
-- Announcements and resources
-- Integration with external LMS
-
-### Game Session Model
-- Individual game action tracking
-- Point calculations and rewards
-- Leaderboard generation
-- Performance analytics
-
-### Message Model
-- Real-time messaging system
-- Conversation management
-- Read receipts and reactions
-- File attachments
-
-## 🚀 Deployment
-
-### Environment Setup
-1. Set up MongoDB Atlas or self-hosted MongoDB
-2. Configure environment variables for production
-3. Set up email service (Gmail, SendGrid, etc.)
-4. Configure file storage (AWS S3, Cloudinary, etc.)
-
-### Production Considerations
-- Use PM2 for process management
-- Set up reverse proxy with Nginx
-- Configure SSL certificates
-- Implement monitoring and logging
-- Set up automated backups
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Run the test suite
-6. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation
-
-## 🎯 Roadmap
-
-### Phase 1 (Current)
-- ✅ Core authentication system
-- ✅ YsUp Game implementation
-- ✅ Real-time messaging
-- ✅ Course management
-- ✅ File sharing system
-
-### Phase 2 (Next)
-- 🔄 Mobile app integration
-- 🔄 Advanced analytics dashboard
-- 🔄 AI-powered tutoring system
-- 🔄 Integration with external LMS
-- 🔄 Video conferencing features
-
-### Phase 3 (Future)
-- 📋 Blockchain-based credentials
-- 📋 VR/AR learning experiences
-- 📋 Advanced AI recommendations
-- 📋 Global campus network
-- 📋 Enterprise partnerships
+Built with Next.js 14, PostgreSQL, and OpenAI.
 
 ---
 
-**YsUp Campus Network** - Revolutionizing education through engagement and gamification! 🎓✨
-\`\`\`
+## Features
 
-```typescriptreact file="scripts/seedDatabase.js"
-[v0-no-op-code-block-prefix]const mongoose = require("mongoose")
-const bcrypt = require("bcryptjs")
-require("dotenv").config()
+### AI-Powered Academic Search Engine
 
-// Import models
-const User = require("../models/User")
-const Course = require("../models/Course")
-const Post = require("../models/Post")
-const Event = require("../models/Event")
+A multi-source search engine with a warm wood/amber themed interface. All searches run in parallel for fast results, and tab switching filters cached results instantly.
 
-const seedDatabase = async () => {
-  try {
-    // Connect to database
-    await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/ysup")
-    console.log("Connected to MongoDB")
+- **Books** - Google Books API integration with interactive 3D blue-themed carousel and styled book covers
+- **Amazon Books** - Book search with ISBN-based Amazon.com purchase links, star ratings, descriptions, and a 3D yellow-themed carousel
+- **Scholarly Articles** - OpenAlex API (240M+ academic works) with 3D emerald-themed journal carousel
+- **Web Search** - DuckDuckGo web results
+- **Encyclopedia** - Wikipedia article search
+- **Campus Users** - Find classmates by name or username
+- **AI Overview** - OpenAI-generated topic overviews with database caching
+- **AI Summarize** - One-click AI summaries for any search result with database caching
 
-    // Clear existing data
-    await User.deleteMany({})
-    await Course.deleteMany({})
-    await Post.deleteMany({})
-    await Event.deleteMany({})
-    console.log("Cleared existing data")
+### Dashboard
 
-    // Create sample users
-    const users = [
-      {
-        firstName: "John",
-        lastName: "Doe",
-        username: "johndoe",
-        email: "john@example.com",
-        phone: "+1234567890",
-        password: "password123",
-        college: "Howard University",
-        major: "Computer Science",
-        year: "Junior",
-        ybucks: 1500,
-        bio: "Passionate about technology and education",
-      },
-      {
-        firstName: "Jane",
-        lastName: "Smith",
-        username: "janesmith",
-        email: "jane@example.com",
-        phone: "+1234567891",
-        password: "password123",
-        college: "Howard University",
-        major: "Mathematics",
-        year: "Sophomore",
-        ybucks: 1200,
-        bio: "Math enthusiast and tutor",
-      },
-      {
-        firstName: "Mike",
-        lastName: "Johnson",
-        username: "mikej",
-        email: "mike@example.com",
-        phone: "+1234567892",
-        password: "password123",
-        college: "Howard University",
-        major: "Biology",
-        year: "Senior",
-        ybucks: 2000,
-        bio: "Pre-med student interested in research",
-      },
-      {
-        firstName: "Sarah",
-        lastName: "Williams",
-        username: "sarahw",
-        email: "sarah@example.com",
-        phone: "+1234567893",
-        password: "password123",
-        college: "Howard University",
-        major: "Psychology",
-        year: "Freshman",
-        ybucks: 800,
-        bio: "New to campus and excited to learn",
-      },
-    ]
+A personalized student dashboard with:
 
-    const createdUsers = await User.insertMany(users)
-    console.log(`Created ${createdUsers.length} users`)
+- **Sticky Notes** - Draggable, persistent notes that save position and content to the database
+- **File Manager** - Upload, view, and manage personal files with on-demand data loading
+- **Class Networks** - Quick access to joined networks with shared files from classmates
+- **YsUp Bluebook Calendar** - Event calendar with month, week, day, and list views
+- **Notifications** - Real-time notification bell with 30-second polling
 
-    // Create sample courses
-    const courses = [
-      {
-        name: "Introduction to Computer Science",
-        code: "CS101",
-        description: "Fundamental concepts of computer science and programming",
-        instructor: {
-          name: "Dr. Robert Chen",
-          email: "rchen@howard.edu",
-          office: "Science Building 301",
-          officeHours: "MWF 2-4 PM",
-        },
-        college: "Howard University",
-        department: "Computer Science",
-        credits: 3,
-        semester: "Fall 2024",
-        year: 2024,
-        schedule: {
-          days: ["Monday", "Wednesday", "Friday"],
-          startTime: "10:00",
-          endTime: "11:00",
-          location: "Science Building 101",
-        },
-        students: [createdUsers[0]._id, createdUsers[1]._id, createdUsers[3]._id],
-        maxStudents: 30,
-      },
-      {
-        name: "Calculus I",
-        code: "MATH151",
-        description: "Differential and integral calculus of functions of one variable",
-        instructor: {
-          name: "Dr. Maria Rodriguez",
-          email: "mrodriguez@howard.edu",
-          office: "Math Building 205",
-          officeHours: "TTh 1-3 PM",
-        },
-        college: "Howard University",
-        department: "Mathematics",
-        credits: 4,
-        semester: "Fall 2024",
-        year: 2024,
-        schedule: {
-          days: ["Tuesday", "Thursday"],
-          startTime: "9:00",
-          endTime: "10:30",
-          location: "Math Building 150",
-        },
-        students: [createdUsers[1]._id, createdUsers[2]._id, createdUsers[3]._id],
-        maxStudents: 25,
-      },
-      {
-        name: "General Biology",
-        code: "BIOL101",
-        description: "Introduction to biological principles and processes",
-        instructor: {
-          name: "Dr. James Wilson",
-          email: "jwilson@howard.edu",
-          office: "Biology Building 401",
-          officeHours: "MWF 3-5 PM",
-        },
-        college: "Howard University",
-        department: "Biology",
-        credits: 4,
-        semester: "Fall 2024",
-        year: 2024,
-        schedule: {
-          days: ["Monday", "Wednesday", "Friday"],
-          startTime: "11:00",
-          endTime: "12:00",
-          location: "Biology Building 201",
-        },
-        students: [createdUsers[2]._id, createdUsers[3]._id],
-        maxStudents: 20,
-      },
-    ]
+### Class Networks
 
-    const createdCourses = await Course.insertMany(courses)
-    console.log(`Created ${createdCourses.length} courses`)
+PostgreSQL-backed social networking for classes, clubs, and organizations:
 
-    // Update users with course references
-    await User.findByIdAndUpdate(createdUsers[0]._id, {
-      courses: [createdCourses[0]._id],
-    })
-    await User.findByIdAndUpdate(createdUsers[1]._id, {
-      courses: [createdCourses[0]._id, createdCourses[1]._id],
-    })
-    await User.findByIdAndUpdate(createdUsers[2]._id, {
-      courses: [createdCourses[1]._id, createdCourses[2]._id],
-    })
-    await User.findByIdAndUpdate(createdUsers[3]._id, {
-      courses: [createdCourses[0]._id, createdCourses[1]._id, createdCourses[2]._id],
-    })
+- Create public or private networks
+- Post feed with co-signing and threaded responses
+- File sharing across network members (files appear on all members' dashboards)
+- Moderator tools for managing members and join requests
+- Share networks via SMS, Email, WhatsApp, Instagram, X (Twitter), or link
+- Invite links with login redirect for unauthenticated users
 
-    // Create sample posts
-    const posts = [
-      {
-        author: createdUsers[0]._id,
-        course: createdCourses[0]._id,
-        content: "Can someone explain the difference between arrays and linked lists?",
-        type: "question",
-        tags: ["data-structures", "arrays", "linked-lists"],
-      },
-      {
-        author: createdUsers[1]._id,
-        course: createdCourses[1]._id,
-        content: "Study group forming for the upcoming calculus exam. Meeting in library room 301 tomorrow at 6 PM.",
-        type: "study-group",
-        tags: ["study-group", "calculus", "exam"],
-      },
-      {
-        author: createdUsers[2]._id,
-        course: createdCourses[2]._id,
-        content: "Great lecture today on cellular respiration! The diagrams really helped me understand the process.",
-        type: "discussion",
-        tags: ["cellular-respiration", "biology"],
-      },
-    ]
+### YsUp Bluebook Calendar
 
-    const createdPosts = await Post.insertMany(posts)
-    console.log(`Created ${createdPosts.length} posts`)
+A full-featured event and calendar system:
 
-    // Create sample events
-    const events = [
-      {
-        title: "CS Study Group",
-        description: "Weekly study group for Computer Science students",
-        creator: createdUsers[0]._id,
-        course: createdCourses[0]._id,
-        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2 hours later
-        location: "Library Study Room A",
-        type: "study-group",
-        tags: ["computer-science", "study-group"],
-      },
-      {
-        title: "Math Tutoring Session",
-        description: "Free tutoring for calculus students",
-        creator: createdUsers[1]._id,
-        course: createdCourses[1]._id,
-        startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // In 3 days
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000), // 1.5 hours later
-        location: "Math Building Tutoring Center",
-        type: "academic",
-        tags: ["mathematics", "tutoring", "calculus"],
-      },
-    ]
+- Month, Week, Day, and List views
+- Day view with hourly timeline (6 AM - 11 PM) and current-time indicator
+- Selectable day squares (click to highlight, double-click to open Day view)
+- 14 rainbow color options for events
+- Multi-day event support
+- Network-based invitations (invite entire networks or individual members)
+- RSVP system (Going / Maybe / Not Going) with real-time tallies
+- Howard University academic calendar (79 events) auto-seeded for Howard students
+- Notification system for upcoming events
 
-    const createdEvents = await Event.insertMany(events)
-    console.log(`Created ${createdEvents.length} events`)
+### The Game
 
-    console.log("Database seeded successfully!")
-    console.log("\nSample login credentials:")
-    console.log("Email: john@example.com, Password: password123")
-    console.log("Email: jane@example.com, Password: password123")
-    console.log("Email: mike@example.com, Password: password123")
-    console.log("Email: sarah@example.com, Password: password123")
+A gamified learning system with two modes:
 
-    process.exit(0)
-  } catch (error) {
-    console.error("Error seeding database:", error)
-    process.exit(1)
-  }
-}
+- **In-Person Mode** - Classroom-based game where teachers award YBucks to students by username
+- **Online AI Mode** - AI coaching sessions powered by GPT-4o-mini using the Socratic teaching method
+  - Chalkboard-style UI
+  - AI coach guides students to answers without giving direct solutions
+  - 10 YBucks awarded for arriving at the answer
+  - 250 YBucks bonus at session end
 
-// Run the seed function
-seedDatabase()
+### Bison Web
+
+A skeuomorphic Howard.edu magazine browser:
+
+- Open two-page magazine design on a wooden desk background
+- 8 content sections: Home, News, Academics, Admissions, Campus Life, Events, Research, Legacy
+- Content mirrors real howard.edu website data
+- Page slide transitions with parchment textures
+- Mobile responsive with vertical stacking
+
+### The Hilltop
+
+A campus newspaper viewer:
+
+- PDF.js-powered newspaper reader with amber/parchment aesthetic
+- Page navigation with clickable page numbers
+- Admin mode for Editor-in-Chief to upload new editions
+- Download button for current PDF
+
+### Additional Features
+
+- **Bookstore** - Virtual campus bookstore
+- **Academy** - Educational content library
+- **Bulletin Board** - Campus-wide announcements
+- **Onboarding** - 12-step guided setup wizard for new students with Honor Code agreement
+- **Notifications** - Real-time notification system with YBucks earned alerts and event invites
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS, shadcn/ui |
+| Database | PostgreSQL |
+| AI | OpenAI GPT-4o-mini |
+| Auth | Server actions with bcryptjs password hashing |
+| PDF Viewer | PDF.js v3.11.174 |
+| Package Manager | pnpm |
+
+---
+
+## Project Structure
+
+```
+app/
+  api/
+    books/              # Google Books API
+    amazon-books/       # Amazon Books search
+    scholar/            # OpenAlex scholarly articles
+    wiki/               # Wikipedia search
+    web-search/         # DuckDuckGo web search
+    search-users/       # Campus user search
+    ai-overview/        # OpenAI topic overviews
+    summarize/          # OpenAI summaries
+    book-image/         # Book cover image proxy
+    networks/           # Class Networks CRUD, posts, files
+    events/             # Calendar events, RSVP, invites
+    notes/              # Sticky notes CRUD
+    files/              # File upload/download
+    notifications/      # Notification system
+    game/
+      online/           # AI coaching sessions
+      inperson/         # In-person game awards
+  actions/
+    auth.ts             # Authentication server actions
+  search/               # Search engine page
+  dashboard/            # Student dashboard
+  networks/[slug]/      # Network detail pages
+  invite/network/[slug]/ # Network invite handler
+  game/online/[sessionId]/ # AI chalkboard page
+  bison-homepage/       # Bison Web magazine browser
+  hilltop/              # Campus newspaper viewer
+  onboarding/           # New student setup wizard
+components/             # Shared React components
+lib/
+  db.ts                 # PostgreSQL connection pool
+public/                 # Static assets and images
+```
+
+---
+
+## Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with YBucks balance |
+| `class_networks` | Networks for classes/clubs/organizations |
+| `network_members` | Network membership tracking |
+| `network_join_requests` | Private network join requests |
+| `network_posts` | Posts within networks |
+| `network_post_responses` | Threaded responses to posts |
+| `network_shared_files` | Files shared within networks |
+| `calendar_events` | Events with color, location, and date ranges |
+| `event_invites` | Event invitations with RSVP status |
+| `user_sticky_notes` | Dashboard sticky notes with position data |
+| `user_files` | Uploaded files with metadata |
+| `game_sessions` | Game session tracking |
+| `game_session_players` | Players in game sessions |
+| `game_chat_messages` | AI coaching chat history |
+| `game_ybucks_awards` | YBucks award records |
+| `notifications` | User notifications |
+| `ai_cache` | Cached AI-generated summaries and overviews |
+
+---
+
+## API Routes (18 Total)
+
+**Search (8):** Books, Amazon Books, Scholarly Articles, Web, Encyclopedia, Campus Users, AI Overview, AI Summarize
+
+**Social (3):** Class Networks, Network Files, Shared Files
+
+**Calendar (1):** Events with RSVP, invites, and seeding
+
+**Dashboard (3):** Sticky Notes, Files, Notifications
+
+**Game (2):** Online AI Coaching, In-Person Awards
+
+**Utility (1):** Book Image Proxy
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- OpenAI API key
+- pnpm package manager
+
+### Installation
+
+```bash
+pnpm install
+```
+
+### Development
+
+```bash
+pnpm next dev --turbo -H 0.0.0.0 -p 5000
+```
+
+### Production Build
+
+```bash
+pnpm build
+pnpm start
+```
+
+---
+
+## External APIs
+
+| Service | Purpose |
+|---------|---------|
+| Google Books API | Book search data and ISBNs |
+| OpenAlex API | Scholarly article search (240M+ works) |
+| Wikipedia API | Encyclopedia article search |
+| DuckDuckGo | Web search results |
+| OpenAI (GPT-4o-mini) | AI overviews, summaries, and game coaching |
+
+---
+
+## Design
+
+- Wood/amber themed UI throughout
+- 3D interactive carousels for books and journals
+- Skeuomorphic design elements (magazine browser, chalkboard, newspaper)
+- Full mobile responsiveness with hamburger menu navigation
+- Horizontal scrollable category tabs on mobile search
+- Accessible navigation with ARIA labels
+
+---
+
+## Supported HBCUs
+
+The platform includes all 100+ Historically Black Colleges and Universities in its signup dropdown, with university-specific features available for Howard University students (academic calendar, Bison Web, The Hilltop).
+
+---
+
+**Created by Najee "Naww G" Jeremiah**
