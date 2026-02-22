@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getCachedResults, setCachedResults } from "@/lib/search-cache"
 
 export const dynamic = "force-dynamic"
+
+const CACHE_SOURCE = "dictionary"
 
 interface DictionaryMeaning {
   partOfSpeech: string
@@ -32,6 +35,11 @@ export async function GET(request: NextRequest) {
 
   if (!query) {
     return NextResponse.json([])
+  }
+
+  const cached = await getCachedResults(query, CACHE_SOURCE)
+  if (cached) {
+    return NextResponse.json(cached)
   }
 
   try {
@@ -78,6 +86,7 @@ export async function GET(request: NextRequest) {
       .filter((r) => r.status === "fulfilled" && r.value !== null)
       .map((r) => (r as PromiseFulfilledResult<any>).value)
 
+    await setCachedResults(query, CACHE_SOURCE, definitions)
     return NextResponse.json(definitions)
   } catch (error) {
     console.error("Dictionary API error:", error)

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getCachedResults, setCachedResults } from "@/lib/search-cache";
 
 export const dynamic = 'force-dynamic'
+
+const CACHE_SOURCE = "wiki"
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#039;/g, "'");
@@ -16,6 +19,11 @@ export async function GET(request: Request) {
         { error: "Query parameter 'q' is required" },
         { status: 400 }
       );
+    }
+
+    const cached = await getCachedResults(query, CACHE_SOURCE);
+    if (cached) {
+      return NextResponse.json(cached);
     }
 
     const response = await fetch(
@@ -36,6 +44,7 @@ export async function GET(request: Request) {
       url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, "_"))}`,
     }));
 
+    await setCachedResults(query, CACHE_SOURCE, articles);
     return NextResponse.json(articles);
   } catch (error) {
     console.error("Wikipedia API error:", error);

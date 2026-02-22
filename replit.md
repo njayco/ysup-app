@@ -42,6 +42,9 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - **Dictionary** (`/api/dictionary`) - Free Dictionary API (dictionaryapi.dev) for word definitions, phonetics, pronunciation audio, synonyms, antonyms, and etymology
 - **Search categories** (sidebar order): Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users
 - All searches run once via Promise.allSettled; tab switching filters cached results
+- **Search Result Caching**: All search API routes cache results in PostgreSQL `search_cache` table for 24 hours; repeat searches return cached results instantly without external API calls
+- Cache helper functions in `lib/search-cache.ts` (getCachedResults, setCachedResults)
+- PostgreSQL table: search_cache (query, source, results JSONB, created_at) with UNIQUE(query, source)
 
 ## User Preferences
 - HBCU-focused platform with all 100+ HBCUs in signup dropdown

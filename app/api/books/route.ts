@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getCachedResults, setCachedResults } from "@/lib/search-cache";
 
 export const dynamic = 'force-dynamic'
+
+const CACHE_SOURCE = "books"
 
 export async function GET(request: Request) {
   try {
@@ -14,6 +17,11 @@ export async function GET(request: Request) {
       );
     }
 
+    const cached = await getCachedResults(query, CACHE_SOURCE);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
     let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12`;
     if (apiKey) {
@@ -24,6 +32,7 @@ export async function GET(request: Request) {
 
     if (response.status === 429) {
       const fallbackBooks = await generateFallbackResults(query);
+      await setCachedResults(query, CACHE_SOURCE, fallbackBooks);
       return NextResponse.json(fallbackBooks);
     }
 
@@ -31,6 +40,7 @@ export async function GET(request: Request) {
       const errorData = await response.json().catch(() => null);
       if (errorData?.error?.status === "RESOURCE_EXHAUSTED") {
         const fallbackBooks = await generateFallbackResults(query);
+        await setCachedResults(query, CACHE_SOURCE, fallbackBooks);
         return NextResponse.json(fallbackBooks);
       }
       throw new Error(`Google Books API responded with status ${response.status}`);
@@ -56,6 +66,7 @@ export async function GET(request: Request) {
       };
     });
 
+    await setCachedResults(query, CACHE_SOURCE, books);
     return NextResponse.json(books);
   } catch (error) {
     console.error("Books API error:", error);

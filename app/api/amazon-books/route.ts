@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getCachedResults, setCachedResults } from "@/lib/search-cache";
 
 export const dynamic = 'force-dynamic'
+
+const CACHE_SOURCE = "amazon-books"
 
 interface AmazonBook {
   id: string
@@ -28,6 +31,11 @@ export async function GET(request: Request) {
       );
     }
 
+    const cached = await getCachedResults(query, CACHE_SOURCE);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
     let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12&printType=books`;
     if (apiKey) {
@@ -39,6 +47,7 @@ export async function GET(request: Request) {
     if (!response.ok) {
       if (response.status === 429) {
         const fallback = await fetchOpenLibraryFallback(query);
+        await setCachedResults(query, CACHE_SOURCE, fallback);
         return NextResponse.json(fallback);
       }
       throw new Error(`Google Books API responded with status ${response.status}`);
@@ -74,6 +83,7 @@ export async function GET(request: Request) {
       };
     });
 
+    await setCachedResults(query, CACHE_SOURCE, books);
     return NextResponse.json(books);
   } catch (error) {
     console.error("Amazon Books API error:", error);

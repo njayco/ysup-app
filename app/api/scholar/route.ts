@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getCachedResults, setCachedResults } from "@/lib/search-cache";
 
 export const dynamic = 'force-dynamic'
+
+const CACHE_SOURCE = "scholar"
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +15,11 @@ export async function GET(request: Request) {
         { error: "Query parameter 'q' is required" },
         { status: 400 }
       );
+    }
+
+    const cached = await getCachedResults(query, CACHE_SOURCE);
+    if (cached) {
+      return NextResponse.json(cached);
     }
 
     const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=12&select=id,title,authorships,publication_year,cited_by_count,doi,primary_location,abstract_inverted_index,open_access&mailto=campus@ysup.edu`;
@@ -83,6 +91,7 @@ export async function GET(request: Request) {
       };
     });
 
+    await setCachedResults(query, CACHE_SOURCE, articles);
     return NextResponse.json(articles);
   } catch (error) {
     console.error("Scholar API error:", error);

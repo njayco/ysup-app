@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getCachedResults, setCachedResults } from "@/lib/search-cache";
 
 export const dynamic = 'force-dynamic'
+
+const CACHE_SOURCE = "web-search"
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +15,11 @@ export async function GET(request: Request) {
         { error: "Query parameter 'q' is required" },
         { status: 400 }
       );
+    }
+
+    const cached = await getCachedResults(query, CACHE_SOURCE);
+    if (cached) {
+      return NextResponse.json(cached);
     }
 
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
@@ -34,6 +42,7 @@ export async function GET(request: Request) {
     const html = await response.text();
     const results = parseDDGResults(html);
 
+    await setCachedResults(query, CACHE_SOURCE, results);
     return NextResponse.json(results);
   } catch (error) {
     console.error("Web search error:", error);
