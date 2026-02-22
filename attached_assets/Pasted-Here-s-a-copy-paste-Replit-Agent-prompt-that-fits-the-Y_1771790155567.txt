@@ -1,0 +1,202 @@
+Here’s a copy/paste Replit “Agent” prompt that fits the YsUp Campus Network architecture (Next.js 14 + PostgreSQL + Prisma + Auth + existing Notifications + YBUCKS economy + skeuomorphic UI) and implements: live YBUCKS on profile, follow system, followers/following counters, notifications for follows + TRUEs (thumbs up), and public networks list on profile.
+
+⸻
+
+Replit Prompt (paste into Replit Agent)
+
+You are working inside an existing codebase called YsUp Campus Network.
+
+Stack/Architecture (must follow):
+	•	Next.js 14 (App Router)
+	•	TypeScript
+	•	PostgreSQL
+	•	Prisma ORM
+	•	Existing auth system already provides currentUser (do not replace auth; integrate with it)
+	•	Existing UI style: skeuomorphic / warm wood / amber UI with glass panels and premium minimal feel
+	•	Use server actions or route handlers consistently with the existing project patterns
+	•	Do not add placeholder/demo data. Use real DB writes/reads.
+
+Goal
+
+Implement User Profiles v2:
+	1.	A live YBUCKS counter on the profile page for the current user.
+	2.	A Follow system (users can follow/unfollow each other).
+	3.	Live counters: “Followers” and “Following” counts on each profile.
+	4.	Notifications: user receives a notification when:
+	•	someone follows them
+	•	someone gives them a TRUE (thumbs up) (TRUE system exists already; integrate notification generation into it)
+	5.	On profile page, show a list of public class networks the user belongs to.
+
+Requirements & Behavior
+	•	A user cannot follow themselves.
+	•	Follow is idempotent: pressing follow twice doesn’t create duplicates.
+	•	Unfollow removes the relation cleanly.
+	•	Followers/Following counts must update immediately after follow/unfollow (optimistic UI if used).
+	•	Notifications:
+	•	Create a notification row on follow events (actor, recipient, type, metadata).
+	•	Create a notification row on TRUE events (actor, recipient, type, metadata).
+	•	If TRUE already triggers something, extend it—don’t duplicate logic.
+	•	Profile page should show:
+	•	user avatar, name, @username
+	•	YBUCKS balance (large, “live” number)
+	•	Follow/Unfollow button when viewing other users
+	•	Followers + Following counters (clickable optional, but counts required)
+	•	“Public Networks” section listing networks where membership is public OR the network is public
+	•	Security:
+	•	All mutations require authentication
+	•	Prevent following if not logged in
+	•	Only show private networks on profile if viewer is also a member (but public networks must show for everyone)
+	•	Performance:
+	•	Use Prisma count() for follower/following counts
+	•	Use minimal selects and indexed columns
+	•	Add DB constraints + indexes to keep it fast
+
+⸻
+
+Step-by-step tasks you MUST do
+
+1) Prisma schema updates
+
+Add/verify these models (adjust to match existing naming conventions, but keep functionality identical):
+
+Follow
+	•	id (cuid)
+	•	followerId (User.id)
+	•	followingId (User.id)
+	•	createdAt
+Constraints:
+	•	unique([followerId, followingId])
+	•	index on followerId
+	•	index on followingId
+
+Notification
+If a Notification model already exists, extend it. If not, create:
+	•	id (cuid)
+	•	userId (recipient)
+	•	actorId (who caused it) nullable
+	•	type enum: FOLLOW, TRUE, (and keep existing types)
+	•	entityType optional (e.g. “USER”, “POST”)
+	•	entityId optional
+	•	message optional
+	•	read boolean default false
+	•	createdAt
+Indexes:
+	•	index(userId, createdAt desc)
+	•	index(read)
+
+YBUCKS balance
+If there is already a YBUCKS ledger/transactions table, DO NOT store balance redundantly unless project already does.
+	•	Preferred: compute balance via aggregation OR use a cached balance field updated transactionally.
+Implement the approach consistent with the existing YBUCKS system.
+
+Network Membership
+Use the existing Class Network / Group / Membership tables.
+We need:
+	•	list of networks user belongs to
+	•	network visibility field: PUBLIC / PRIVATE (or similar)
+If visibility doesn’t exist, add it with default PUBLIC for new networks, but DO NOT change existing networks unexpectedly.
+
+Run migration.
+
+⸻
+
+2) Backend APIs / Server Actions
+
+Follow actions
+Create server actions or route handlers (match project style) for:
+	•	followUser(targetUserId)
+	•	unfollowUser(targetUserId)
+	•	getFollowStats(userId) => { followersCount, followingCount, isFollowing } (isFollowing depends on viewer)
+Rules:
+	•	Validate auth
+	•	Block self-follow
+	•	Create follow relation with upsert-safe logic
+	•	On follow success: create Notification for target user:
+	•	type: FOLLOW
+	•	actorId: currentUser.id
+	•	entityType: USER
+	•	entityId: currentUser.id or targetUserId (choose consistent)
+	•	message: “@username followed you”
+	•	On unfollow: do not notify
+
+TRUE notifications integration
+Find where TRUE (thumbs up) is created (likely post reactions or a “TRUE” table).
+After a TRUE is recorded successfully:
+	•	create a Notification for the content owner (recipient)
+	•	type: TRUE
+	•	actorId: currentUser.id
+	•	entityType and entityId point to the reacted entity (post/comment/profile)
+	•	message: “@username gave you a TRUE”
+
+Prevent self-notifications (if user TRUEs their own content, don’t notify).
+
+⸻
+
+3) Profile page UI updates (skeuomorphic)
+
+Locate the profile route and component. Update layout:
+
+Top Profile Card:
+	•	Avatar + name + @username
+	•	Right side: a “YBUCKS” panel with a big number
+	•	On own profile: show live balance
+	•	On someone else’s profile: still show their YBUCKS only if this is allowed by product; if not allowed, show only your own. Default: show only the profile owner’s YBUCKS if the system already exposes it; otherwise show only for current user. Implement a safe default: show YBUCKS only when viewing your own profile unless an existing public rule exists.
+	•	Follow button:
+	•	Only shows if viewer != profile user
+	•	Button text toggles Follow / Following
+	•	Uses optimistic UI and refreshes counts
+	•	Stats row:
+	•	Followers: N
+	•	Following: N
+	•	Must update instantly after follow/unfollow
+
+Public Networks section:
+	•	Title: “Public Networks”
+	•	List cards for each network:
+	•	network name
+	•	type (class/club/organization)
+	•	small logo if exists
+	•	link to open that network page
+Only include:
+	•	networks where network.visibility === PUBLIC
+OR membership.visibility === PUBLIC (if membership has per-user visibility)
+If no membership visibility exists, treat network.visibility as source of truth.
+
+⸻
+
+4) Notifications UI
+
+Find existing notifications dropdown/page.
+	•	Ensure FOLLOW and TRUE types render nicely:
+	•	icon (user add / thumbs up)
+	•	message
+	•	timestamp
+	•	link: to actor profile (and/or entity)
+	•	Ensure unread count updates (if there’s a live badge)
+If there is no notification UI, create minimal:
+	•	/dashboard/notifications page listing latest 50 notifications for current user
+
+⸻
+
+5) Testing checklist (must do)
+	•	Follow/unfollow works with no duplicates
+	•	Counts correct
+	•	Notifications created for follow and TRUE
+	•	No notification when following yourself (blocked) or TRUEing own content
+	•	Profile page shows YBUCKS accurately
+	•	Public networks list correct
+	•	All endpoints protected
+
+⸻
+
+6) Deliverables
+
+After implementation, output:
+	1.	files changed/added list
+	2.	Prisma migration name
+	3.	brief instructions to test manually (exact URLs)
+	4.	any env vars needed (should be none for follow/notifications)
+
+Do the work now in this repo. Do not propose; implement.
+
+⸻
