@@ -1836,7 +1836,7 @@ export default function DashboardPage() {
         {(() => {
           const gridItems: ({ type: "file"; data: PDFFile } | { type: "folder"; data: typeof folders[0] } | { type: "note"; data: StickyNote } | { type: "shared_file"; data: NetworkSharedFile })[] = []
 
-          filteredFiles.forEach((f) => gridItems.push({ type: "file", data: f }))
+          filteredFiles.filter((f) => f.type !== "bluebook" && f.type !== "notebook").forEach((f) => gridItems.push({ type: "file", data: f }))
           folders.forEach((f) => gridItems.push({ type: "folder", data: f }))
           networkSharedFiles.forEach((sf) => gridItems.push({ type: "shared_file", data: sf }))
           stickyNotes.forEach((n) => gridItems.push({ type: "note", data: n }))
@@ -1848,6 +1848,58 @@ export default function DashboardPage() {
           return (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                {/* YsUp Bluebook Tile */}
+                {safePage === 0 && (
+                  <div key="tile-bluebook" onClick={() => handleFileClick(allFiles.find(f => f.type === "bluebook") || defaultFiles[0])} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 bg-blue-200 border-blue-400 relative">
+                      <div className="p-2 h-full flex flex-col">
+                        <div className="text-center mb-2">
+                          <Calendar className="w-8 h-8 mx-auto text-blue-600" />
+                          <div className="text-xs font-bold text-blue-800">YsUp Bluebook</div>
+                        </div>
+                        <div className="flex-1 text-xs space-y-1">
+                          <div className="bg-blue-100 p-1 rounded">
+                            <div className="font-bold">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                            <div>Tap to view</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Class Networks Tile */}
+                {safePage === 0 && (
+                  <div key="tile-notebook" onClick={() => handleFileClick(allFiles.find(f => f.type === "notebook") || defaultFiles[1])} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 bg-yellow-200 border-yellow-400 relative">
+                      <div className="p-2 h-full flex flex-col relative">
+                        <div className="absolute left-1 top-2 bottom-2 w-1">
+                          <div className="h-full bg-gray-400 rounded-full opacity-60"></div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-center mb-2">
+                            <BookOpen className="w-6 h-6 mx-auto text-yellow-600" />
+                            <div className="text-xs font-bold text-gray-800">Class Networks</div>
+                          </div>
+                          <div className="flex-1 text-xs space-y-1">
+                            {myNetworks.length > 0 ? (
+                              myNetworks.slice(0, 2).map((net) => (
+                                <div key={net.id} className="bg-white p-1 rounded border">
+                                  <div className="font-semibold truncate">{net.name}</div>
+                                  <div className="text-gray-600">{net.member_count} member{Number(net.member_count) !== 1 ? "s" : ""}</div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="bg-white p-1 rounded border text-center">
+                                <div className="text-gray-500">No networks yet</div>
+                                <div className="text-gray-400">Tap to join</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* YsUp Pad Tile */}
                 {safePage === 0 && (
                   <div key="tile-pad" onClick={() => googleConnected ? window.location.href = "/dashboard/pad" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
@@ -1883,37 +1935,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-                {/* YsUp Calc Tile */}
-                {safePage === 0 && (
-                  <div key="tile-calc" onClick={() => googleConnected ? window.location.href = "/dashboard/calc" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
-                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", borderColor: "#2a5a2a" }}>
-                      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
-                      <div className="relative p-2 h-full flex flex-col">
-                        <div className="text-center mb-1">
-                          <div className="text-xl">📊</div>
-                          <div className="text-xs font-bold text-gray-800">YsUp Calc</div>
-                          <div className="text-[9px] text-gray-500">Google Sheets</div>
-                        </div>
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
-                          <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
-                        </div>
-                        <div className="flex-1 text-xs space-y-1">
-                          {googleConnected ? (
-                            <>
-                              {recentCalcDocs.slice(0, 2).map((doc) => (
-                                <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
-                              ))}
-                              {recentCalcDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
-                            </>
-                          ) : (
-                            <div className="bg-green-100 p-1 rounded text-center text-[9px] text-green-600 font-medium">Tap to connect</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 {/* YsUp Slideshow Tile */}
                 {safePage === 0 && (
                   <div key="tile-slideshow" onClick={() => googleConnected ? window.location.href = "/dashboard/slideshow" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
@@ -1939,6 +1960,37 @@ export default function DashboardPage() {
                             </>
                           ) : (
                             <div className="bg-blue-900/50 p-1 rounded text-center text-[9px] text-blue-300 font-medium">Tap to connect</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* YsUp Calc Tile */}
+                {safePage === 0 && (
+                  <div key="tile-calc" onClick={() => googleConnected ? window.location.href = "/dashboard/calc" : handleConnectGoogle()} className="cursor-pointer transform hover:scale-105 transition-all duration-200 group relative">
+                    <div className="rounded-lg shadow-lg overflow-hidden border-2 h-44 relative" style={{ background: "linear-gradient(145deg, #f0f4f0, #e4ece4)", borderColor: "#2a5a2a" }}>
+                      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4a8a4a 19px, #4a8a4a 20px)", backgroundSize: "20px 20px" }}></div>
+                      <div className="relative p-2 h-full flex flex-col">
+                        <div className="text-center mb-1">
+                          <div className="text-xl">📊</div>
+                          <div className="text-xs font-bold text-gray-800">YsUp Calc</div>
+                          <div className="text-[9px] text-gray-500">Google Sheets</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${googleConnected ? "bg-green-500" : "bg-red-400"}`}></div>
+                          <span className="text-[8px] text-gray-500">{googleConnected ? "Connected" : "Not connected"}</span>
+                        </div>
+                        <div className="flex-1 text-xs space-y-1">
+                          {googleConnected ? (
+                            <>
+                              {recentCalcDocs.slice(0, 2).map((doc) => (
+                                <div key={doc.id} className="bg-white/60 p-1 rounded border text-[9px] truncate">{doc.title}</div>
+                              ))}
+                              {recentCalcDocs.length === 0 && <div className="bg-white/60 p-1 rounded border text-center text-[9px] text-gray-400">Tap to open</div>}
+                            </>
+                          ) : (
+                            <div className="bg-green-100 p-1 rounded text-center text-[9px] text-green-600 font-medium">Tap to connect</div>
                           )}
                         </div>
                       </div>
