@@ -12,7 +12,12 @@ export const viewport: Viewport = {
 export const metadata = {
   title: "The YsUp Campus Network by Naww G",
   description: "An innovative educational platform designed to transform the learning experience",
-    generator: 'v0.app'
+  generator: 'v0.app',
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 }
 
 export default function RootLayout({
