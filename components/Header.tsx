@@ -377,7 +377,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               </button>
 
               {showNotifications && (
-                <div className="absolute top-10 right-0 w-80 bg-white rounded-lg shadow-2xl border border-amber-200 z-50 max-h-96 flex flex-col">
+                <div className="absolute top-10 left-0 w-80 bg-white rounded-lg shadow-2xl border border-amber-200 z-50 max-h-96 flex flex-col">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100 bg-amber-50 rounded-t-lg">
                     <h3 className="font-bold text-amber-900 text-sm">Notifications</h3>
                     {unreadNotifications > 0 && (
