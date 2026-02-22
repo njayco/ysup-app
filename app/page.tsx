@@ -184,7 +184,7 @@ export default function HomePage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search articles, books, or classmates..."
+                    placeholder="Search mad stuff like articles, books, or classmates...."
                     className="flex-1 bg-transparent text-amber-100 placeholder-amber-400 text-sm md:text-lg focus:outline-none min-w-0"
                   />
                 </div>
