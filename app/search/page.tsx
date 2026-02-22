@@ -63,6 +63,20 @@ interface WebResult {
   displayUrl: string
 }
 
+interface AmazonBook {
+  id: string
+  title: string
+  authors: string[]
+  description: string
+  publishedDate: string
+  pageCount: number
+  rating: number
+  ratingsCount: number
+  isbn: string
+  amazonUrl: string
+  categories: string[]
+}
+
 interface CampusUser {
   id: number
   username: string
@@ -71,7 +85,7 @@ interface CampusUser {
   college: string
 }
 
-type TabType = "all" | "web" | "scholar" | "books" | "wikipedia" | "users"
+type TabType = "all" | "web" | "scholar" | "books" | "amazon" | "wikipedia" | "users"
 
 function BookPlaceholder({ title, authors, isFocused }: { title: string; authors: string[]; isFocused: boolean }) {
   const authorText = authors.length > 0 ? authors[0] : ""
@@ -103,6 +117,69 @@ function BookPlaceholder({ title, authors, isFocused }: { title: string; authors
         <div className="w-full px-3 pb-3 z-10">
           <div className="w-full h-0.5 bg-blue-500 opacity-30 rounded-full mb-1" />
           <p className="text-blue-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+            {authorText}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StarRating({ rating, count }: { rating: number; count: number }) {
+  const stars = []
+  for (let i = 1; i <= 5; i++) {
+    if (i <= Math.floor(rating)) {
+      stars.push(<span key={i} className="text-yellow-400 text-xs">★</span>)
+    } else if (i - 0.5 <= rating) {
+      stars.push(<span key={i} className="text-yellow-400 text-xs">★</span>)
+    } else {
+      stars.push(<span key={i} className="text-yellow-700 text-xs">★</span>)
+    }
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex">{stars}</div>
+      {rating > 0 && <span className="text-yellow-300 text-[10px]">{rating.toFixed(1)}</span>}
+      {count > 0 && <span className="text-yellow-500 text-[9px]">({count.toLocaleString()})</span>}
+    </div>
+  )
+}
+
+function AmazonBookPlaceholder({ title, authors, rating, isFocused }: { title: string; authors: string[]; rating: number; isFocused: boolean }) {
+  const authorText = authors.length > 0 ? authors[0] : ""
+  return (
+    <div
+      className="w-40 h-56 rounded-lg border-2 border-yellow-600 flex flex-col items-center justify-between overflow-hidden relative"
+      style={{
+        background: "linear-gradient(135deg, #4a3a0a 0%, #7a6a1d 40%, #5a4a10 60%, #3a2a05 100%)",
+        boxShadow: isFocused
+          ? "0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(234,179,8,0.3), inset -3px 0 8px rgba(0,0,0,0.3)"
+          : "0 10px 30px rgba(0,0,0,0.4), inset -3px 0 8px rgba(0,0,0,0.3)",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)" }} />
+      <div className="absolute left-0 top-0 bottom-0 w-3" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 100%)" }} />
+      <div className="w-full px-3 pt-2.5 z-10">
+        <div className="flex items-center gap-1 mb-1">
+          <span className="text-[9px]">📦</span>
+          <p className="text-yellow-400 text-[8px] uppercase tracking-wider opacity-70">Amazon</p>
+        </div>
+        <div className="w-full h-0.5 bg-yellow-500 opacity-30 rounded-full" />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-1 z-10">
+        <p className="text-yellow-100 text-xs text-center font-bold leading-tight line-clamp-3" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
+          {title}
+        </p>
+        {rating > 0 && (
+          <div className="mt-1">
+            <StarRating rating={rating} count={0} />
+          </div>
+        )}
+      </div>
+      {authorText && (
+        <div className="w-full px-3 pb-2.5 z-10">
+          <div className="w-full h-0.5 bg-yellow-500 opacity-30 rounded-full mb-1" />
+          <p className="text-yellow-300 text-[10px] text-center opacity-80 line-clamp-2" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.6)" }}>
             {authorText}
           </p>
         </div>
@@ -167,6 +244,9 @@ function SearchContent() {
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [scholarCarouselIndex, setScholarCarouselIndex] = useState(0)
   const [selectedScholar, setSelectedScholar] = useState<ScholarArticle | null>(null)
+  const [amazonBooks, setAmazonBooks] = useState<AmazonBook[]>([])
+  const [amazonCarouselIndex, setAmazonCarouselIndex] = useState(0)
+  const [selectedAmazon, setSelectedAmazon] = useState<AmazonBook | null>(null)
   const [searchTime, setSearchTime] = useState(0)
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
   const [aiOverview, setAiOverview] = useState("")
@@ -182,19 +262,22 @@ function SearchContent() {
     setHasSearched(true)
     setCarouselIndex(0)
     setScholarCarouselIndex(0)
+    setAmazonCarouselIndex(0)
     setSelectedBook(null)
     setSelectedScholar(null)
+    setSelectedAmazon(null)
     setFailedImages(new Set())
     setAiOverview("")
     const startTime = Date.now()
 
     try {
-      const [booksRes, scholarRes, wikiRes, usersRes, webRes] = await Promise.allSettled([
+      const [booksRes, scholarRes, wikiRes, usersRes, webRes, amazonRes] = await Promise.allSettled([
         fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/search-users?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/web-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/amazon-books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
       ])
 
       const booksData = booksRes.status === "fulfilled" && Array.isArray(booksRes.value) ? booksRes.value : []
@@ -202,15 +285,18 @@ function SearchContent() {
       const wikiData = wikiRes.status === "fulfilled" && Array.isArray(wikiRes.value) ? wikiRes.value : []
       const usersData = usersRes.status === "fulfilled" && Array.isArray(usersRes.value) ? usersRes.value : []
       const webData = webRes.status === "fulfilled" && Array.isArray(webRes.value) ? webRes.value : []
+      const amazonData = amazonRes.status === "fulfilled" && Array.isArray(amazonRes.value) ? amazonRes.value : []
 
       setBooks(booksData)
       setScholarArticles(scholarData)
       setWikiArticles(wikiData)
       setCampusUsers(usersData)
       setWebResults(webData)
+      setAmazonBooks(amazonData)
 
       if (booksData.length > 0) setSelectedBook(booksData[0])
       if (scholarData.length > 0) setSelectedScholar(scholarData[0])
+      if (amazonData.length > 0) setSelectedAmazon(amazonData[0])
 
       setSearchTime((Date.now() - startTime) / 1000)
 
@@ -297,11 +383,12 @@ function SearchContent() {
     }
   }
 
-  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length
+  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length + amazonBooks.length
 
   const sidebarCategories = [
     { label: "Everything", icon: <Search className="w-4 h-4" />, tab: "all" as TabType, count: totalResults },
     { label: "Books", icon: <BookOpen className="w-4 h-4" />, tab: "books" as TabType, count: books.length },
+    { label: "Amazon Books", icon: <span className="text-sm">📦</span>, tab: "amazon" as TabType, count: amazonBooks.length },
     { label: "Scholarly Articles", icon: <GraduationCap className="w-4 h-4" />, tab: "scholar" as TabType, count: scholarArticles.length },
     { label: "Web", icon: <Monitor className="w-4 h-4" />, tab: "web" as TabType, count: webResults.length },
     { label: "Encyclopedia", icon: <Globe className="w-4 h-4" />, tab: "wikipedia" as TabType, count: wikiArticles.length },
@@ -335,6 +422,20 @@ function SearchContent() {
       setSelectedScholar(scholarArticles[scholarCarouselIndex])
     }
   }, [scholarCarouselIndex, scholarArticles])
+
+  const scrollAmazonCarousel = (direction: "left" | "right") => {
+    if (direction === "left" && amazonCarouselIndex > 0) {
+      setAmazonCarouselIndex(amazonCarouselIndex - 1)
+    } else if (direction === "right" && amazonCarouselIndex < amazonBooks.length - 1) {
+      setAmazonCarouselIndex(amazonCarouselIndex + 1)
+    }
+  }
+
+  useEffect(() => {
+    if (amazonBooks.length > 0 && amazonCarouselIndex < amazonBooks.length) {
+      setSelectedAmazon(amazonBooks[amazonCarouselIndex])
+    }
+  }, [amazonCarouselIndex, amazonBooks])
 
   const handleImageError = (bookId: string) => {
     setFailedImages((prev) => new Set(prev).add(bookId))
@@ -455,6 +556,7 @@ function SearchContent() {
             {!loading && hasSearched && totalResults > 0 && activeTab !== "all" && (
               (activeTab === "web" && webResults.length === 0) ||
               (activeTab === "books" && books.length === 0) ||
+              (activeTab === "amazon" && amazonBooks.length === 0) ||
               (activeTab === "scholar" && scholarArticles.length === 0) ||
               (activeTab === "wikipedia" && wikiArticles.length === 0) ||
               (activeTab === "users" && campusUsers.length === 0)
@@ -462,7 +564,7 @@ function SearchContent() {
               <div className="text-center py-20">
                 <FolderSearch className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-60" />
                 <p className="text-amber-200 text-lg" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
-                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
+                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "amazon" ? "Amazon books" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
                 </p>
                 <p className="text-amber-400 text-sm mt-2 opacity-70">Try checking other categories for results</p>
               </div>
@@ -667,6 +769,167 @@ function SearchContent() {
                                 ) : (
                                   <p className="text-amber-200 text-sm leading-relaxed">
                                     {summaries[`books-${selectedBook.id}`]}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+
+                {/* 3D Amazon Book Carousel */}
+                {(activeTab === "all" || activeTab === "amazon") && amazonBooks.length > 0 && (
+                  <section>
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-2 flex items-center gap-2 max-w-3xl mx-auto"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <span className="text-lg">📦</span>
+                      Amazon Books ({amazonBooks.length})
+                    </h2>
+                    <div className="relative">
+                      <div className="relative flex items-center justify-center py-4 overflow-hidden" style={{ perspective: "1200px", minHeight: "240px" }}>
+                        {amazonCarouselIndex > 0 && (
+                          <button
+                            onClick={() => scrollAmazonCarousel("left")}
+                            className="absolute left-0 z-30 bg-yellow-900 bg-opacity-70 hover:bg-opacity-90 text-yellow-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
+                          >
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                          </button>
+                        )}
+
+                        <div className="flex items-center justify-center" style={{ transformStyle: "preserve-3d" }}>
+                          {amazonBooks.map((book, index) => {
+                            const offset = index - amazonCarouselIndex
+                            const absOffset = Math.abs(offset)
+                            const isMobile = typeof window !== "undefined" && window.innerWidth < 768
+                            if (absOffset > (isMobile ? 2 : 3)) return null
+
+                            const mobileScale = isMobile ? 0.75 : 1
+                            const translateX = offset * (isMobile ? 100 : 140)
+                            const translateZ = -absOffset * (isMobile ? 70 : 100)
+                            const rotateY = offset * -15
+                            const scale = (1 - absOffset * 0.12) * mobileScale
+                            const opacity = 1 - absOffset * 0.25
+                            const zIndex = 10 - absOffset
+                            const isFocused = offset === 0
+
+                            return (
+                              <div
+                                key={book.id}
+                                onClick={() => {
+                                  setAmazonCarouselIndex(index)
+                                  setSelectedAmazon(book)
+                                }}
+                                className="absolute cursor-pointer transition-all duration-500 ease-out"
+                                style={{
+                                  transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                                  zIndex,
+                                  opacity,
+                                }}
+                              >
+                                <div className="relative group">
+                                  <AmazonBookPlaceholder title={book.title} authors={book.authors} rating={book.rating} isFocused={isFocused} />
+                                  {isFocused && (
+                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 hidden md:block">
+                                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[14px] border-l-yellow-400"></div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {amazonCarouselIndex < amazonBooks.length - 1 && (
+                          <button
+                            onClick={() => scrollAmazonCarousel("right")}
+                            className="absolute right-0 z-30 bg-yellow-900 bg-opacity-70 hover:bg-opacity-90 text-yellow-200 p-1.5 md:p-2 rounded-full shadow-lg transition-all"
+                          >
+                            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                          </button>
+                        )}
+                      </div>
+
+                      {selectedAmazon && (
+                        <div className="mt-2 max-w-3xl mx-auto">
+                          <div className="bg-yellow-950 bg-opacity-60 rounded-xl p-4 border border-yellow-800">
+                            <p className="text-yellow-100 text-sm leading-relaxed" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}>
+                              <span className="text-yellow-300 font-semibold">
+                                &ldquo;{selectedAmazon.title}&rdquo;
+                              </span>
+                              {selectedAmazon.authors.length > 0 && (
+                                <span> by {selectedAmazon.authors.join(", ")}</span>
+                              )}
+                              {selectedAmazon.publishedDate && (
+                                <span> &middot; {selectedAmazon.publishedDate}</span>
+                              )}
+                              {selectedAmazon.pageCount > 0 && (
+                                <span> &middot; {selectedAmazon.pageCount} pages</span>
+                              )}
+                            </p>
+                            {selectedAmazon.rating > 0 && (
+                              <div className="mt-1.5">
+                                <StarRating rating={selectedAmazon.rating} count={selectedAmazon.ratingsCount} />
+                              </div>
+                            )}
+                            {selectedAmazon.description && (
+                              <p className="text-yellow-200 text-sm mt-2 line-clamp-3 opacity-80">
+                                {selectedAmazon.description}
+                              </p>
+                            )}
+                            {selectedAmazon.categories.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {selectedAmazon.categories.map((cat, i) => (
+                                  <span key={i} className="px-2 py-0.5 bg-yellow-800 bg-opacity-50 text-yellow-300 text-[10px] rounded-full">
+                                    {cat}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <a
+                                href={selectedAmazon.amazonUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-yellow-950 rounded-lg text-sm font-bold transition-colors"
+                              >
+                                <span>📦</span>
+                                View on Amazon
+                              </a>
+                              <button
+                                onClick={() =>
+                                  handleSummarize(
+                                    selectedAmazon.title,
+                                    selectedAmazon.description,
+                                    "amazon",
+                                    selectedAmazon.id
+                                  )
+                                }
+                                className="flex items-center gap-1 px-3 py-1.5 bg-yellow-800 hover:bg-yellow-700 text-yellow-100 rounded-lg text-sm font-medium transition-colors"
+                              >
+                                {loadingSummaries[`amazon-${selectedAmazon.id}`] ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4" />
+                                )}
+                                AI Summary
+                              </button>
+                            </div>
+
+                            {expandedSummaries[`amazon-${selectedAmazon.id}`] && (
+                              <div className="mt-3 bg-yellow-900 bg-opacity-50 border border-yellow-700 rounded-lg p-4">
+                                {loadingSummaries[`amazon-${selectedAmazon.id}`] ? (
+                                  <div className="flex items-center gap-2 text-yellow-300">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Generating AI summary...
+                                  </div>
+                                ) : (
+                                  <p className="text-yellow-200 text-sm leading-relaxed">
+                                    {summaries[`amazon-${selectedAmazon.id}`]}
                                   </p>
                                 )}
                               </div>
