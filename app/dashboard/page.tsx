@@ -151,6 +151,7 @@ export default function DashboardPage() {
     email: "",
     phone: "",
     college: "",
+    dormitory: "",
     major: "",
     year: "",
     bio: "",
@@ -322,6 +323,7 @@ export default function DashboardPage() {
         email: userData.email || "",
         phone: userData.phone || "",
         college: userData.college || "",
+        dormitory: userData.dormitory || "",
         major: userData.major || "",
         year: userData.year || "",
         bio: userData.bio || "",
@@ -3214,6 +3216,7 @@ export default function DashboardPage() {
                     {profileData.major} • {profileData.year}
                   </p>
                   <p className="text-gray-600">{profileData.college}</p>
+                  {profileData.dormitory && <p className="text-gray-500 text-sm">{profileData.dormitory}</p>}
                 </div>
 
                 <div className="flex-shrink-0">
@@ -3310,6 +3313,17 @@ export default function DashboardPage() {
                     type="text"
                     value={profileData.college}
                     onChange={(e) => setProfileData({ ...profileData, college: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Dormitory</label>
+                  <input
+                    type="text"
+                    value={profileData.dormitory}
+                    onChange={(e) => setProfileData({ ...profileData, dormitory: e.target.value })}
+                    placeholder="Enter your dorm name"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
