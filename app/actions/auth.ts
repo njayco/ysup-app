@@ -67,6 +67,23 @@ export async function signupUser(formData: FormData) {
 
     const newUser = result.rows[0]
 
+    if (newUser.college === "Howard University") {
+      try {
+        const universityEvents = await pool.query(
+          `SELECT id FROM calendar_events WHERE source = 'howard_university'`
+        )
+        for (const event of universityEvents.rows) {
+          await pool.query(
+            `INSERT INTO event_invites (event_id, user_id, rsvp) VALUES ($1, $2, 'going')
+             ON CONFLICT (event_id, user_id) DO NOTHING`,
+            [event.id, newUser.id]
+          )
+        }
+      } catch (e) {
+        console.error("Failed to auto-enroll user in Howard events:", e)
+      }
+    }
+
     return {
       success: true,
       user: {

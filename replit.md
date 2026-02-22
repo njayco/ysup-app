@@ -60,13 +60,18 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 ## YsUp Bluebook Calendar Feature
 - PostgreSQL-backed event/calendar system accessible from the dashboard Bluebook item
 - API routes: `/api/events` (create/list events), `/api/events/rsvp` (RSVP responses), `/api/events/invites` (pending invitations), `/api/events/network-members` (fetch members for inviting)
-- Event creation: Title, description, date, time, location fields
+- API routes: `/api/events/seed-howard` (POST to seed Howard University 2025-2026 academic calendar), `/api/events/notify-cron` (POST for notification cron)
+- Event creation: Title, description, date, time (nullable for all-day events), location fields
 - Network-based invitations: Invite entire Class Networks or pick individual members from joined networks
 - RSVP system: Three states (going/maybe/not_going) with real-time tallies displayed on each event
 - Pending invites section: Shows unresponded invitations with quick RSVP buttons
 - Event deletion: Only event creators can delete their events (cascades to invites)
 - Header notifications: Fetches real pending event invites as notification badges
-- PostgreSQL tables: calendar_events, event_invites with proper foreign keys and indexes
+- Howard University Academic Calendar: 79 events from 2025-2026 official calendar seeded for all Howard University users
+- University events scoped by `source = 'howard_university'` column on calendar_events table; only shown to users with `college = 'Howard University'`
+- New Howard University users auto-enrolled in all university calendar events on signup
+- Notification cron: All-day events trigger notifications daily; timed events trigger alerts 2 hours prior
+- PostgreSQL tables: calendar_events (with source column), event_invites with proper foreign keys and indexes
 - Bluebook preview card shows current date dynamically (no hardcoded dates)
 
 ## Sticky Notes Feature

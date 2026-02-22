@@ -436,7 +436,7 @@ export default function DashboardPage() {
     title: string
     description: string | null
     event_date: string
-    event_time: string
+    event_time: string | null
     location: string | null
     creator_id: number
     creator_first_name: string
@@ -925,7 +925,8 @@ export default function DashboardPage() {
     return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
   }
 
-  const formatEventTime = (timeStr: string) => {
+  const formatEventTime = (timeStr: string | null) => {
+    if (!timeStr) return "All Day"
     const [h, m] = timeStr.split(":")
     const hour = parseInt(h)
     const ampm = hour >= 12 ? "PM" : "AM"
@@ -1867,7 +1868,7 @@ export default function DashboardPage() {
                           <div>
                             <h4 className="font-bold text-blue-100">{invite.title}</h4>
                             <p className="text-xs text-blue-300">
-                              {formatEventDate(invite.event_date)} at {formatEventTime(invite.event_time)}
+                              {formatEventDate(invite.event_date)}{invite.event_time ? ` at ${formatEventTime(invite.event_time)}` : " — All Day"}
                               {invite.location && ` - ${invite.location}`}
                             </p>
                             <p className="text-xs text-blue-400 mt-1">
@@ -1931,7 +1932,7 @@ export default function DashboardPage() {
                               <h4 className="font-bold text-blue-800 text-base">{event.title}</h4>
                               {event.description && <p className="text-sm text-blue-700 mt-0.5">{event.description}</p>}
                               <p className="text-sm text-blue-600 mt-1">
-                                {formatEventDate(event.event_date)} at {formatEventTime(event.event_time)}
+                                {formatEventDate(event.event_date)}{event.event_time ? ` at ${formatEventTime(event.event_time)}` : " — All Day"}
                               </p>
                               {event.location && <p className="text-xs text-blue-500 mt-0.5">{event.location}</p>}
                               <p className="text-xs text-blue-500 mt-1">
