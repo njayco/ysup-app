@@ -102,7 +102,21 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Notification types: YBUCKS_EARNED, event_invite, general
 - PostgreSQL table: notifications with user_id, type, title, message, meta (JSONB), read flag
 
+## Bison Web - Howard.edu Magazine Browser
+- Skeuomorphic open two-page magazine design on a wooden desk background
+- 8 content sections: Home, News, Academics, Admissions, Campus Life, Events, Research, Legacy
+- All content mirrors real howard.edu website data (news articles, events, alumni, programs)
+- Page navigation: clicking a nav link loads content on right page, shifts previous right content to left page
+- Slide transitions: content slides in/out with translateX and opacity animations (500ms duration)
+- Spine divider between pages with wood grain texture and shadow effects
+- Page textures with parchment-style gradients and subtle edge shadows
+- Mobile responsive: pages stack vertically (current page on top, previous below) with horizontal spine divider
+- Nav bar with icons and aria-current/aria-label for accessibility
+- Custom scrollbars on each page matching the parchment aesthetic
+- External links to howard.edu, thedig.howard.edu, events.howard.edu, admission.howard.edu
+
 ## Recent Changes
+- Replaced Bison Web (old student information system) with skeuomorphic Howard.edu magazine browser
 - Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
 - Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens
 - Mobile carousels: 3D book/journal carousels scale to 75% with fewer visible items on mobile
