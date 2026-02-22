@@ -519,7 +519,7 @@ function SearchContent() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search the Web, Books, Scholarly Articles or find classmates"
+                  placeholder="Search mad stuff like articles, books, or classmates...."
                   className="w-full pl-5 pr-14 py-3 text-lg rounded-full bg-amber-950 bg-opacity-70 border-2 border-amber-700 text-amber-100 placeholder-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-500 shadow-lg"
                   style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.3)" }}
                 />
