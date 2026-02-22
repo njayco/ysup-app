@@ -152,6 +152,16 @@ export default function ChalkboardPage() {
     fetchMeetings()
   }
 
+  const handleDeleteMeeting = async (meetingId: number) => {
+    if (!currentUser) return
+    await fetch("/api/chalkboard", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser.id, meetingId, action: "delete" }),
+    })
+    fetchMeetings()
+  }
+
   const handleCopyLink = (meeting: Meeting) => {
     navigator.clipboard.writeText(meeting.meet_uri || "")
     setCopiedId(meeting.id)
@@ -322,6 +332,16 @@ export default function ChalkboardPage() {
                           {meeting.title}
                         </h3>
                       </div>
+                      {meeting.host_user_id === currentUser?.id && (
+                        <button
+                          onClick={() => handleDeleteMeeting(meeting.id)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                          style={{ background: "rgba(239,68,68,0.2)", color: "#ef4444" }}
+                          title="Delete room"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     {meeting.description && (

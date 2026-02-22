@@ -224,6 +224,22 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === "delete") {
+      const meeting = await pool.query(
+        `SELECT * FROM chalkboard_meetings WHERE id = $1 AND host_user_id = $2`,
+        [meetingId, userId]
+      )
+      if (meeting.rows.length === 0) {
+        return NextResponse.json({ error: "Not authorized" }, { status: 403 })
+      }
+      if (meeting.rows[0].meet_space_name) {
+        try { await endMeetSpace(meeting.rows[0].meet_space_name) } catch (e) {}
+      }
+      await pool.query(`DELETE FROM chalkboard_participants WHERE meeting_id = $1`, [meetingId])
+      await pool.query(`DELETE FROM chalkboard_meetings WHERE id = $1`, [meetingId])
+      return NextResponse.json({ success: true })
+    }
+
     if (action === "rsvp") {
       const rsvpStatus = body.rsvpStatus || "accepted"
       await pool.query(
