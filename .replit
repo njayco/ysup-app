@@ -39,3 +39,8 @@ deploymentTarget = "autoscale"
 run = ["pnpm", "next-start"]
 build = ["pnpm", "build"]
 publicDir = "public"
+
+[userenv]
+
+[userenv.shared]
+TOKEN_ENCRYPTION_KEY = "ukem072MC+Z3A/X9Yk9eQPT4unptCqz3ELzP63I6DbQ="

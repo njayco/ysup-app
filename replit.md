@@ -17,6 +17,7 @@ The platform is built on Next.js 14 with TypeScript, utilizing the App Router fo
 - **Campus Social Network (Class Networks)**: PostgreSQL-backed system for creating, joining, and managing class/club/organization networks. Features include post feeds, co-signing, threaded responses, member management, moderator tools, invite links, and shared file uploads.
 - **YsUp Bluebook Calendar**: A PostgreSQL-backed event and calendar system. It supports event creation with color coding, multi-day events, network-based invitations with RSVP tracking, and notifications. Specific university academic calendars (e.g., Howard University) can be seeded and automatically applied to relevant users.
 - **Skeuomorphic Calculator**: A client-side interactive desktop calculator with full arithmetic, memory functions, and a distinct visual design.
+- **Productivity Dock (Google Workspace Integration)**: Three skeuomorphic productivity tiles on the dashboard — YsUp Pad (Google Docs), YsUp Calc (Google Sheets), YsUp Slideshow (Google Slides). Uses OAuth 2.0 with encrypted token storage (AES-256-GCM). Users can create, import, and sync documents via Google Workspace APIs (REST). Workspace pages at `/dashboard/pad`, `/dashboard/calc`, `/dashboard/slideshow` with embedded Google editors, search, and sync panels.
 - **Sticky Notes**: Dashboard sticky notes with full persistence, allowing users to create, position, and rotate notes, with content and position saved to PostgreSQL.
 - **File Upload**: Dashboard file storage with CRUD operations, saving file metadata and base64 data to PostgreSQL, with lazy loading of file data for performance.
 - **The Game (Online AI Coaching)**: Offers an online AI coaching mode where GPT-4o-mini acts as a Socratic coach. It includes a reward system (YBucks) for user engagement in sessions.
@@ -39,3 +40,4 @@ The platform is built on Next.js 14 with TypeScript, utilizing the App Router fo
 - **Free Dictionary API (dictionaryapi.dev)**: Provides word definitions, phonetics, and related linguistic information.
 - **Amazon Books**: Integrated for Amazon book search, including ratings and purchase links.
 - **PDF.js**: Used for rendering PDF documents within "The Hilltop" newspaper viewer.
+- **Google Workspace APIs (Docs, Sheets, Slides, Drive)**: Used via REST for the Productivity Dock feature. OAuth 2.0 with encrypted token storage. Requires GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, TOKEN_ENCRYPTION_KEY env vars.
