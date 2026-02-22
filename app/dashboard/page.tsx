@@ -72,6 +72,18 @@ interface StickyNote {
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useAuth()
+  const [liveDateTime, setLiveDateTime] = useState("")
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      setLiveDateTime(now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) + ", " + now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }))
+    }
+    update()
+    const interval = setInterval(update, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [showNotebook, setShowNotebook] = useState(false)
   const [showBluebook, setShowBluebook] = useState(false)
@@ -1357,7 +1369,7 @@ export default function DashboardPage() {
           <span className="text-amber-100 font-medium text-sm md:text-base">
             {currentUser.firstName} {currentUser.lastName} (+{currentUser.username})
           </span>
-          <span className="text-amber-200 text-xs md:text-base hidden sm:inline">Wednesday, March 21, 2012, 1:35 AM</span>
+          <span className="text-amber-200 text-xs md:text-base hidden sm:inline">{liveDateTime}</span>
         </div>
 
         <div className="flex items-center space-x-2 w-full sm:w-auto">
