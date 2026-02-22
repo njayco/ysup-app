@@ -320,16 +320,18 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     }
   }
 
-  const navItems = [
+  const allNavItems = [
+    { name: "Homepage", href: "/bison-web", public: true },
     { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game" },
-    { name: "Homepage", href: "/bison-web" },
     { name: "The Hilltop", href: "/hilltop" },
     { name: "Bulletin Board", href: "/bulletin-board" },
     { name: "HU Bookstore", href: "/bookstore" },
     { name: "Academy", href: "/academy", badge: "NEW" },
-    { name: "About Us", href: "https://ysup.co", external: true },
+    { name: "About Us", href: "https://ysup.co", external: true, public: true },
   ]
+
+  const navItems = allNavItems.filter((item) => item.public || isLoggedIn)
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser")
