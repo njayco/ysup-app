@@ -352,7 +352,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   return (
     <header className="wood-background border-b-4 border-amber-800">
       {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center justify-between px-4 py-2">
+      <div className="hidden lg:flex items-center justify-between px-4 py-2">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-2">
             <img src="/ysup-logo.png" alt="YsUp" className="h-9 w-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }} />
@@ -532,7 +532,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden flex items-center justify-between px-4 py-2">
+      <div className="lg:hidden flex items-center justify-between px-4 py-2">
         {/* Left side - YsUp logo, mail, and notifications */}
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-2">
@@ -622,7 +622,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
 
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
-        <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowMobileMenu(false)}>
+        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowMobileMenu(false)}>
           <div
             className="absolute top-0 right-0 w-80 h-full bg-amber-900 shadow-2xl transform transition-transform duration-300 ease-in-out"
             onClick={(e) => e.stopPropagation()}
