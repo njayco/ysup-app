@@ -169,12 +169,10 @@ const featureWalkthroughs = [
     heading: "Turn Learning Into a Game",
     descriptions: [
       "The Game transforms your academic experience into an exciting competition. Earn points, level up, and compete with classmates.",
-      "Purchase the $50 Game Set to unlock 3 months of access to classroom challenges, trivia, and interactive learning activities.",
       "Compete on leaderboards, earn badges, and see how you stack up against other students in your courses.",
       "The Game makes studying fun — answer trivia, complete challenges, and earn rewards while actually learning the material.",
     ],
     tips: [
-      "Get the Game Set for 3 months of access",
       "Compete on leaderboards with classmates",
       "Earn badges for completing challenges",
       "Use The Game to make studying more engaging",
