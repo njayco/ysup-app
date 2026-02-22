@@ -2,6 +2,7 @@ import type React from "react"
 import type { Viewport } from "next"
 import "./globals.css"
 import PageTracker from "@/components/PageTracker"
+import UniversityBanner from "@/components/UniversityBanner"
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <PageTracker />
+        <UniversityBanner />
         {children}
         <footer className="w-full py-4 px-4 text-center border-t border-amber-900/30 bg-amber-950/40">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-amber-200/60">
