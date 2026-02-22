@@ -306,9 +306,19 @@ export default function DashboardPage() {
       if (userData.id) {
         fetch(`/api/files?userId=${userData.id}`)
           .then((r) => r.json())
-          .then((dbFiles) => {
+          .then(async (dbFiles) => {
             if (Array.isArray(dbFiles)) {
               setAllFiles([...defaultFiles, ...dbFiles])
+              const pdfFiles = dbFiles.filter((f: any) => f.type === "pdf" && f.fromDb && !f.fileData)
+              for (const pf of pdfFiles) {
+                try {
+                  const res = await fetch(`/api/files?userId=${userData.id}&fileId=${pf.id}`)
+                  const data = await res.json()
+                  if (data.fileData) {
+                    setAllFiles((prev) => prev.map((f) => f.id === pf.id ? { ...f, fileData: data.fileData } : f))
+                  }
+                } catch {}
+              }
             }
           })
           .catch(() => {})
