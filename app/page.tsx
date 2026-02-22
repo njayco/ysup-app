@@ -2,15 +2,86 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import Link from "next/link"
 import { Search, Sparkles } from "lucide-react"
 
+const weatherCodeLabels: Record<number, { label: string; icon: string }> = {
+  0: { label: "Clear", icon: "☀️" },
+  1: { label: "Mostly Clear", icon: "🌤️" },
+  2: { label: "Partly Cloudy", icon: "⛅" },
+  3: { label: "Overcast", icon: "☁️" },
+  45: { label: "Fog", icon: "🌫️" },
+  48: { label: "Rime Fog", icon: "🌫️" },
+  51: { label: "Light Drizzle", icon: "🌦️" },
+  53: { label: "Drizzle", icon: "🌦️" },
+  55: { label: "Heavy Drizzle", icon: "🌧️" },
+  61: { label: "Light Rain", icon: "🌧️" },
+  63: { label: "Rain", icon: "🌧️" },
+  65: { label: "Heavy Rain", icon: "🌧️" },
+  71: { label: "Light Snow", icon: "🌨️" },
+  73: { label: "Snow", icon: "❄️" },
+  75: { label: "Heavy Snow", icon: "❄️" },
+  77: { label: "Snow Grains", icon: "🌨️" },
+  80: { label: "Light Showers", icon: "🌦️" },
+  81: { label: "Showers", icon: "🌧️" },
+  82: { label: "Heavy Showers", icon: "🌧️" },
+  85: { label: "Snow Showers", icon: "🌨️" },
+  86: { label: "Heavy Snow Showers", icon: "🌨️" },
+  95: { label: "Thunderstorm", icon: "⛈️" },
+  96: { label: "Thunderstorm + Hail", icon: "⛈️" },
+  99: { label: "Thunderstorm + Heavy Hail", icon: "⛈️" },
+}
+
+function formatDateTime(date: Date): string {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  const day = days[date.getDay()]
+  const month = months[date.getMonth()]
+  const dateNum = date.getDate()
+  const year = date.getFullYear()
+  let hours = date.getHours()
+  const minutes = date.getMinutes().toString().padStart(2, "0")
+  const ampm = hours >= 12 ? "PM" : "AM"
+  hours = hours % 12 || 12
+  return `${day}, ${month} ${dateNum}, ${year} ${hours}:${minutes} ${ampm}`
+}
+
 export default function HomePage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentTime, setCurrentTime] = useState("")
+  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null)
+
+  const fetchWeather = useCallback(async () => {
+    try {
+      const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=38.9072&longitude=-77.0369&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=America%2FNew_York")
+      const data = await res.json()
+      if (data.current) {
+        setWeather({ temp: Math.round(data.current.temperature_2m), code: data.current.weather_code })
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    setCurrentTime(formatDateTime(new Date()))
+    fetchWeather()
+
+    const timeInterval = setInterval(() => {
+      setCurrentTime(formatDateTime(new Date()))
+    }, 60000)
+
+    const weatherInterval = setInterval(() => {
+      fetchWeather()
+    }, 900000)
+
+    return () => {
+      clearInterval(timeInterval)
+      clearInterval(weatherInterval)
+    }
+  }, [fetchWeather])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,6 +173,22 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {currentTime && (
+          <div className="fixed bottom-4 left-4 z-50">
+            <div className="bg-stone-900/80 backdrop-blur-sm border border-amber-700/30 rounded-lg px-4 py-2.5 shadow-lg">
+              <div className="text-amber-100 text-xs sm:text-sm font-medium">{currentTime}</div>
+              {weather && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-base">{weatherCodeLabels[weather.code]?.icon || "🌡️"}</span>
+                  <span className="text-amber-200/80 text-xs sm:text-sm">
+                    Washington, DC — {weather.temp}°F, {weatherCodeLabels[weather.code]?.label || "Unknown"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
