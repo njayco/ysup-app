@@ -104,6 +104,12 @@ export default function LoginPage() {
       return
     }
 
+    if (!signupData.agreeTerms) {
+      setError("You must agree to the Terms & Conditions to sign up")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append("college", signupData.college)
@@ -480,7 +486,10 @@ export default function LoginPage() {
                         required
                       />
                       <label htmlFor="terms" className="text-xs text-gray-600">
-                        I have read and agree with the Terms & Conditions
+                        I have read and agree with the{" "}
+                        <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="text-orange-600 underline hover:text-orange-700 font-medium">
+                          Terms & Conditions
+                        </a>
                       </label>
                     </div>
 
