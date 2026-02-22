@@ -84,6 +84,24 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - File data loaded on demand (not in list response) for performance
 - PostgreSQL table: user_files
 
+## The Game - Online AI Coaching Feature
+- Two game modes: In-Person (classroom) and Online AI (AI coaching sessions)
+- API routes: `/api/game/online/start` (create session), `/api/game/online/[sessionId]/message` (chat with AI coach), `/api/game/online/[sessionId]/arrived` (answer arrived, awards 10 YBucks), `/api/game/online/[sessionId]/end` (end session, awards 250 coach bonus)
+- API route: `/api/game/inperson/award` (award YBucks to users by username in in-person games)
+- AI Coach uses GPT-4o-mini via Replit AI Integrations with strict Socratic teaching method (never gives direct answers)
+- Online AI Chalkboard page at `/game/online/[sessionId]` with dark green chalkboard UI
+- YBucks amounts: 10 for arriving at answer, 250 coach bonus at session end
+- Authorization checks: users must be session players to interact, only creators can end sessions
+- PostgreSQL tables: game_sessions, game_session_players, game_chat_messages, game_ybucks_awards
+- Users table has `ybucks` column for tracking currency balance
+
+## Notifications System
+- API routes: `/api/notifications` (list with unread count), `/api/notifications/read` (mark individual or all as read)
+- Header bell icon with dropdown showing real notifications from DB + event invites
+- 30-second polling for real-time notification updates
+- Notification types: YBUCKS_EARNED, event_invite, general
+- PostgreSQL table: notifications with user_id, type, title, message, meta (JSONB), read flag
+
 ## Recent Changes
 - Full mobile-responsive design: All pages (login, home, search, dashboard, networks, onboarding, bookstore, bulletin board, academy, bison web, hilltop, the game) now use responsive Tailwind breakpoints for mobile-friendly layouts
 - Mobile search: Sidebar category list converts to horizontal scrollable tab strip on small screens

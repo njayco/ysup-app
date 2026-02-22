@@ -24,6 +24,15 @@ export async function POST(
       return NextResponse.json({ success: false, message: "Session not found or ended" }, { status: 404 })
     }
 
+    const playerCheck = await pool.query(
+      "SELECT id FROM game_session_players WHERE session_id = $1 AND user_id = $2",
+      [sessionId, parseInt(userId)]
+    )
+
+    if (playerCheck.rows.length === 0) {
+      return NextResponse.json({ success: false, message: "Not authorized for this session" }, { status: 403 })
+    }
+
     const ybucksAmount = 10
 
     await pool.query(

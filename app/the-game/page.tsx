@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Header from "@/components/Header"
 import { useAuth } from "@/lib/useAuth"
 import {
@@ -16,6 +17,7 @@ import {
   Crown,
   Star,
   Award,
+  Brain,
 } from "lucide-react"
 
 interface Student {
@@ -42,12 +44,14 @@ interface GameSession {
 
 export default function TheGamePage() {
   const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
   const [showRules, setShowRules] = useState(false)
   const [showCreateSession, setShowCreateSession] = useState(false)
   const [currentSession, setCurrentSession] = useState<GameSession | null>(null)
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [customPoints, setCustomPoints] = useState<{ [key: string]: string }>({})
   const [classCustomPoints, setClassCustomPoints] = useState("")
+  const [isStartingOnlineGame, setIsStartingOnlineGame] = useState(false)
   const [newSessionData, setNewSessionData] = useState({
     teacherName: "",
     subject: "",
@@ -308,6 +312,40 @@ export default function TheGamePage() {
     URL.revokeObjectURL(url)
   }
 
+  const startOnlineGame = async () => {
+    try {
+      setIsStartingOnlineGame(true)
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}")
+      
+      if (!currentUser.id) {
+        alert("User not found. Please log in again.")
+        return
+      }
+
+      const response = await fetch("/api/game/online/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: currentUser.id,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to start online game session")
+      }
+
+      const data = await response.json()
+      router.push(`/game/online/${data.sessionId}`)
+    } catch (error) {
+      console.error("Error starting online game:", error)
+      alert("Failed to start online game. Please try again.")
+    } finally {
+      setIsStartingOnlineGame(false)
+    }
+  }
+
   if (isLoading || !isAuthenticated) {
     return null
   }
@@ -332,13 +370,23 @@ export default function TheGamePage() {
           </button>
 
           {!currentSession && (
-            <button
-              onClick={() => setShowCreateSession(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-1.5 md:py-2 rounded transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Start New Game</span>
-            </button>
+            <>
+              <button
+                onClick={() => setShowCreateSession(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-1.5 md:py-2 rounded transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">In-Person Game</span>
+              </button>
+              <button
+                onClick={startOnlineGame}
+                disabled={isStartingOnlineGame}
+                className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-3 md:px-4 py-1.5 md:py-2 rounded transition-colors flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
+              >
+                <Brain className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Coach</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -380,7 +428,16 @@ export default function TheGamePage() {
                   className="bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg text-base md:text-lg font-medium transition-colors flex items-center justify-center space-x-2"
                 >
                   <Plus className="w-5 h-5" />
-                  <span>Start New Game Session</span>
+                  <span>Start A New In-Person Game Session</span>
+                </button>
+
+                <button
+                  onClick={startOnlineGame}
+                  disabled={isStartingOnlineGame}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg text-base md:text-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Brain className="w-5 h-5" />
+                  <span>{isStartingOnlineGame ? "Starting..." : "Start An Online Game Session (AI)"}</span>
                 </button>
 
                 <button

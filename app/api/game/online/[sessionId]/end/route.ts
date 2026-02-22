@@ -26,6 +26,10 @@ export async function POST(
 
     const session = sessionResult.rows[0]
 
+    if (session.creator_user_id !== parseInt(userId)) {
+      return NextResponse.json({ success: false, message: "Not authorized to end this session" }, { status: 403 })
+    }
+
     if (session.status === "ended") {
       return NextResponse.json({ success: true, message: "Session already ended" })
     }

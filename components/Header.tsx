@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Mail, Globe, X, Send, Search, Menu, LogOut, LogIn } from "lucide-react"
+import { Mail, Bell, Award, Calendar, MessageSquare, Heart, X, Send, Search, Menu, LogOut, LogIn } from "lucide-react"
 
 interface HeaderProps {
   currentPage?: string
@@ -21,12 +21,13 @@ interface Message {
 
 interface Notification {
   id: string
-  type: "message" | "cosign" | "response" | "event_invite"
+  type: "message" | "cosign" | "response" | "event_invite" | "YBUCKS_EARNED" | "general"
   from: string
   content: string
   timestamp: string
   read: boolean
   eventId?: number
+  title?: string
 }
 
 export default function Header({ currentPage = "Home" }: HeaderProps) {
@@ -50,6 +51,41 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   const [groupChatRecipients, setGroupChatRecipients] = useState<string[]>([])
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const notificationRef = useRef<HTMLDivElement>(null)
+  const mobileNotificationRef = useRef<HTMLDivElement>(null)
+
+  const formatRelativeTime = (timestamp: string) => {
+    const now = new Date()
+    const date = new Date(timestamp)
+    const diffMs = now.getTime() - date.getTime()
+    const diffSec = Math.floor(diffMs / 1000)
+    const diffMin = Math.floor(diffSec / 60)
+    const diffHour = Math.floor(diffMin / 60)
+    const diffDay = Math.floor(diffHour / 24)
+
+    if (diffSec < 60) return "Just now"
+    if (diffMin < 60) return `${diffMin} min ago`
+    if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? "s" : ""} ago`
+    if (diffDay === 1) return "Yesterday"
+    if (diffDay < 7) return `${diffDay} days ago`
+    return date.toLocaleDateString()
+  }
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "YBUCKS_EARNED":
+        return <Award className="w-5 h-5 text-yellow-500" />
+      case "event_invite":
+        return <Calendar className="w-5 h-5 text-blue-500" />
+      case "message":
+        return <MessageSquare className="w-5 h-5 text-green-500" />
+      case "cosign":
+        return <Heart className="w-5 h-5 text-pink-500" />
+      default:
+        return <Bell className="w-5 h-5 text-amber-500" />
+    }
+  }
 
   // Mock users for search
   const [allUsers] = useState([
@@ -67,6 +103,74 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
     "+emmawilson",
   ])
 
+  const fetchNotifications = useCallback((userId: string) => {
+    const invitesPromise = fetch(`/api/events/invites?userId=${userId}`)
+      .then(res => res.json())
+      .catch(() => ({ success: false, invites: [] }))
+
+    const notifsPromise = fetch(`/api/notifications?userId=${userId}`)
+      .then(res => res.json())
+      .catch(() => ({ success: false, notifications: [], unreadCount: 0 }))
+
+    Promise.all([invitesPromise, notifsPromise]).then(([inviteData, notifData]) => {
+      const allNotifs: Notification[] = []
+      let totalUnread = 0
+
+      if (inviteData.success && inviteData.invites?.length > 0) {
+        const eventNotifs: Notification[] = inviteData.invites.map((inv: any) => ({
+          id: `event-${inv.event_id}`,
+          type: "event_invite" as const,
+          from: `${inv.creator_first_name} ${inv.creator_last_name}`,
+          content: `invited you to "${inv.title}"`,
+          timestamp: inv.invited_at,
+          read: false,
+          eventId: inv.event_id,
+        }))
+        allNotifs.push(...eventNotifs)
+        totalUnread += eventNotifs.length
+      }
+
+      if (notifData.success && notifData.notifications?.length > 0) {
+        const dbNotifs: Notification[] = notifData.notifications.map((n: any) => ({
+          id: `notif-${n.id}`,
+          type: n.type || "general",
+          from: n.title || "YsUp",
+          content: n.message || "",
+          timestamp: n.created_at,
+          read: n.read,
+          title: n.title,
+        }))
+        allNotifs.push(...dbNotifs)
+        totalUnread += notifData.unreadCount || 0
+      }
+
+      allNotifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      setNotifications(allNotifs)
+      setUnreadNotifications(totalUnread)
+    })
+  }, [])
+
+  const markAllAsRead = useCallback(() => {
+    const storedUser = localStorage.getItem("currentUser")
+    if (!storedUser) return
+    const userData = JSON.parse(storedUser)
+    if (!userData.id) return
+
+    fetch("/api/notifications/read", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: userData.id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+          setUnreadNotifications(0)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
@@ -79,34 +183,32 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
       setIsLoggedIn(true)
 
       if (userData.id) {
-        fetch(`/api/events/invites?userId=${userData.id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.invites.length > 0) {
-              const eventNotifs: Notification[] = data.invites.map((inv: any) => ({
-                id: `event-${inv.event_id}`,
-                type: "event_invite" as const,
-                from: `${inv.creator_first_name} ${inv.creator_last_name}`,
-                content: `invited you to "${inv.title}"`,
-                timestamp: inv.invited_at,
-                read: false,
-                eventId: inv.event_id,
-              }))
-              setNotifications(eventNotifs)
-              setUnreadNotifications(eventNotifs.length)
-            } else {
-              setNotifications([])
-              setUnreadNotifications(0)
-            }
-          })
-          .catch(() => {
-            setNotifications([])
-            setUnreadNotifications(0)
-          })
+        fetchNotifications(userData.id)
+        const interval = setInterval(() => fetchNotifications(userData.id), 30000)
+        return () => clearInterval(interval)
       }
     } else {
       setIsLoggedIn(false)
     }
+  }, [fetchNotifications])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notificationRef.current && !notificationRef.current.contains(event.target as Node) &&
+        mobileNotificationRef.current && !mobileNotificationRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false)
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node) && !mobileNotificationRef.current) {
+        setShowNotifications(false)
+      }
+      if (mobileNotificationRef.current && !mobileNotificationRef.current.contains(event.target as Node) && !notificationRef.current) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const markMessagesAsRead = (conversationId: string) => {
@@ -261,10 +363,61 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                 <Mail className="w-6 h-6" />
               </button>
             </div>
-            <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
-              {unreadNotifications}
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-amber-100 hover:text-white transition-colors"
+              >
+                <Bell className="w-6 h-6" />
+                {unreadNotifications > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    {unreadNotifications}
+                  </div>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute top-10 right-0 w-80 bg-white rounded-lg shadow-2xl border border-amber-200 z-50 max-h-96 flex flex-col">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100 bg-amber-50 rounded-t-lg">
+                    <h3 className="font-bold text-amber-900 text-sm">Notifications</h3>
+                    {unreadNotifications > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-amber-700 hover:text-amber-900 font-medium"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="overflow-y-auto flex-1">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-400 text-sm">No notifications</div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`flex items-start gap-3 px-4 py-3 border-b border-gray-50 hover:bg-amber-50 transition-colors ${
+                            !notif.read ? "bg-amber-50/50" : ""
+                          }`}
+                        >
+                          <div className="mt-0.5 flex-shrink-0">{getNotificationIcon(notif.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {notif.title || notif.from}
+                            </p>
+                            <p className="text-xs text-gray-600 line-clamp-2">{notif.content}</p>
+                            <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notif.timestamp)}</p>
+                          </div>
+                          {!notif.read && (
+                            <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <Globe className="text-amber-100 w-6 h-6" />
           </div>
         </div>
 
@@ -386,8 +539,60 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                 <Mail className="w-5 h-5" />
               </button>
             </div>
-            <div className="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-              {unreadNotifications}
+            <div className="relative" ref={mobileNotificationRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-amber-100 hover:text-white transition-colors"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadNotifications > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                    {unreadNotifications}
+                  </div>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute top-8 left-0 w-72 bg-white rounded-lg shadow-2xl border border-amber-200 z-50 max-h-80 flex flex-col">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-amber-100 bg-amber-50 rounded-t-lg">
+                    <h3 className="font-bold text-amber-900 text-xs">Notifications</h3>
+                    {unreadNotifications > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-amber-700 hover:text-amber-900 font-medium"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="overflow-y-auto flex-1">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-400 text-sm">No notifications</div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`flex items-start gap-2 px-3 py-2 border-b border-gray-50 hover:bg-amber-50 transition-colors ${
+                            !notif.read ? "bg-amber-50/50" : ""
+                          }`}
+                        >
+                          <div className="mt-0.5 flex-shrink-0">{getNotificationIcon(notif.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {notif.title || notif.from}
+                            </p>
+                            <p className="text-xs text-gray-600 line-clamp-2">{notif.content}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(notif.timestamp)}</p>
+                          </div>
+                          {!notif.read && (
+                            <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -506,7 +711,7 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                 </Link>
               )}
               <div className="flex items-center space-x-2 text-amber-100 px-6 py-3 border-t border-amber-700">
-                <Globe className="w-5 h-5" />
+                <Bell className="w-5 h-5" />
                 <span className="text-sm">Connected to Campus Network</span>
               </div>
             </div>
