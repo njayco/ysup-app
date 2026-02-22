@@ -321,13 +321,13 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
   }
 
   const allNavItems = [
-    { name: "Homepage", href: "/bison-homepage", public: true, badge: "NEW", badgeColor: "green" },
-    { name: "Dashboard", href: "/dashboard", badge: "NEW", badgeColor: "green" },
+    { name: "Homepage", href: "/bison-homepage", public: true },
+    { name: "Dashboard", href: "/dashboard" },
     { name: "The Game", href: "/the-game", badge: "NEW", badgeColor: "green" },
-    { name: "The Hilltop", href: "/hilltop", badge: "TBA", badgeColor: "red" },
-    { name: "Bulletin Board", href: "/bulletin-board", badge: "TBA", badgeColor: "red" },
-    { name: "HU Bookstore", href: "/bookstore", badge: "TBA", badgeColor: "red" },
-    { name: "Academy", href: "/academy", badge: "TBA", badgeColor: "red" },
+    { name: "The Hilltop", href: "/hilltop", badge: "🔜", badgeColor: "emoji" },
+    { name: "Bulletin Board", href: "/bulletin-board", badge: "🔜", badgeColor: "emoji" },
+    { name: "HU Bookstore", href: "/bookstore", badge: "🔜", badgeColor: "emoji" },
+    { name: "Academy", href: "/academy", badge: "🔜", badgeColor: "emoji" },
     { name: "About Us", href: "https://ysup.co", external: true, public: true },
   ]
 
@@ -445,9 +445,13 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
               >
                 {item.name}
                 {item.badge && (
-                  <span className={`absolute -top-1 -right-1 text-white text-xs px-1 rounded ${item.badgeColor === "red" ? "bg-red-500" : "bg-green-500"}`}>
-                    {item.badge}
-                  </span>
+                  item.badgeColor === "emoji" ? (
+                    <span className="absolute -top-1 -right-1 text-sm">{item.badge}</span>
+                  ) : (
+                    <span className={`absolute -top-1 -right-1 text-white text-xs px-1 rounded ${item.badgeColor === "red" ? "bg-red-500" : "bg-green-500"}`}>
+                      {item.badge}
+                    </span>
+                  )
                 )}
               </Link>
             )
@@ -684,7 +688,11 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
                     <div className="flex items-center justify-between">
                       <span className="text-lg">{item.name}</span>
                       {item.badge && (
-                        <span className={`text-white text-xs px-2 py-1 rounded ${item.badgeColor === "red" ? "bg-red-500" : "bg-green-500"}`}>{item.badge}</span>
+                        item.badgeColor === "emoji" ? (
+                          <span className="text-sm">{item.badge}</span>
+                        ) : (
+                          <span className={`text-white text-xs px-2 py-1 rounded ${item.badgeColor === "red" ? "bg-red-500" : "bg-green-500"}`}>{item.badge}</span>
+                        )
                       )}
                     </div>
                   </Link>
