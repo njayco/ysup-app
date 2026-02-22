@@ -20,9 +20,17 @@ import {
   Brain,
 } from "lucide-react"
 
+interface StudentInput {
+  firstName: string
+  lastName: string
+  username: string
+}
+
 interface Student {
   id: string
-  name: string
+  firstName: string
+  lastName: string
+  username: string
   ybucks: number
   assists: number
   questions: number
@@ -56,7 +64,7 @@ export default function TheGamePage() {
     teacherName: "",
     subject: "",
     className: "",
-    studentNames: [""],
+    students: [{ firstName: "", lastName: "", username: "" }] as StudentInput[],
   })
 
   useEffect(() => {
@@ -77,24 +85,24 @@ export default function TheGamePage() {
   const addStudentField = () => {
     setNewSessionData({
       ...newSessionData,
-      studentNames: [...newSessionData.studentNames, ""],
+      students: [...newSessionData.students, { firstName: "", lastName: "", username: "" }],
     })
   }
 
   const removeStudentField = (index: number) => {
-    const newNames = newSessionData.studentNames.filter((_, i) => i !== index)
+    const newStudents = newSessionData.students.filter((_, i) => i !== index)
     setNewSessionData({
       ...newSessionData,
-      studentNames: newNames.length > 0 ? newNames : [""],
+      students: newStudents.length > 0 ? newStudents : [{ firstName: "", lastName: "", username: "" }],
     })
   }
 
-  const updateStudentName = (index: number, name: string) => {
-    const newNames = [...newSessionData.studentNames]
-    newNames[index] = name
+  const updateStudentField = (index: number, field: keyof StudentInput, value: string) => {
+    const newStudents = [...newSessionData.students]
+    newStudents[index] = { ...newStudents[index], [field]: value }
     setNewSessionData({
       ...newSessionData,
-      studentNames: newNames,
+      students: newStudents,
     })
   }
 
@@ -104,15 +112,19 @@ export default function TheGamePage() {
       return
     }
 
-    const validStudentNames = newSessionData.studentNames.filter((name) => name.trim() !== "")
-    if (validStudentNames.length === 0) {
-      alert("Please add at least one student")
+    const validStudents = newSessionData.students.filter(
+      (s) => s.firstName.trim() !== "" && s.lastName.trim() !== "" && s.username.trim() !== ""
+    )
+    if (validStudents.length === 0) {
+      alert("Please add at least one student with first name, last name, and +username")
       return
     }
 
-    const students: Student[] = validStudentNames.map((name, index) => ({
+    const students: Student[] = validStudents.map((s, index) => ({
       id: `student-${Date.now()}-${index}`,
-      name: name.trim(),
+      firstName: s.firstName.trim(),
+      lastName: s.lastName.trim(),
+      username: s.username.trim().replace(/^\+/, ""),
       ybucks: 0,
       assists: 0,
       questions: 0,
@@ -143,8 +155,20 @@ export default function TheGamePage() {
       teacherName: "",
       subject: "",
       className: "",
-      studentNames: [""],
+      students: [{ firstName: "", lastName: "", username: "" }],
     })
+  }
+
+  const awardYbucksToUser = async (username: string, amount: number, reason: string) => {
+    try {
+      await fetch("/api/game/inperson/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, amount, reason }),
+      })
+    } catch (err) {
+      console.error("Failed to award YBucks to user:", err)
+    }
   }
 
   const updateStudentPoints = (studentId: string, action: "assist" | "question" | "correct") => {
@@ -156,6 +180,12 @@ export default function TheGamePage() {
       correct: 10,
     }
 
+    const reasons: Record<string, string> = {
+      assist: "Assist in YsUp Game",
+      question: "Raised Hand in YsUp Game",
+      correct: "Correct Answer in YsUp Game",
+    }
+
     const updatedStudents = currentSession.students.map((student) => {
       if (student.id === studentId) {
         const newStudent = { ...student }
@@ -164,6 +194,8 @@ export default function TheGamePage() {
         if (action === "assist") newStudent.assists += 1
         if (action === "question") newStudent.questions += 1
         if (action === "correct") newStudent.correctAnswers += 1
+
+        awardYbucksToUser(newStudent.username, points[action], reasons[action])
 
         return newStudent
       }
@@ -188,6 +220,7 @@ export default function TheGamePage() {
 
     const updatedStudents = currentSession!.students.map((student) => {
       if (student.id === studentId) {
+        awardYbucksToUser(student.username, points, "Custom points in YsUp Game")
         return { ...student, ybucks: student.ybucks + points }
       }
       return student
@@ -209,6 +242,10 @@ export default function TheGamePage() {
   const addClassPoints = () => {
     const points = Number.parseInt(classCustomPoints || "0")
     if (points === 0) return
+
+    currentSession!.students.forEach((student) => {
+      awardYbucksToUser(student.username, points, "Class points in YsUp Game")
+    })
 
     const updatedStudents = currentSession!.students.map((student) => ({
       ...student,
@@ -559,7 +596,8 @@ export default function TheGamePage() {
                       <div className="flex items-center">
                         {student.isCaptain && <Crown className="w-4 h-4 text-yellow-500 mr-2" />}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                          <div className="text-sm font-medium text-gray-900">{student.firstName} {student.lastName}</div>
+                          <div className="text-xs text-gray-500">+{student.username}</div>
                           {student.isCaptain && <div className="text-xs text-yellow-600">Team Captain</div>}
                         </div>
                       </div>
@@ -650,7 +688,8 @@ export default function TheGamePage() {
                           <div className="flex items-center">
                             {student.isCaptain && <Crown className="w-5 h-5 text-yellow-500 mr-2" />}
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                              <div className="text-sm font-medium text-gray-900">{student.firstName} {student.lastName}</div>
+                              <div className="text-xs text-gray-500">+{student.username}</div>
                               {student.isCaptain && <div className="text-xs text-yellow-600">Team Captain</div>}
                             </div>
                           </div>
@@ -753,7 +792,7 @@ export default function TheGamePage() {
                           {index === 1 && <Award className="w-5 h-5 md:w-6 md:h-6 text-gray-500" />}
                           {index === 2 && <Star className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />}
                           <div>
-                            <div className="font-bold text-sm md:text-base">{student.name}</div>
+                            <div className="font-bold text-sm md:text-base">{student.firstName} {student.lastName}</div>
                             <div className="text-xs md:text-sm text-gray-600">
                               {index === 0 ? "🥇 1st Place" : index === 1 ? "🥈 2nd Place" : "🥉 3rd Place"}
                             </div>
@@ -981,39 +1020,60 @@ export default function TheGamePage() {
 
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Student Names</label>
+                  <label className="block text-sm font-medium text-gray-700">Players</label>
                   <button
                     onClick={addStudentField}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm flex items-center space-x-1"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Student</span>
+                    <span>Add Player</span>
                   </button>
                 </div>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {newSessionData.studentNames.map((name, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => updateStudentName(index, e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm md:text-base"
-                        placeholder={`Student ${index + 1} name`}
-                      />
-                      {newSessionData.studentNames.length > 1 && (
-                        <button
-                          onClick={() => removeStudentField(index)}
-                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      )}
-                      {index === 0 && <span className="text-xs text-yellow-600 font-medium whitespace-nowrap">Captain</span>}
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {newSessionData.students.map((student, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-gray-500">Player {index + 1}</span>
+                        <div className="flex items-center space-x-2">
+                          {index === 0 && <span className="text-xs text-yellow-600 font-medium">Captain</span>}
+                          {newSessionData.students.length > 1 && (
+                            <button
+                              onClick={() => removeStudentField(index)}
+                              className="bg-red-600 hover:bg-red-700 text-white p-1 rounded"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          value={student.firstName}
+                          onChange={(e) => updateStudentField(index, "firstName", e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                          placeholder="First Name"
+                        />
+                        <input
+                          type="text"
+                          value={student.lastName}
+                          onChange={(e) => updateStudentField(index, "lastName", e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                          placeholder="Last Name"
+                        />
+                        <input
+                          type="text"
+                          value={student.username}
+                          onChange={(e) => updateStudentField(index, "username", e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                          placeholder="+username"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">First student will be set as team captain by default</p>
+                <p className="text-xs text-gray-500 mt-2">First player will be set as team captain by default. Enter their YsUp +username so they receive YBucks to their account.</p>
               </div>
 
               <div className="flex space-x-4">
