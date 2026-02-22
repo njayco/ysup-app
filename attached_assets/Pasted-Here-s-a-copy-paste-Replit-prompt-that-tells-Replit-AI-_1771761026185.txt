@@ -1,0 +1,123 @@
+Here’s a **copy/paste Replit prompt** that tells Replit AI to add **Twilio SMS (2-way capable)** + **6-digit phone verification** for **signup** and **password reset** in your **existing Next.js 14 + Postgres + server-actions** architecture—without breaking your current auth.
+
+```text
+You are working inside an existing Next.js 14 (App Router) TypeScript app named “YsUp Campus Network” using:
+- PostgreSQL
+- server actions in app/actions/auth.ts
+- bcryptjs password hashing
+- an existing users table
+- existing signup/login/forgot password flows
+
+TASK: Add Twilio SMS sending + verification codes, including:
+1) NEW USER SIGNUP PHONE VERIFICATION
+- When a user signs up for the first time, they must provide a phone number (E.164 format, e.g. +15165551234).
+- After creating the user record (or as part of signup), send an SMS with a RANDOM 6-digit code.
+- Show a “Verify phone” step before onboarding proceeds.
+- User enters the code; if valid, mark their phone as verified and continue to onboarding.
+- If code is wrong/expired, show a clear error.
+- Add “Resend code” with rate limits.
+
+2) FORGOT PASSWORD BY SMS (PHONE-BASED)
+- On “Forgot password”, user enters their phone number.
+- If phone exists and is verified, send random 6-digit code via SMS.
+- User enters the code; if valid, allow them to set a new password.
+- After successful reset, automatically log them in (create session as the existing system does).
+- If phone is not found or not verified, return a safe message (do not reveal which is true).
+
+3) REPLIES INTEGRATION (2-WAY READY)
+- Create a Twilio webhook endpoint to receive inbound SMS replies.
+- Store inbound messages in Postgres for future features (ex: network invites, support, onboarding help).
+- Do NOT build a full chat UI now, but implement the backend route + DB table + verification of Twilio signature.
+- Log/return 200 properly so Twilio accepts it.
+
+ARCHITECTURE REQUIREMENTS
+- Use existing patterns: server actions for auth mutations, API routes for webhook handling.
+- Add new files only where appropriate:
+  - lib/twilio.ts (Twilio client + helpers)
+  - app/api/sms/webhook/route.ts (POST endpoint for inbound messages)
+  - app/actions/sms.ts (send code, verify code, resend code helpers)
+  - app/(auth)/verify-phone/page.tsx (or appropriate route) for entering code after signup
+  - app/(auth)/forgot-password/page.tsx updates: phone -> send code -> verify -> reset password
+- Keep code TypeScript-first, clean, and consistent with existing project structure.
+- Use shadcn/ui components and Tailwind styling (match wood/amber theme).
+- Ensure accessibility (ARIA labels, proper form validation).
+
+DATABASE CHANGES (PostgreSQL)
+1) Add columns to users table (via migration script):
+- phone_number TEXT UNIQUE
+- phone_verified BOOLEAN DEFAULT FALSE
+- phone_verified_at TIMESTAMP NULL
+
+2) Create a new table sms_verification_codes:
+- id UUID PK
+- user_id UUID FK NULL (nullable for forgot password lookup until resolved)
+- phone_number TEXT NOT NULL
+- code_hash TEXT NOT NULL (hash the 6-digit code, do NOT store plaintext)
+- purpose TEXT NOT NULL CHECK IN ('signup', 'reset_password')
+- expires_at TIMESTAMP NOT NULL (10 minutes)
+- attempts INT DEFAULT 0
+- max_attempts INT DEFAULT 5
+- created_at TIMESTAMP DEFAULT now()
+- consumed_at TIMESTAMP NULL
+- last_sent_at TIMESTAMP NULL
+- send_count INT DEFAULT 1
+Indexes:
+- (phone_number, purpose, expires_at)
+- (user_id)
+
+3) Create table sms_inbound_messages:
+- id UUID PK
+- from_number TEXT NOT NULL
+- to_number TEXT NOT NULL
+- body TEXT NOT NULL
+- message_sid TEXT UNIQUE NOT NULL
+- received_at TIMESTAMP DEFAULT now()
+- raw_payload JSONB NOT NULL
+
+SECURITY / ABUSE CONTROLS
+- Rate limit sending codes: per phone number (e.g., 3 sends per 15 minutes) and per IP if feasible.
+- Block brute force: increment attempts; lock out after max_attempts until expiration.
+- Always respond with generic messages on forgot password so attackers can’t enumerate accounts.
+- Twilio signature validation for webhook:
+  - Use TWILIO_AUTH_TOKEN and validate X-Twilio-Signature.
+- Validate E.164 phone formatting on input.
+
+TWILIO CONFIG
+- Add env vars:
+  - TWILIO_ACCOUNT_SID
+  - TWILIO_AUTH_TOKEN
+  - TWILIO_PHONE_NUMBER
+- Use Twilio Node SDK.
+- Implement sendSms(to, message) helper.
+- Provide clear README section for setting Twilio webhook URL:
+  - POST https://<your-domain>/api/sms/webhook
+
+UX FLOW DETAILS
+SIGNUP:
+- signup form includes phone number field
+- after successful signup credentials creation, redirect to /verify-phone
+- /verify-phone shows “We sent a 6-digit code to +1•••” and input
+- on verify success: mark verified and redirect to /onboarding (existing wizard)
+
+FORGOT PASSWORD:
+- step 1: enter phone -> “Send code”
+- step 2: enter code -> “Verify”
+- step 3: set new password -> on success auto login + redirect to /dashboard
+
+IMPLEMENTATION DETAILS
+- Use crypto-secure random code generation (6 digits).
+- Hash code with bcrypt (or a fast hash + salt). Prefer bcrypt for consistency.
+- Ensure only the latest unexpired code for a phone/purpose is accepted (or accept any unexpired not-consumed but invalidate previous by consuming/overwriting).
+- Use transactions where needed.
+- Add server action return types with proper error handling.
+
+DELIVERABLES
+- Create/modify all needed files.
+- Add SQL migration(s) in a /migrations folder or the project’s existing migration system.
+- Update the signup and forgot-password UI pages to match the new flow.
+- Add minimal tests or at least a “manual test checklist” section.
+
+IMPORTANT: Do not remove existing email/password login. This SMS layer is for verification + password reset only (for now). Keep future-proofing for “send outgoing emails not supported yet” messaging elsewhere.
+```
+
+If you want, I can also give you a **second prompt** that extends this into **“Invite links via SMS”** (for your Class Networks share menu) using the same Twilio plumbing—no new auth changes needed.
