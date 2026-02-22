@@ -230,6 +230,7 @@ pnpm start
 | Service | Purpose |
 |---------|---------|
 | Google Books API | Book search data and ISBNs |
+| Free Dictionary API | Word definitions, phonetics, and pronunciation |
 | OpenAlex API | Scholarly article search (240M+ works) |
 | Wikipedia API | Encyclopedia article search |
 | DuckDuckGo | Web search results |
