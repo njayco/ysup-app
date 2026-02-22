@@ -21,7 +21,7 @@ interface Message {
 
 interface Notification {
   id: string
-  type: "message" | "cosign" | "response" | "event_invite" | "YBUCKS_EARNED" | "general"
+  type: "message" | "cosign" | "response" | "event_invite" | "YBUCKS_EARNED" | "FOLLOW" | "TRUE" | "general"
   from: string
   content: string
   timestamp: string
@@ -82,6 +82,10 @@ export default function Header({ currentPage = "Home" }: HeaderProps) {
         return <MessageSquare className="w-5 h-5 text-green-500" />
       case "cosign":
         return <Heart className="w-5 h-5 text-pink-500" />
+      case "FOLLOW":
+        return <Award className="w-5 h-5 text-blue-500" />
+      case "TRUE":
+        return <Heart className="w-5 h-5 text-amber-600" />
       default:
         return <Bell className="w-5 h-5 text-amber-500" />
     }

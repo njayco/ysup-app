@@ -20,6 +20,32 @@ export async function POST(request: Request) {
       await pool.query(`DELETE FROM profile_media_trues WHERE media_id=$1 AND user_id=$2`, [mediaId, userId])
     } else {
       await pool.query(`INSERT INTO profile_media_trues (media_id, user_id) VALUES ($1, $2)`, [mediaId, userId])
+
+      const mediaOwner = await pool.query(
+        `SELECT pm.user_id as owner_id, u.username, u.first_name, u.last_name
+         FROM profile_media pm
+         JOIN users u ON u.id = $2
+         WHERE pm.id = $1`,
+        [mediaId, userId]
+      )
+
+      if (mediaOwner.rows.length > 0) {
+        const row = mediaOwner.rows[0]
+        const ownerId = row.owner_id
+        if (ownerId !== userId) {
+          await pool.query(
+            `INSERT INTO notifications (user_id, actor_id, type, title, message, entity_type, entity_id, meta)
+             VALUES ($1, $2, 'TRUE', 'New TRUE', $3, 'MEDIA', $4, $5)`,
+            [
+              ownerId,
+              userId,
+              `+${row.username} gave you a TRUE`,
+              mediaId,
+              JSON.stringify({ actorUsername: row.username, actorName: `${row.first_name} ${row.last_name}` }),
+            ]
+          )
+        }
+      }
     }
 
     const countResult = await pool.query(

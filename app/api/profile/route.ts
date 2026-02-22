@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const normalizedUsername = username.trim().toLowerCase().replace(/^\+/, "")
 
     const userResult = await pool.query(
-      `SELECT id, username, first_name, last_name, college, profile_image, bio, headline, status_note, major, graduation_year, created_at
+      `SELECT id, username, first_name, last_name, college, profile_image, bio, headline, status_note, major, graduation_year, created_at, ybucks
        FROM users WHERE LOWER(REPLACE(username, '+', '')) = $1`,
       [normalizedUsername]
     )
@@ -54,6 +54,7 @@ export async function GET(request: Request) {
         major: user.major || "",
         graduationYear: user.graduation_year || "",
         createdAt: user.created_at,
+        ybucks: user.ybucks || 0,
       },
       resume: resumeResult.rows,
       media: mediaResult.rows.map((m: any) => ({

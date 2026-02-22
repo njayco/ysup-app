@@ -37,6 +37,17 @@ interface ProfileUser {
   major: string
   graduationYear: string
   createdAt: string
+  ybucks: number
+}
+
+interface NetworkItem {
+  id: number
+  name: string
+  slug: string
+  type: string
+  privacy: string
+  logo_url: string | null
+  member_count: number
 }
 
 interface ResumeSection {
@@ -142,6 +153,10 @@ export default function ProfilePage() {
 
   const [activeGalleryTab, setActiveGalleryTab] = useState<"posts" | "tagged">("posts")
 
+  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false })
+  const [followLoading, setFollowLoading] = useState(false)
+  const [publicNetworks, setPublicNetworks] = useState<NetworkItem[]>([])
+
   useEffect(() => {
     if (RESERVED_ROUTES.includes(usernameParam.toLowerCase())) {
       return
@@ -186,11 +201,53 @@ export default function ProfilePage() {
       setEditMajor(data.user.major)
       setEditGradYear(data.user.graduationYear)
       setStatusValue(data.user.statusNote)
+
+      loadFollowStats(data.user.id)
+      loadPublicNetworks(data.user.id)
     } catch {
       setNotFound(true)
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadFollowStats = async (userId: number) => {
+    try {
+      const stored = localStorage.getItem("currentUser")
+      const viewerId = stored ? JSON.parse(stored).id : null
+      const res = await fetch(`/api/follow?userId=${userId}&viewerId=${viewerId || ""}`)
+      const data = await res.json()
+      setFollowStats(data)
+    } catch {}
+  }
+
+  const loadPublicNetworks = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/profile/networks?userId=${userId}`)
+      const data = await res.json()
+      if (data.success) setPublicNetworks(data.networks)
+    } catch {}
+  }
+
+  const handleFollow = async () => {
+    if (!currentUser || !profileUser || followLoading) return
+    setFollowLoading(true)
+    try {
+      if (followStats.isFollowing) {
+        const res = await fetch(`/api/follow?followerId=${currentUser.id}&followingId=${profileUser.id}`, { method: "DELETE" })
+        const data = await res.json()
+        if (data.success) setFollowStats(data)
+      } else {
+        const res = await fetch("/api/follow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ followerId: currentUser.id, followingId: profileUser.id }),
+        })
+        const data = await res.json()
+        if (data.success) setFollowStats(data)
+      }
+    } catch {}
+    setFollowLoading(false)
   }
 
   const saveProfile = async () => {
@@ -383,7 +440,7 @@ export default function ProfilePage() {
           }}
         >
           <div
-            className="absolute left-1/2 top-0 bottom-0 w-8 -translate-x-1/2 z-10 pointer-events-none"
+            className="absolute left-1/2 top-0 bottom-0 w-8 -translate-x-1/2 z-10 pointer-events-none hidden lg:block"
             style={{
               background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 30%, rgba(139,105,20,0.1) 50%, rgba(0,0,0,0.05) 70%, rgba(0,0,0,0.15) 100%)",
               boxShadow: "inset 2px 0 4px rgba(0,0,0,0.1), inset -2px 0 4px rgba(0,0,0,0.1)",
@@ -458,6 +515,48 @@ export default function ProfilePage() {
                   <p className="text-amber-800 text-sm mt-2 text-center max-w-xs" style={{ fontFamily: "'Georgia', serif" }}>
                     {profileUser.headline || (isOwner ? "Add a headline..." : "")}
                   </p>
+                )}
+
+                {/* YBUCKS Display - own profile only */}
+                {isOwner && (
+                  <div className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-100 border border-amber-300"
+                    style={{ boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)" }}>
+                    <span className="text-amber-600 text-xs font-semibold uppercase tracking-wide">YBucks</span>
+                    <span className="text-amber-900 text-xl font-bold" style={{ fontFamily: "'Georgia', serif" }}>
+                      {profileUser.ybucks?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                )}
+
+                {/* Followers / Following Stats */}
+                <div className="mt-3 flex items-center gap-6 text-center">
+                  <div>
+                    <p className="text-amber-900 text-lg font-bold" style={{ fontFamily: "'Georgia', serif" }}>
+                      {followStats.followersCount}
+                    </p>
+                    <p className="text-amber-600 text-xs uppercase tracking-wide">Followers</p>
+                  </div>
+                  <div>
+                    <p className="text-amber-900 text-lg font-bold" style={{ fontFamily: "'Georgia', serif" }}>
+                      {followStats.followingCount}
+                    </p>
+                    <p className="text-amber-600 text-xs uppercase tracking-wide">Following</p>
+                  </div>
+                </div>
+
+                {/* Follow / Unfollow Button */}
+                {currentUser && !isOwner && (
+                  <button
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                    className={`mt-3 px-6 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      followStats.isFollowing
+                        ? "bg-amber-200 text-amber-800 border border-amber-400 hover:bg-amber-300"
+                        : "bg-amber-800 text-amber-100 hover:bg-amber-700"
+                    } disabled:opacity-50`}
+                  >
+                    {followLoading ? "..." : followStats.isFollowing ? "Following" : "Follow"}
+                  </button>
                 )}
               </div>
 
@@ -650,6 +749,34 @@ export default function ProfilePage() {
                     )}
                   </div>
                 )}
+              {/* Public Networks */}
+              {publicNetworks.length > 0 && (
+                <div className="max-w-md mx-auto mt-6">
+                  <div className="flex items-center gap-2 mb-3 border-b border-amber-300 pb-1">
+                    <GraduationCap className="w-4 h-4 text-amber-700" />
+                    <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>
+                      Networks
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    {publicNetworks.map((net) => (
+                      <a
+                        key={net.id}
+                        href={`/dashboard?network=${net.slug}`}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-amber-100 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center text-amber-100 text-xs font-bold flex-shrink-0">
+                          {net.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-amber-900 text-sm font-medium truncate">{net.name}</p>
+                          <p className="text-amber-600 text-xs capitalize">{net.type} &middot; {net.member_count} members</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
               </div>
             </div>
 
