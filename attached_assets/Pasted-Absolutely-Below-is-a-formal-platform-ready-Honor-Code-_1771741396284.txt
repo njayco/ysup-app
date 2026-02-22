@@ -1,0 +1,147 @@
+Absolutely. Below is a **formal, platform-ready Honor Code & Disclaimer** for **YsUp Campus** that aligns with your educational mission, protects your platform legally, and reinforces the culture of integrity you're building.
+
+You can paste this into your sign-up flow with a required checkbox:
+
+---
+
+# YsUp Campus Honor Code & Community Disclaimer
+
+**Effective Date:** [Insert Date]
+
+Welcome to YsUp Campus — a collaborative educational platform designed to promote independent learning, integrity, and positive community engagement.
+
+By accessing or using YsUp Campus, you agree to uphold the following Honor Code and Community Standards.
+
+---
+
+## 1. Academic Integrity
+
+YsUp Campus is designed to promote independent thinking and learning. Users agree:
+
+* Not to use the platform to cheat on assignments, exams, quizzes, or academic evaluations.
+* Not to request or share direct answers for graded coursework when doing so violates school policies.
+* Not to impersonate another student or submit work on behalf of another person.
+* Not to use AI tools within YsUp to bypass learning objectives or academic rules set by instructors.
+
+YsUp encourages guidance, hints, collaboration, and critical thinking — not answer-sharing or academic dishonesty.
+
+Violation of academic integrity may result in:
+
+* Suspension or permanent removal from YsUp Campus
+* Notification to educators or institutions (if applicable)
+
+---
+
+## 2. Copyright & Intellectual Property Protection
+
+Users agree NOT to:
+
+* Upload, share, distribute, or reproduce copyrighted materials without proper authorization.
+* Share pirated textbooks, movies, music, software, exam banks, or proprietary academic materials.
+* Post protected content that violates U.S. or international copyright law.
+
+All users are responsible for ensuring the content they upload complies with copyright and intellectual property laws.
+
+YsUp Campus reserves the right to:
+
+* Remove infringing content immediately
+* Suspend or terminate accounts
+* Cooperate with legal authorities when required
+
+---
+
+## 3. Anti-Bullying & Respect Policy
+
+YsUp Campus maintains a zero-tolerance policy for:
+
+* Cyberbullying
+* Harassment
+* Hate speech
+* Threats of violence
+* Discrimination based on race, ethnicity, gender, religion, nationality, disability, or identity
+* Encouraging in-person bullying or real-world harm
+
+Users must treat others with dignity and respect in:
+
+* Class Networks
+* Direct messages
+* Bulletin boards
+* Public posts
+* Online game sessions
+* In-person interactions facilitated through YsUp
+
+Any behavior that creates a hostile, intimidating, or unsafe environment may result in immediate account suspension or permanent ban.
+
+---
+
+## 4. Illegal Activity Prohibition
+
+Users may not use YsUp Campus to:
+
+* Engage in fraud or identity theft
+* Sell or promote illegal goods or services
+* Coordinate harmful or unlawful activities
+* Distribute malware or attempt to hack the platform
+* Circumvent platform safeguards
+
+Illegal conduct may be reported to law enforcement authorities.
+
+---
+
+## 5. Responsible AI Usage
+
+Where YsUp integrates AI tools:
+
+* AI is designed to assist learning — not replace it.
+* Users agree not to manipulate or exploit AI systems for misconduct.
+* Users understand AI responses may not always be accurate and must use independent judgment.
+
+---
+
+## 6. Reporting Violations
+
+If you witness behavior that violates this Honor Code, you are encouraged to report it through the platform’s reporting system.
+
+Protecting the integrity of YsUp is a shared responsibility.
+
+---
+
+## 7. Platform Rights
+
+YsUp Campus reserves the right to:
+
+* Remove content
+* Suspend or terminate accounts
+* Restrict features
+* Update this Honor Code at any time
+
+Continued use of the platform constitutes acceptance of updated terms.
+
+---
+
+## 8. Agreement
+
+By checking the box below and creating or continuing to use a YsUp Campus account, you confirm that:
+
+☐ I have read and agree to the YsUp Campus Honor Code.
+☐ I commit to academic integrity, legal compliance, and respectful conduct.
+☐ I understand violations may result in suspension or removal from the platform.
+
+---
+
+### YsUp Philosophy
+
+YsUp stands for growth, discipline, and independent mastery.
+The goal is not just to get answers — but to become someone who can discover them.
+
+---
+
+If you'd like, I can also draft:
+
+* A shorter student-friendly version
+* A legal-strong Terms of Service version
+* A teacher/admin enforcement policy
+* A minor-friendly COPPA-compliant version
+* A version tailored for K–12 vs college
+
+Let me know the direction you want to take with YsUp Campus governance.
