@@ -20,9 +20,9 @@ export async function POST(request: Request) {
     const file = await driveCreateFile(type, title)
 
     const result = await pool.query(
-      `INSERT INTO workspace_docs (user_id, type, title, google_file_id, google_url)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [userId, type, title, file.fileId, file.url]
+      `INSERT INTO workspace_docs (user_id, type, title, google_file_id, google_url, google_preview_url)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [userId, type, title, file.fileId, file.url, file.previewUrl]
     )
 
     await pool.query(

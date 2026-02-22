@@ -103,15 +103,38 @@ export async function driveCreateFile(type: "pad" | "calc" | "slideshow", title:
 
   const file = await res.json()
 
+  try {
+    await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}/permissions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "reader",
+        type: "anyone",
+      }),
+    })
+  } catch (e) {
+    console.error("Failed to set sharing permissions:", e)
+  }
+
   const urlPrefixes: Record<string, string> = {
     pad: "https://docs.google.com/document/d/",
     calc: "https://docs.google.com/spreadsheets/d/",
     slideshow: "https://docs.google.com/presentation/d/",
   }
 
+  const previewSuffixes: Record<string, string> = {
+    pad: "/preview",
+    calc: "/preview",
+    slideshow: "/embed?start=false&loop=false",
+  }
+
   return {
     fileId: file.id,
     url: `${urlPrefixes[type]}${file.id}/edit`,
+    previewUrl: `${urlPrefixes[type]}${file.id}${previewSuffixes[type]}`,
   }
 }
 

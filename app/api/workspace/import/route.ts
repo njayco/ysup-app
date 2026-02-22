@@ -39,12 +39,18 @@ export async function POST(request: Request) {
       calc: "https://docs.google.com/spreadsheets/d/",
       slideshow: "https://docs.google.com/presentation/d/",
     }
+    const previewSuffixes: Record<string, string> = {
+      pad: "/preview",
+      calc: "/preview",
+      slideshow: "/embed?start=false&loop=false",
+    }
     const docUrl = `${urlPrefixes[type]}${fileId}/edit`
+    const previewUrl = `${urlPrefixes[type]}${fileId}${previewSuffixes[type]}`
 
     const result = await pool.query(
-      `INSERT INTO workspace_docs (user_id, type, title, google_file_id, google_url)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [userId, type, fileMeta.name || "Imported Document", fileId, docUrl]
+      `INSERT INTO workspace_docs (user_id, type, title, google_file_id, google_url, google_preview_url)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [userId, type, fileMeta.name || "Imported Document", fileId, docUrl, previewUrl]
     )
 
     return NextResponse.json(result.rows[0])
