@@ -160,7 +160,7 @@ export default function PadWorkspacePage() {
                   <ExternalLink className="w-3 h-3" /> Open in Google
                 </a>
               </div>
-              <iframe src={selectedDoc.google_preview_url || selectedDoc.google_url?.replace(/\/edit.*$/, '/preview')} className="flex-1 w-full min-h-[500px]" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" />
+              <iframe src={selectedDoc.google_url} className="flex-1 w-full min-h-[500px]" allow="clipboard-read; clipboard-write" />
             </div>
           ) : (
             <div className="h-full flex items-center justify-center text-gray-400 text-sm min-h-[500px]">

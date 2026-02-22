@@ -111,7 +111,7 @@ export async function driveCreateFile(type: "pad" | "calc" | "slideshow", title:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        role: "reader",
+        role: "writer",
         type: "anyone",
       }),
     })
