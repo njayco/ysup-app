@@ -113,7 +113,7 @@ export default function DashboardPage() {
   const [currentPostPage, setCurrentPostPage] = useState(0)
   const [expandedResponses, setExpandedResponses] = useState<string[]>([])
   const [newResponse, setNewResponse] = useState<{ [key: string]: string }>({})
-  const [userYBucks, setUserYBucks] = useState(950)
+  const [userYBucks, setUserYBucks] = useState(0)
   const [currentUser, setCurrentUser] = useState({
     firstName: "",
     lastName: "",
@@ -249,6 +249,12 @@ export default function DashboardPage() {
             if (d.success && d.profileImage) {
               setProfileData(prev => ({ ...prev, profileImage: d.profileImage }))
             }
+          })
+          .catch(() => {})
+        fetch(`/api/ybucks?userId=${userData.id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (typeof d.ybucks === "number") setUserYBucks(d.ybucks)
           })
           .catch(() => {})
       }
@@ -2661,6 +2667,13 @@ export default function DashboardPage() {
                     {profileData.major} • {profileData.year}
                   </p>
                   <p className="text-gray-600">{profileData.college}</p>
+                </div>
+
+                <div className="flex-shrink-0">
+                  <div className="w-28 h-28 bg-yellow-400 rounded-xl shadow-lg border-2 border-yellow-500 flex flex-col items-center justify-center">
+                    <div className="text-3xl font-black text-yellow-900">{userYBucks.toLocaleString()}</div>
+                    <div className="text-xs font-bold text-yellow-800 tracking-wider mt-1">YBUCKS</div>
+                  </div>
                 </div>
               </div>
 
