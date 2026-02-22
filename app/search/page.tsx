@@ -1722,9 +1722,10 @@ function SearchContent() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {campusUsers.map((user) => (
-                        <div
+                        <a
                           key={user.id}
-                          className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 transition-all"
+                          href={`/${user.username.replace(/^\+/, "").toLowerCase()}`}
+                          className="block bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 transition-all"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-amber-700 rounded-full flex items-center justify-center text-amber-100 text-lg font-bold flex-shrink-0 shadow-lg">
@@ -1734,17 +1735,16 @@ function SearchContent() {
                               <h3 className="font-bold text-amber-200" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
                                 {user.firstName} {user.lastName}
                               </h3>
-                              <p className="text-amber-400 text-sm">@{user.username}</p>
+                              <p className="text-amber-400 text-sm">+{user.username.replace(/^\+/, "")}</p>
                               {user.college && (
                                 <p className="text-amber-500 text-xs">{user.college}</p>
                               )}
                             </div>
-                            <button className="flex items-center gap-1 px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg text-sm font-medium transition-colors">
-                              <MessageCircle className="w-4 h-4" />
-                              Message
-                            </button>
+                            <span className="flex items-center gap-1 px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg text-sm font-medium transition-colors">
+                              View Profile
+                            </span>
                           </div>
-                        </div>
+                        </a>
                       ))}
                     </div>
                   </section>
