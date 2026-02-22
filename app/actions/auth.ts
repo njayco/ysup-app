@@ -42,18 +42,20 @@ export async function signupUser(formData: FormData) {
       return { success: false, error: "You must agree to the Terms & Conditions" }
     }
 
-    const existingUser = await pool.query(
-      "SELECT id, phone, username FROM users WHERE phone = $1 OR username = $2",
-      [phone, username]
+    const existingByPhone = await pool.query(
+      "SELECT id FROM users WHERE phone = $1",
+      [phone]
     )
+    if (existingByPhone.rows.length > 0) {
+      return { success: false, error: "User with this phone number already exists" }
+    }
 
-    if (existingUser.rows.length > 0) {
-      const existing = existingUser.rows[0]
-      if (existing.phone === phone) {
-        return { success: false, error: "User with this phone number already exists" }
-      } else {
-        return { success: false, error: "Username is already taken" }
-      }
+    const existingByUsername = await pool.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    )
+    if (existingByUsername.rows.length > 0) {
+      return { success: false, error: "Username is already taken" }
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
