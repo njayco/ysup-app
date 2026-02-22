@@ -14,11 +14,25 @@ export async function GET(request: Request) {
       );
     }
 
-    const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12`
-    );
+    const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+    let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12`;
+    if (apiKey) {
+      url += `&key=${apiKey}`;
+    }
+
+    const response = await fetch(url);
+
+    if (response.status === 429) {
+      const fallbackBooks = await generateFallbackResults(query);
+      return NextResponse.json(fallbackBooks);
+    }
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (errorData?.error?.status === "RESOURCE_EXHAUSTED") {
+        const fallbackBooks = await generateFallbackResults(query);
+        return NextResponse.json(fallbackBooks);
+      }
       throw new Error(`Google Books API responded with status ${response.status}`);
     }
 
@@ -50,4 +64,24 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function generateFallbackResults(query: string) {
+  const openLibraryUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12`;
+  return fetch(openLibraryUrl)
+    .then((res) => res.json())
+    .then((data) => {
+      return (data.docs || []).slice(0, 12).map((doc: any) => ({
+        id: doc.key || `ol-${doc.cover_edition_key || Math.random()}`,
+        title: doc.title || "Untitled",
+        authors: doc.author_name || [],
+        description: doc.first_sentence?.join(" ") || "",
+        thumbnail: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : "",
+        publishedDate: doc.first_publish_year?.toString() || "",
+        pageCount: doc.number_of_pages_median || 0,
+        previewLink: doc.key ? `https://openlibrary.org${doc.key}` : "",
+        infoLink: doc.key ? `https://openlibrary.org${doc.key}` : "",
+      }));
+    })
+    .catch(() => []);
 }
