@@ -225,6 +225,9 @@ export default function OnboardingPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const profileImageRef = useRef<HTMLInputElement>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [honorCodeScrolled, setHonorCodeScrolled] = useState(false)
+  const [honorCodeAgreed, setHonorCodeAgreed] = useState(false)
+  const honorCodeRef = useRef<HTMLDivElement>(null)
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
     lastName: "",
@@ -274,10 +277,18 @@ export default function OnboardingPage() {
     setAuthChecked(true)
   }, [])
 
-  const totalSteps = 2 + featureWalkthroughs.length
+  const totalSteps = 3 + featureWalkthroughs.length
   const isProfileStep = currentStep === 0
+  const isHonorCodeStep = currentStep === 1 + featureWalkthroughs.length
   const isCompletionStep = currentStep === totalSteps - 1
   const walkthroughIndex = currentStep - 1
+
+  const handleHonorCodeScroll = () => {
+    const el = honorCodeRef.current
+    if (!el) return
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+    if (atBottom) setHonorCodeScrolled(true)
+  }
 
   const saveProfileToStorage = () => {
     const storedUser = localStorage.getItem("currentUser")
@@ -328,6 +339,7 @@ export default function OnboardingPage() {
       if (!profileComplete) return
       saveProfileToStorage()
     }
+    if (isHonorCodeStep && !honorCodeAgreed) return
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1)
     }
@@ -545,7 +557,7 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {!isProfileStep && !isCompletionStep && walkthroughIndex >= 0 && walkthroughIndex < featureWalkthroughs.length && (
+              {!isProfileStep && !isHonorCodeStep && !isCompletionStep && walkthroughIndex >= 0 && walkthroughIndex < featureWalkthroughs.length && (
                 <div>
                   <div className="text-center mb-2">
                     <span className="text-xs font-medium text-amber-400/50 uppercase tracking-wider">
@@ -609,6 +621,148 @@ export default function OnboardingPage() {
                         Next
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {isHonorCodeStep && (
+                <div>
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 mb-3 shadow-lg">
+                      <span className="text-3xl">📜</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Honor Code</h2>
+                    <p className="text-amber-200/60 text-sm">Please read the entire Honor Code and agree to continue</p>
+                  </div>
+
+                  <div
+                    ref={honorCodeRef}
+                    onScroll={handleHonorCodeScroll}
+                    className="h-64 overflow-y-auto bg-amber-950/60 border border-amber-700/40 rounded-lg p-4 mb-4 text-sm text-amber-100/80 leading-relaxed scrollbar-thin"
+                  >
+                    <h3 className="text-lg font-bold text-yellow-400 mb-3 text-center">YsUp Campus Honor Code & Community Disclaimer</h3>
+                    <p className="text-amber-200/50 text-xs mb-4 text-center">Effective Date: February 22, 2026</p>
+                    <p className="mb-3">Welcome to YsUp Campus — a collaborative educational platform designed to promote independent learning, integrity, and positive community engagement.</p>
+                    <p className="mb-4">By accessing or using YsUp Campus, you agree to uphold the following Honor Code and Community Standards.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">1. Academic Integrity</h4>
+                    <p className="mb-2">YsUp Campus is designed to promote independent thinking and learning. Users agree:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Not to use the platform to cheat on assignments, exams, quizzes, or academic evaluations.</li>
+                      <li>Not to request or share direct answers for graded coursework when doing so violates school policies.</li>
+                      <li>Not to impersonate another student or submit work on behalf of another person.</li>
+                      <li>Not to use AI tools within YsUp to bypass learning objectives or academic rules set by instructors.</li>
+                    </ul>
+                    <p className="mb-2">YsUp encourages guidance, hints, collaboration, and critical thinking — not answer-sharing or academic dishonesty.</p>
+                    <p className="mb-4">Violation of academic integrity may result in suspension or permanent removal from YsUp Campus, and notification to educators or institutions (if applicable).</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">2. Copyright & Intellectual Property Protection</h4>
+                    <p className="mb-2">Users agree NOT to:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Upload, share, distribute, or reproduce copyrighted materials without proper authorization.</li>
+                      <li>Share pirated textbooks, movies, music, software, exam banks, or proprietary academic materials.</li>
+                      <li>Post protected content that violates U.S. or international copyright law.</li>
+                    </ul>
+                    <p className="mb-4">All users are responsible for ensuring the content they upload complies with copyright and intellectual property laws. YsUp Campus reserves the right to remove infringing content immediately, suspend or terminate accounts, and cooperate with legal authorities when required.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">3. Anti-Bullying & Respect Policy</h4>
+                    <p className="mb-2">YsUp Campus maintains a zero-tolerance policy for:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Cyberbullying</li>
+                      <li>Harassment</li>
+                      <li>Hate speech</li>
+                      <li>Threats of violence</li>
+                      <li>Discrimination based on race, ethnicity, gender, religion, nationality, disability, or identity</li>
+                      <li>Encouraging in-person bullying or real-world harm</li>
+                    </ul>
+                    <p className="mb-2">Users must treat others with dignity and respect in Class Networks, direct messages, bulletin boards, public posts, online game sessions, and in-person interactions facilitated through YsUp.</p>
+                    <p className="mb-4">Any behavior that creates a hostile, intimidating, or unsafe environment may result in immediate account suspension or permanent ban.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">4. Illegal Activity Prohibition</h4>
+                    <p className="mb-2">Users may not use YsUp Campus to:</p>
+                    <ul className="list-disc pl-5 mb-2 space-y-1">
+                      <li>Engage in fraud or identity theft</li>
+                      <li>Sell or promote illegal goods or services</li>
+                      <li>Coordinate harmful or unlawful activities</li>
+                      <li>Distribute malware or attempt to hack the platform</li>
+                      <li>Circumvent platform safeguards</li>
+                    </ul>
+                    <p className="mb-4">Illegal conduct may be reported to law enforcement authorities.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">5. Responsible AI Usage</h4>
+                    <p className="mb-2">Where YsUp integrates AI tools:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>AI is designed to assist learning — not replace it.</li>
+                      <li>Users agree not to manipulate or exploit AI systems for misconduct.</li>
+                      <li>Users understand AI responses may not always be accurate and must use independent judgment.</li>
+                    </ul>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">6. Reporting Violations</h4>
+                    <p className="mb-4">If you witness behavior that violates this Honor Code, you are encouraged to report it through the platform's reporting system. Protecting the integrity of YsUp is a shared responsibility.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">7. Platform Rights</h4>
+                    <p className="mb-2">YsUp Campus reserves the right to:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>Remove content</li>
+                      <li>Suspend or terminate accounts</li>
+                      <li>Restrict features</li>
+                      <li>Update this Honor Code at any time</li>
+                    </ul>
+                    <p className="mb-4">Continued use of the platform constitutes acceptance of updated terms.</p>
+
+                    <h4 className="font-bold text-yellow-400 mb-2">8. Agreement</h4>
+                    <p className="mb-2">By checking the box below and creating or continuing to use a YsUp Campus account, you confirm that:</p>
+                    <ul className="list-disc pl-5 mb-4 space-y-1">
+                      <li>I have read and agree to the YsUp Campus Honor Code.</li>
+                      <li>I commit to academic integrity, legal compliance, and respectful conduct.</li>
+                      <li>I understand violations may result in suspension or removal from the platform.</li>
+                    </ul>
+
+                    <div className="text-center mt-4 pt-4 border-t border-amber-700/30">
+                      <p className="text-yellow-400 font-bold italic">YsUp stands for growth, discipline, and independent mastery.</p>
+                      <p className="text-amber-200/60 text-xs mt-1">The goal is not just to get answers — but to become someone who can discover them.</p>
+                    </div>
+                  </div>
+
+                  {!honorCodeScrolled && (
+                    <p className="text-amber-400/60 text-xs text-center mb-3">Scroll down to read the full Honor Code to enable the checkbox</p>
+                  )}
+
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-all mb-4 ${
+                    honorCodeScrolled
+                      ? "border-amber-500/40 bg-amber-900/20 cursor-pointer"
+                      : "border-amber-800/20 bg-amber-950/20 cursor-not-allowed opacity-50"
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={honorCodeAgreed}
+                      onChange={(e) => honorCodeScrolled && setHonorCodeAgreed(e.target.checked)}
+                      disabled={!honorCodeScrolled}
+                      className="w-5 h-5 rounded accent-yellow-500"
+                    />
+                    <span className="text-sm text-amber-100/80">
+                      I have read and agree to the YsUp Campus Honor Code. I commit to academic integrity, legal compliance, and respectful conduct.
+                    </span>
+                  </label>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePrev}
+                      className="text-amber-300/60 hover:text-amber-200 transition-colors px-4 py-2"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      disabled={!honorCodeAgreed}
+                      className={`px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-lg ${
+                        honorCodeAgreed
+                          ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white"
+                          : "bg-amber-800/40 text-amber-400/40 cursor-not-allowed"
+                      }`}
+                    >
+                      I Agree — Continue
+                    </button>
                   </div>
                 </div>
               )}

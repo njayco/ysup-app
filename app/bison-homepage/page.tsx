@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import Header from "@/components/Header"
-import { useAuth } from "@/lib/useAuth"
 import {
   GraduationCap, BookOpen, Newspaper, Users, MapPin, Calendar, FlaskConical,
   Award, ChevronRight, ExternalLink, Star, Globe, Heart, Building2, Lightbulb
@@ -432,7 +431,7 @@ function renderSection(key: SectionKey, onNavigate: (key: SectionKey) => void) {
 }
 
 export default function BisonWebPage() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const [pageReady, setPageReady] = useState(false)
   const [rightPage, setRightPage] = useState<PageContent>({ key: "home", title: "Home" })
   const [leftPage, setLeftPage] = useState<PageContent | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -455,7 +454,11 @@ export default function BisonWebPage() {
     }, 300)
   }
 
-  if (authLoading || !isAuthenticated) {
+  useEffect(() => {
+    setPageReady(true)
+  }, [])
+
+  if (!pageReady) {
     return null
   }
 

@@ -155,5 +155,7 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - Scholar API: Replaced unreliable Google Scholar scraping with OpenAlex API (free, reliable, 240M+ works)
 - Single search: Search runs once on submit, results cached, tab switching just filters
 - AI-powered academic search engine with wood/amber themed UI
-- Onboarding wizard with 10-step guided setup for new students
+- Onboarding wizard with 12-step guided setup for new students (includes Honor Code with scroll-to-unlock)
+- Honor Code step: Users must scroll through full Honor Code text to unlock agreement checkbox; cannot proceed without agreeing
+- Bison Homepage (`/bison-homepage`) is publicly accessible without login for all visitors
 - PostgreSQL auth with bcryptjs password hashing
