@@ -1,0 +1,163 @@
+You are building within the YsUp Dashboard web app. Implement three productivity tools — YsUp Pad, YsUp Calc, YsUp Slideshow — but power them using Google Workspace APIs (Google Docs, Sheets, Slides) instead of OpenOffice/UNO, because OpenOffice can’t run in the browser.
+
+NON-NEGOTIABLE GOALS
+1) Skeuomorphic UI in the YsUp Dashboard that represents the tools (Pad/Calc/Slideshow) with premium tactile design.
+2) Real integration with Google Docs API, Google Sheets API, and Google Slides API via REST.
+3) Users can: Create new docs, view recent docs, open docs, and “sync” YsUp content into Google Docs/Sheets/Slides programmatically.
+4) Use OAuth 2.0 (Google Identity Services) so each YsUp user connects their Google account (“Connect Google Workspace”).
+5) Store each user’s Google tokens securely server-side (encrypted at rest) and refresh automatically.
+
+STACK (use this exactly)
+- Frontend: Next.js (App Router) + TypeScript + Tailwind
+- Backend: Next.js route handlers (server) for OAuth callback + API routes
+- DB: Prisma + SQLite (ok for Replit)
+- Auth in YsUp: assume existing session auth; if missing, scaffold a minimal auth stub.
+- Validation: zod
+- HTTP: native fetch
+- Encryption: use Node crypto to encrypt tokens before storing (AES-256-GCM)
+
+GOOGLE CLOUD SETUP (must generate clear instructions and env vars)
+The app must require these env vars:
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- GOOGLE_REDIRECT_URI (e.g. https://<replit-url>/api/google/callback)
+- GOOGLE_SCOPES (pre-filled)
+- TOKEN_ENCRYPTION_KEY (32 bytes base64)
+Provide README steps to:
+- Create Google Cloud project
+- Enable APIs: Google Docs API, Google Sheets API, Google Slides API, Google Drive API
+- Configure OAuth consent screen
+- Create OAuth 2.0 Client ID (Web application)
+- Add Authorized redirect URIs
+- Add Authorized JavaScript origins
+- Put env vars into Replit Secrets
+
+SCOPES (use least privilege that still works)
+Use these scopes:
+- https://www.googleapis.com/auth/drive.file
+- https://www.googleapis.com/auth/documents
+- https://www.googleapis.com/auth/spreadsheets
+- https://www.googleapis.com/auth/presentations
+Explain why drive.file is used: to create/manage only files the app creates or opens via the app.
+
+DATABASE MODELS (Prisma)
+Add models:
+User (id, email, name, createdAt)
+GoogleAccount (id, userId, googleUserId, encryptedAccessToken, encryptedRefreshToken, tokenExpiry, scope, createdAt, updatedAt)
+WorkspaceDoc (id, userId, type: 'Pad'|'calc'|'Slideshow', title, googleFileId, googleUrl, createdAt, updatedAt)
+
+SKEUOMORPHIC UI REQUIREMENTS
+In YsUp Dashboard add a “Productivity Dock” section:
+- Three large tactile tiles:
+  - YsUp Pad (Black and White Composition Notebook + paper texture + pencil)
+  - YsUp Calc (graph paper + subtle LED)
+  - YsUp Slideshow (iPad inspired design)
+- Each tile shows:
+  - Connect status (Connected / Not connected)
+  - Button: “Connect Google Workspace” if not connected
+  - “New” button
+  - “Recent” list (last 5) with Open links
+- Hover/press animations: tile lifts slightly + soft shadow, press sinks.
+
+When clicking a tool:
+Open a dedicated workspace route:
+- /dashboard/Pad
+- /dashboard/calc
+- /dashboard/Slideshow
+
+Each workspace layout:
+- Left sidebar: search, recent docs, “New”, “Import by URL”, “Disconnect”
+- Main panel: embedded Google editor using an iframe (Docs/Sheets/Slides URL) so users can edit in-browser with Google’s UI.
+- Right panel: “YsUp Sync” panel with structured content and actions:
+  - For Pad: a rich text editor (TipTap) that can push selected content into the Google Doc via Docs API batchUpdate.
+  - For Calc: a grid editor that can push values into a Google Sheet via Sheets API spreadsheets.values.update.
+  - For Slideshow: slide builder form that can push slides/text/images into a Google Slides presentation via Slides API batchUpdate.
+
+IMPORTANT: If embedding is blocked by Google in some contexts, provide a fallback:
+- Open in new tab button to googleUrl
+- Keep sync working via API regardless of embed availability.
+
+API ROUTES (Next.js Route Handlers)
+Create the following endpoints:
+1) GET /api/google/auth-url
+- Generates OAuth URL with state (CSRF) tied to user session.
+2) GET /api/google/callback?code=&state=
+- Exchanges code for tokens, encrypts and stores in GoogleAccount, then redirects to /dashboard/productivity?connected=1
+3) POST /api/google/disconnect
+- Deletes GoogleAccount tokens for the user
+4) GET /api/workspace/recent?type=Pad|calc|Slideshow
+- Returns recent WorkspaceDoc records
+5) POST /api/workspace/create
+- Body: { type, title }
+- Uses Google Drive API to create:
+  - Doc: application/vnd.google-apps.document
+  - Sheet: application/vnd.google-apps.spreadsheet
+  - Slides: application/vnd.google-apps.presentation
+- Stores googleFileId + googleUrl in WorkspaceDoc and returns it
+6) POST /api/workspace/import
+- Body: { type, googleUrl or fileId }
+- Verifies access via Drive API, stores record, returns it
+7) POST /api/workspace/sync/Pad
+- Body: { docId, content } where content is TipTap JSON or HTML
+- Converts to Docs API requests and calls documents.batchUpdate
+- Minimal v1: replace entire doc body with plain text extracted from HTML
+- v2: map headings, bold/italic, bullet lists
+8) POST /api/workspace/sync/calc
+- Body: { sheetId, range, values }
+- Calls Sheets API spreadsheets.values.update with valueInputOption=USER_ENTERED
+9) POST /api/workspace/sync/Slideshow
+- Body: { presentationId, slidesPayload }
+- Calls Slides API presentations.batchUpdate to:
+  - createSlide
+  - insertText into title/body placeholders
+  - optionally set background color
+10) GET /api/workspace/status
+- Returns whether user is connected + scopes + token expiry
+
+GOOGLE API CLIENT IMPLEMENTATION (no heavy SDK required, use REST)
+Create a server utility:
+- /lib/google.ts
+Functions:
+- getGoogleAccount(userId)
+- getAccessToken(userId) with refresh flow if expired
+- googleFetch(userId, url, init) adds Authorization header
+- driveCreateFile(type,title)
+- docsBatchUpdate(documentId, requests)
+- sheetsUpdateValues(spreadsheetId, range, values)
+- slidesBatchUpdate(presentationId, requests)
+
+Token Refresh:
+- If tokenExpiry is in the past, POST to https://oauth2.googleapis.com/token with refresh_token + client_secret to refresh.
+- Store new access token + expiry encrypted.
+
+SECURITY
+- Encrypt tokens at rest using AES-256-GCM with TOKEN_ENCRYPTION_KEY.
+- Never expose tokens to the browser.
+- Validate all inputs with zod.
+- Ensure docId belongs to current user in DB before calling Google APIs.
+- Use OAuth state parameter for CSRF protection.
+
+UX DETAILS
+- If user is not connected, show a full-width “Connect Google Workspace” banner and disable New/Sync buttons.
+- On successful connect, show toast “Google Workspace connected” and auto-refresh recent docs.
+- Add skeleton loaders for recent docs list and workspace embed panel.
+- Add a “Sync History” log (local DB) storing time, action, docId, status.
+
+DELIVERABLES
+1) Fully working YsUp Dashboard section with skeuomorphic Pad/Calc/Slideshow tiles.
+2) OAuth connect/disconnect flow working in Replit.
+3) Create/open/import recent docs working for all three.
+4) Sync endpoints working (Pad replaces body text; calc updates a range; Slideshow creates slides and inserts text).
+5) README with exact Google Cloud steps and required env vars.
+
+IMPLEMENTATION NOTES
+- Use iframe embedding:
+  - Docs: https://docs.google.com/document/d/{fileId}/edit
+  - Sheets: https://docs.google.com/spreadsheets/d/{fileId}/edit
+  - Slides: https://docs.google.com/presentation/d/{fileId}/edit
+- Provide “Open in Google” link always.
+- Keep styling premium and skeuomorphic using Tailwind + CSS gradients (no external images required).
+- Code must compile and run.
+
+Now implement it.
+
