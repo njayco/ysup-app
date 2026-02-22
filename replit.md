@@ -7,7 +7,12 @@ YsUp Campus Network is an HBCU-focused educational platform built with Next.js 1
 - HBCU-focused platform with all 100+ HBCUs in signup dropdown
 - Wood/amber themed UI design
 - Blue book carousel, emerald journal carousel
-- Search categories ordered: Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Encyclopedia, Campus Users
+- Search categories ordered: Everything, Books, Amazon Books, Dictionary, Scholarly Articles, Web, Images, Videos, News, Maps, Shopping, Encyclopedia, Campus Users
+- Images tab: Wooden picture frame skeuomorphic collage with hover download/visit buttons
+- Videos tab: CRT TV screen collage with vintage camcorder filter on hover, scanlines, REC indicator
+- News tab: Card-based layout with article images and source/date info
+- Maps tab: OpenStreetMap embed with DuckDuckGo Maps redirect
+- Shopping tab: DuckDuckGo Shopping redirect
 
 ## System Architecture
 The platform is built on Next.js 14 with TypeScript, utilizing the App Router for both frontend and backend API routes. Tailwind CSS and shadcn/ui components are used for styling and UI. Authentication is handled via Next.js server actions, PostgreSQL for user storage, and bcryptjs for password hashing, with localStorage for client-side sessions. OpenAI (gpt-4o-mini) is integrated via Replit AI for various AI functionalities like summaries, topic overviews, and AI coaching.

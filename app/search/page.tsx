@@ -108,7 +108,41 @@ interface CampusUser {
   college: string
 }
 
-type TabType = "all" | "web" | "scholar" | "books" | "amazon" | "wikipedia" | "dictionary" | "users"
+interface ImageResult {
+  id: string
+  title: string
+  image: string
+  thumbnail: string
+  url: string
+  width: number
+  height: number
+  source: string
+}
+
+interface VideoResult {
+  id: string
+  title: string
+  description: string
+  url: string
+  embedUrl: string
+  thumbnail: string
+  duration: string
+  published: string
+  publisher: string
+  viewCount: number
+}
+
+interface NewsResult {
+  id: string
+  title: string
+  snippet: string
+  url: string
+  source: string
+  date: string
+  image: string
+}
+
+type TabType = "all" | "web" | "scholar" | "books" | "amazon" | "wikipedia" | "dictionary" | "users" | "images" | "videos" | "news" | "maps" | "shopping"
 
 function BookPlaceholder({ title, authors, isFocused }: { title: string; authors: string[]; isFocused: boolean }) {
   const authorText = authors.length > 0 ? authors[0] : ""
@@ -271,6 +305,10 @@ function SearchContent() {
   const [amazonCarouselIndex, setAmazonCarouselIndex] = useState(0)
   const [selectedAmazon, setSelectedAmazon] = useState<AmazonBook | null>(null)
   const [dictionaryResults, setDictionaryResults] = useState<DictionaryResult[]>([])
+  const [imageResults, setImageResults] = useState<ImageResult[]>([])
+  const [videoResults, setVideoResults] = useState<VideoResult[]>([])
+  const [newsResults, setNewsResults] = useState<NewsResult[]>([])
+  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null)
   const [searchTime, setSearchTime] = useState(0)
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
   const [aiOverview, setAiOverview] = useState("")
@@ -295,7 +333,7 @@ function SearchContent() {
     const startTime = Date.now()
 
     try {
-      const [booksRes, scholarRes, wikiRes, usersRes, webRes, amazonRes, dictRes] = await Promise.allSettled([
+      const [booksRes, scholarRes, wikiRes, usersRes, webRes, amazonRes, dictRes, imageRes, videoRes, newsRes] = await Promise.allSettled([
         fetch(`/api/books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/scholar?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/wiki?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
@@ -303,6 +341,9 @@ function SearchContent() {
         fetch(`/api/web-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/amazon-books?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
         fetch(`/api/dictionary?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/image-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/video-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
+        fetch(`/api/news-search?q=${encodeURIComponent(searchQuery)}`).then((r) => r.json()),
       ])
 
       const booksData = booksRes.status === "fulfilled" && Array.isArray(booksRes.value) ? booksRes.value : []
@@ -312,6 +353,9 @@ function SearchContent() {
       const webData = webRes.status === "fulfilled" && Array.isArray(webRes.value) ? webRes.value : []
       const amazonData = amazonRes.status === "fulfilled" && Array.isArray(amazonRes.value) ? amazonRes.value : []
       const dictData = dictRes.status === "fulfilled" && Array.isArray(dictRes.value) ? dictRes.value : []
+      const imageData = imageRes.status === "fulfilled" && Array.isArray(imageRes.value) ? imageRes.value : []
+      const videoData = videoRes.status === "fulfilled" && Array.isArray(videoRes.value) ? videoRes.value : []
+      const newsData = newsRes.status === "fulfilled" && Array.isArray(newsRes.value) ? newsRes.value : []
 
       setBooks(booksData)
       setScholarArticles(scholarData)
@@ -320,6 +364,9 @@ function SearchContent() {
       setWebResults(webData)
       setAmazonBooks(amazonData)
       setDictionaryResults(dictData)
+      setImageResults(imageData)
+      setVideoResults(videoData)
+      setNewsResults(newsData)
 
       if (booksData.length > 0) setSelectedBook(booksData[0])
       if (scholarData.length > 0) setSelectedScholar(scholarData[0])
@@ -410,7 +457,7 @@ function SearchContent() {
     }
   }
 
-  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length + amazonBooks.length + dictionaryResults.length
+  const totalResults = books.length + scholarArticles.length + wikiArticles.length + campusUsers.length + webResults.length + amazonBooks.length + dictionaryResults.length + imageResults.length + videoResults.length + newsResults.length
 
   const sidebarCategories = [
     { label: "Everything", icon: <Search className="w-4 h-4" />, tab: "all" as TabType, count: totalResults },
@@ -419,6 +466,11 @@ function SearchContent() {
     { label: "Dictionary", icon: <span className="text-sm">📖</span>, tab: "dictionary" as TabType, count: dictionaryResults.length },
     { label: "Scholarly Articles", icon: <GraduationCap className="w-4 h-4" />, tab: "scholar" as TabType, count: scholarArticles.length },
     { label: "Web", icon: <Monitor className="w-4 h-4" />, tab: "web" as TabType, count: webResults.length },
+    { label: "Images", icon: <span className="text-sm">🖼️</span>, tab: "images" as TabType, count: imageResults.length },
+    { label: "Videos", icon: <Video className="w-4 h-4" />, tab: "videos" as TabType, count: videoResults.length },
+    { label: "News", icon: <FileText className="w-4 h-4" />, tab: "news" as TabType, count: newsResults.length },
+    { label: "Maps", icon: <span className="text-sm">🗺️</span>, tab: "maps" as TabType, count: 0 },
+    { label: "Shopping", icon: <span className="text-sm">🛒</span>, tab: "shopping" as TabType, count: 0 },
     { label: "Encyclopedia", icon: <Globe className="w-4 h-4" />, tab: "wikipedia" as TabType, count: wikiArticles.length },
     { label: "Campus Users", icon: <Users className="w-4 h-4" />, tab: "users" as TabType, count: campusUsers.length },
   ]
@@ -581,19 +633,22 @@ function SearchContent() {
             )}
 
             {/* Per-tab empty state */}
-            {!loading && hasSearched && totalResults > 0 && activeTab !== "all" && (
+            {!loading && hasSearched && totalResults > 0 && activeTab !== "all" && activeTab !== "maps" && activeTab !== "shopping" && (
               (activeTab === "web" && webResults.length === 0) ||
               (activeTab === "books" && books.length === 0) ||
               (activeTab === "amazon" && amazonBooks.length === 0) ||
               (activeTab === "dictionary" && dictionaryResults.length === 0) ||
               (activeTab === "scholar" && scholarArticles.length === 0) ||
               (activeTab === "wikipedia" && wikiArticles.length === 0) ||
-              (activeTab === "users" && campusUsers.length === 0)
+              (activeTab === "users" && campusUsers.length === 0) ||
+              (activeTab === "images" && imageResults.length === 0) ||
+              (activeTab === "videos" && videoResults.length === 0) ||
+              (activeTab === "news" && newsResults.length === 0)
             ) && (
               <div className="text-center py-20">
                 <FolderSearch className="w-16 h-16 text-amber-400 mx-auto mb-4 opacity-60" />
                 <p className="text-amber-200 text-lg" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
-                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "amazon" ? "Amazon books" : activeTab === "dictionary" ? "dictionary definitions" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : "campus users"} found for &ldquo;{query}&rdquo;
+                  No {activeTab === "web" ? "web results" : activeTab === "books" ? "books" : activeTab === "amazon" ? "Amazon books" : activeTab === "dictionary" ? "dictionary definitions" : activeTab === "scholar" ? "scholarly articles" : activeTab === "wikipedia" ? "encyclopedia articles" : activeTab === "images" ? "images" : activeTab === "videos" ? "videos" : activeTab === "news" ? "news articles" : "campus users"} found for &ldquo;{query}&rdquo;
                 </p>
                 <p className="text-amber-400 text-sm mt-2 opacity-70">Try checking other categories for results</p>
               </div>
@@ -1334,6 +1389,323 @@ function SearchContent() {
                           </div>
                         )
                       })}
+                    </div>
+                  </section>
+                )}
+
+                {/* Images - Wooden Picture Frame Collage */}
+                {(activeTab === "all" || activeTab === "images") && imageResults.length > 0 && (
+                  <section className="max-w-4xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <span>🖼️</span>
+                      Images ({imageResults.length})
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                      {(activeTab === "images" ? imageResults : imageResults.slice(0, 8)).map((img) => (
+                        <div key={img.id} className="group relative">
+                          <div
+                            className="relative rounded-sm overflow-hidden"
+                            style={{
+                              padding: "10px",
+                              background: "linear-gradient(145deg, #8B6914 0%, #A0782C 15%, #6B4F10 30%, #8B6914 50%, #A0782C 70%, #6B4F10 85%, #8B6914 100%)",
+                              boxShadow: "inset 0 0 8px rgba(0,0,0,0.5), 4px 4px 12px rgba(0,0,0,0.6), -1px -1px 3px rgba(255,215,0,0.1)",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <div
+                              className="absolute inset-0 pointer-events-none"
+                              style={{
+                                background: "repeating-linear-gradient(90deg, transparent 0%, transparent 48%, rgba(0,0,0,0.15) 49%, transparent 50%, transparent 98%, rgba(0,0,0,0.15) 99%, transparent 100%)",
+                                backgroundSize: "8px 8px",
+                              }}
+                            />
+                            <div
+                              style={{
+                                border: "2px solid #5A3E0A",
+                                boxShadow: "inset 0 0 6px rgba(0,0,0,0.4), inset 0 0 1px rgba(255,215,0,0.2)",
+                              }}
+                            >
+                              <img
+                                src={img.thumbnail || img.image}
+                                alt={img.title}
+                                className="w-full aspect-square object-cover block"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23331a00' width='200' height='200'/%3E%3Ctext fill='%23a08040' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='14'%3ENo Image%3C/text%3E%3C/svg%3E"
+                                }}
+                              />
+                            </div>
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100" style={{ margin: "10px" }}>
+                              <a
+                                href={img.image}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-amber-800 bg-opacity-90 rounded-lg text-amber-100 hover:bg-amber-700 transition-colors"
+                                title="View full size"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                              <a
+                                href={img.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-amber-800 bg-opacity-90 rounded-lg text-amber-100 hover:bg-amber-700 transition-colors"
+                                title="Visit source"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="w-4 h-4" />
+                              </a>
+                            </div>
+                          </div>
+                          <p className="text-amber-300 text-xs mt-2 line-clamp-1 text-center opacity-80">{img.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {activeTab === "all" && imageResults.length > 8 && (
+                      <button
+                        onClick={() => setActiveTab("images")}
+                        className="mt-4 text-amber-400 hover:text-amber-300 text-sm font-medium transition-colors"
+                      >
+                        View all {imageResults.length} images →
+                      </button>
+                    )}
+                  </section>
+                )}
+
+                {/* Videos - CRT TV Screen Collage */}
+                {(activeTab === "all" || activeTab === "videos") && videoResults.length > 0 && (
+                  <section className="max-w-4xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <Video className="w-5 h-5" />
+                      Videos ({videoResults.length})
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                      {(activeTab === "videos" ? videoResults : videoResults.slice(0, 6)).map((vid) => (
+                        <div
+                          key={vid.id}
+                          className="group relative"
+                          onMouseEnter={() => setHoveredVideo(vid.id)}
+                          onMouseLeave={() => setHoveredVideo(null)}
+                        >
+                          <div
+                            className="relative rounded-lg overflow-hidden"
+                            style={{
+                              padding: "16px 16px 30px 16px",
+                              background: "linear-gradient(145deg, #2a2a2a 0%, #3d3d3d 20%, #1a1a1a 50%, #2d2d2d 80%, #1a1a1a 100%)",
+                              boxShadow: "inset 0 0 15px rgba(0,0,0,0.6), 6px 6px 16px rgba(0,0,0,0.7), -2px -2px 4px rgba(80,80,80,0.1)",
+                              borderRadius: "12px",
+                            }}
+                          >
+                            <div
+                              className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ boxShadow: hoveredVideo === vid.id ? "0 0 6px rgba(255,0,0,0.8)" : "none" }} />
+                              <span className="text-[8px] text-gray-500 font-mono uppercase tracking-widest">rec</span>
+                            </div>
+                            <div
+                              className="relative overflow-hidden"
+                              style={{
+                                borderRadius: "8px",
+                                border: "3px solid #111",
+                                boxShadow: "inset 0 0 20px rgba(0,0,0,0.8), 0 0 2px rgba(100,100,100,0.3)",
+                              }}
+                            >
+                              <a href={vid.url} target="_blank" rel="noopener noreferrer" className="block relative">
+                                <img
+                                  src={vid.thumbnail}
+                                  alt={vid.title}
+                                  className="w-full aspect-video object-cover block transition-all duration-300"
+                                  style={{
+                                    filter: hoveredVideo === vid.id
+                                      ? "saturate(0.7) contrast(1.15) brightness(1.1) sepia(0.25)"
+                                      : "saturate(0.85) contrast(1.05)",
+                                  }}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect fill='%23111' width='320' height='180'/%3E%3Ctext fill='%23555' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='14'%3ENo Preview%3C/text%3E%3C/svg%3E"
+                                  }}
+                                />
+                                {hoveredVideo === vid.id && (
+                                  <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                      background: "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)",
+                                      mixBlendMode: "multiply",
+                                    }}
+                                  />
+                                )}
+                                {hoveredVideo === vid.id && (
+                                  <div className="absolute bottom-2 right-2 text-[10px] font-mono text-green-400 bg-black bg-opacity-70 px-1.5 py-0.5 rounded" style={{ textShadow: "0 0 4px rgba(0,255,0,0.5)" }}>
+                                    {new Date().toLocaleTimeString()} REC
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all">
+                                  <div className="w-12 h-12 rounded-full bg-white bg-opacity-0 group-hover:bg-opacity-90 flex items-center justify-center transition-all transform scale-75 group-hover:scale-100">
+                                    <div className="w-0 h-0 border-l-[16px] border-l-gray-800 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                </div>
+                              </a>
+                              {vid.duration && (
+                                <div className="absolute bottom-2 left-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+                                  {vid.duration}
+                                </div>
+                              )}
+                            </div>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-3">
+                              <div className="w-3 h-3 rounded-full border border-gray-600" style={{ background: "radial-gradient(circle at 30% 30%, #555, #222)" }} />
+                              <div className="w-6 h-1.5 rounded-full bg-gray-700" />
+                              <div className="w-3 h-3 rounded-full border border-gray-600" style={{ background: "radial-gradient(circle at 30% 30%, #555, #222)" }} />
+                            </div>
+                          </div>
+                          <div className="mt-2 px-1">
+                            <a href={vid.url} target="_blank" rel="noopener noreferrer" className="text-amber-200 text-sm font-medium line-clamp-2 hover:text-amber-100 transition-colors" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
+                              {vid.title}
+                            </a>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-amber-500 text-xs">{vid.publisher}</span>
+                              {vid.viewCount > 0 && (
+                                <span className="text-amber-600 text-xs">{vid.viewCount.toLocaleString()} views</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {activeTab === "all" && videoResults.length > 6 && (
+                      <button
+                        onClick={() => setActiveTab("videos")}
+                        className="mt-4 text-amber-400 hover:text-amber-300 text-sm font-medium transition-colors"
+                      >
+                        View all {videoResults.length} videos →
+                      </button>
+                    )}
+                  </section>
+                )}
+
+                {/* News */}
+                {(activeTab === "all" || activeTab === "news") && newsResults.length > 0 && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <FileText className="w-5 h-5" />
+                      News ({newsResults.length})
+                    </h2>
+                    <div className="space-y-3">
+                      {(activeTab === "news" ? newsResults : newsResults.slice(0, 5)).map((article) => (
+                        <a
+                          key={article.id}
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-4 hover:bg-opacity-60 hover:border-amber-600 transition-all group"
+                        >
+                          <div className="flex gap-4">
+                            {article.image && (
+                              <img
+                                src={article.image}
+                                alt={article.title}
+                                className="w-24 h-20 sm:w-32 sm:h-24 object-cover rounded-lg flex-shrink-0"
+                                loading="lazy"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-amber-200 group-hover:text-amber-100 line-clamp-2 transition-colors" style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.4)" }}>
+                                {article.title}
+                              </h3>
+                              <p className="text-amber-400 text-sm mt-1 line-clamp-2">{article.snippet}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-amber-500 text-xs font-medium">{article.source}</span>
+                                {article.date && (
+                                  <span className="text-amber-600 text-xs">
+                                    {new Date(article.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                    {activeTab === "all" && newsResults.length > 5 && (
+                      <button
+                        onClick={() => setActiveTab("news")}
+                        className="mt-4 text-amber-400 hover:text-amber-300 text-sm font-medium transition-colors"
+                      >
+                        View all {newsResults.length} news articles →
+                      </button>
+                    )}
+                  </section>
+                )}
+
+                {/* Maps */}
+                {activeTab === "maps" && hasSearched && query && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <span>🗺️</span>
+                      Maps
+                    </h2>
+                    <div className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl overflow-hidden">
+                      <iframe
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-85,180,85&layer=mapnik&marker=&query=${encodeURIComponent(query)}`}
+                        className="w-full h-[500px] border-0"
+                        title="Map results"
+                        loading="lazy"
+                      />
+                      <div className="p-4 border-t border-amber-800">
+                        <a
+                          href={`https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=maps&iaxm=maps`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-amber-300 hover:text-amber-200 text-sm font-medium transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Open full map on DuckDuckGo Maps
+                        </a>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Shopping */}
+                {activeTab === "shopping" && hasSearched && query && (
+                  <section className="max-w-3xl mx-auto">
+                    <h2
+                      className="text-xl font-bold text-amber-200 mb-4 flex items-center gap-2"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}
+                    >
+                      <span>🛒</span>
+                      Shopping
+                    </h2>
+                    <div className="bg-amber-950 bg-opacity-50 border border-amber-800 rounded-xl p-6 text-center">
+                      <div className="text-4xl mb-4">🛒</div>
+                      <p className="text-amber-200 text-lg mb-2" style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.5)" }}>
+                        Shop for &ldquo;{query}&rdquo;
+                      </p>
+                      <p className="text-amber-400 text-sm mb-4">
+                        Browse shopping results on DuckDuckGo
+                      </p>
+                      <a
+                        href={`https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=shopping&iax=shopping`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-xl text-sm font-medium transition-colors shadow-lg"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open DuckDuckGo Shopping
+                      </a>
                     </div>
                   </section>
                 )}
