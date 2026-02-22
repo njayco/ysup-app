@@ -1,5 +1,12 @@
 import type React from "react"
+import type { Viewport } from "next"
 import "./globals.css"
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+}
 
 export const metadata = {
   title: "YsUpCampus.com | The HBCU Network",
