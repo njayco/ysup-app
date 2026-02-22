@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata = {
-  title: "YsUpCampus.com | The HBCU Network",
+  title: "The YsUp Campus Network by Naww G",
   description: "An innovative educational platform designed to transform the learning experience",
     generator: 'v0.app'
 }
