@@ -24,10 +24,11 @@ The platform is built on Next.js 14 with TypeScript, utilizing the App Router fo
 - **Notifications System**: Real-time notifications for various events (e.g., YBucks earned, event invites) fetched via polling and displayed in a header dropdown.
 - **Bison Web - Howard.edu Magazine Browser**: A skeuomorphic, two-page magazine interface that mirrors content from the real howard.edu website, featuring responsive design and animated page transitions.
 - **The Hilltop - Campus Newspaper**: A PDF.js-powered viewer for campus newspapers with a skeuomorphic aesthetic. It includes page navigation and an admin mode for PDF uploads.
+- **YsUp Chalkboard (Virtual Meeting Rooms)**: A skeuomorphic chalkboard-themed virtual meeting room system at `/chalkboard`. Uses Google Meet REST API (v2) via Replit's Google Drive connector to create meeting spaces. Features include instant study groups, scheduled class sessions, network-linked rooms, participant tracking, invite system via class networks, meeting history, and RSVP. The UI uses chalk handwriting fonts (Caveat), dark green board backgrounds, chalk dust textures, and chalk tray details. Data stored in `chalkboard_meetings` and `chalkboard_participants` PostgreSQL tables.
 
 ### UI/UX and Design:
 - **Responsive Design**: All pages are fully mobile-responsive using Tailwind breakpoints, adapting layouts, font sizes, and navigation (e.g., hamburger menu, horizontal scrollable tabs for mobile search categories).
-- **Skeuomorphic Elements**: Incorporates skeuomorphic designs for the calculator, Bison Web magazine browser, and The Hilltop newspaper viewer, enhancing visual engagement.
+- **Skeuomorphic Elements**: Incorporates skeuomorphic designs for the calculator, Bison Web magazine browser, The Hilltop newspaper viewer, and the Chalkboard meeting rooms, enhancing visual engagement.
 - **Themed Carousels**: 3D book and journal carousels with distinct blue and emerald themes.
 
 ## External Dependencies
@@ -40,4 +41,5 @@ The platform is built on Next.js 14 with TypeScript, utilizing the App Router fo
 - **Free Dictionary API (dictionaryapi.dev)**: Provides word definitions, phonetics, and related linguistic information.
 - **Amazon Books**: Integrated for Amazon book search, including ratings and purchase links.
 - **PDF.js**: Used for rendering PDF documents within "The Hilltop" newspaper viewer.
-- **Google Workspace APIs (Docs, Sheets, Slides, Drive)**: Used via REST for the Productivity Dock feature. OAuth 2.0 with encrypted token storage. Requires GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, TOKEN_ENCRYPTION_KEY env vars.
+- **Google Workspace APIs (Docs, Sheets, Slides, Drive)**: Used via REST for the Productivity Dock feature. OAuth 2.0 via Replit connectors (google-docs, google-sheet, google-drive). Tokens auto-managed by Replit.
+- **Google Meet REST API (v2)**: Used for YsUp Chalkboard to create meeting spaces, end active conferences, and retrieve meeting data. Uses the Google Drive connector token for authentication.
