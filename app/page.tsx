@@ -76,8 +76,11 @@ export default function HomePage() {
       if (!hasSeenSplash) {
         setShowSplash(true)
         localStorage.setItem("ysup_splash_seen", "1")
+        setSplashChecked(true)
+      } else {
+        router.push("/login")
+        return
       }
-      setSplashChecked(true)
     }
   }, [])
 
@@ -122,7 +125,7 @@ export default function HomePage() {
   if (showSplash) {
     return (
       <SplashScreen
-        onComplete={() => setShowSplash(false)}
+        onComplete={() => { setShowSplash(false); if (!isLoggedIn) { router.push("/login"); return; } }}
         isLoggedIn={isLoggedIn}
         lastPage={lastPage}
       />
